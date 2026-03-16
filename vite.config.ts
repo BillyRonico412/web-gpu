@@ -3,6 +3,7 @@ import tailwindcss from "@tailwindcss/vite"
 import { tanstackRouter } from "@tanstack/router-plugin/vite"
 import react from "@vitejs/plugin-react"
 import { defineConfig } from "vite"
+import topLevelAwait from "vite-plugin-top-level-await"
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -13,10 +14,11 @@ export default defineConfig({
 		}),
 		react(),
 		tailwindcss(),
+		topLevelAwait(),
 	],
 	resolve: {
 		alias: {
-			"@/*": path.resolve(__dirname, "./src/*"),
+			"@": path.resolve(__dirname, "./src"),
 		},
 	},
 })

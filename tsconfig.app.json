@@ -5,7 +5,6 @@
 		"useDefineForClassFields": true,
 		"lib": ["ES2023", "DOM", "DOM.Iterable"],
 		"module": "ESNext",
-		"types": ["vite/client"],
 		"skipLibCheck": true,
 
 		/* Bundler mode */
@@ -26,7 +25,8 @@
 		"baseUrl": ".",
 		"paths": {
 			"@/*": ["./src/*"]
-		}
+		},
+		"types": ["vite/client", "@webgpu/types"]
 	},
 	"include": ["src"]
 }

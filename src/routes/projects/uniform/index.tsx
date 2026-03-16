@@ -38,8 +38,8 @@ function RouteComponent() {
 			<div className="flex flex-col items-center gap-4">
 				<canvas
 					id="uniform-canvas"
-					width="600"
-					height="400"
+					width="300"
+					height="300"
 					className="border"
 				/>
 				<div>

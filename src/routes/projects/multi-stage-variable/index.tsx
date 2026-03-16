@@ -15,8 +15,8 @@ function RouteComponent() {
 			<div className="flex items-center mt-8">
 				<canvas
 					id="multi-stage-variable-canvas"
-					width="600"
-					height="400"
+					width="300"
+					height="300"
 					className="border"
 				/>
 			</div>

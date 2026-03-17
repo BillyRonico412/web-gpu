@@ -1,7 +1,5 @@
 import { initWebGPU } from "@/lib/webgpu"
-import shaderCode from "@/routes/projects/uniform/-shader.wgsl?raw"
-
-export const uniformData = new Float32Array(4)
+import shaderCode from "@/routes/projects/uniform/uniform-1/-shader.wgsl?raw"
 
 export const init = async () => {
 	const { device } = await initWebGPU()
@@ -10,6 +8,7 @@ export const init = async () => {
 	if (!context) {
 		throw new Error("Error when get context")
 	}
+	const uniformData = new Float32Array(4)
 	const canvasFormat = navigator.gpu.getPreferredCanvasFormat()
 	context.configure({
 		device,

@@ -10,17 +10,13 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as ProjectsUniformIndexRouteImport } from './routes/projects/uniform/index'
 import { Route as ProjectsMultiStageVariableIndexRouteImport } from './routes/projects/multi-stage-variable/index'
+import { Route as ProjectsUniformUniform2IndexRouteImport } from './routes/projects/uniform/uniform-2/index'
+import { Route as ProjectsUniformUniform1IndexRouteImport } from './routes/projects/uniform/uniform-1/index'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ProjectsUniformIndexRoute = ProjectsUniformIndexRouteImport.update({
-  id: '/projects/uniform/',
-  path: '/projects/uniform/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ProjectsMultiStageVariableIndexRoute =
@@ -29,39 +25,64 @@ const ProjectsMultiStageVariableIndexRoute =
     path: '/projects/multi-stage-variable/',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ProjectsUniformUniform2IndexRoute =
+  ProjectsUniformUniform2IndexRouteImport.update({
+    id: '/projects/uniform/uniform-2/',
+    path: '/projects/uniform/uniform-2/',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ProjectsUniformUniform1IndexRoute =
+  ProjectsUniformUniform1IndexRouteImport.update({
+    id: '/projects/uniform/uniform-1/',
+    path: '/projects/uniform/uniform-1/',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/projects/multi-stage-variable/': typeof ProjectsMultiStageVariableIndexRoute
-  '/projects/uniform/': typeof ProjectsUniformIndexRoute
+  '/projects/uniform/uniform-1/': typeof ProjectsUniformUniform1IndexRoute
+  '/projects/uniform/uniform-2/': typeof ProjectsUniformUniform2IndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/projects/multi-stage-variable': typeof ProjectsMultiStageVariableIndexRoute
-  '/projects/uniform': typeof ProjectsUniformIndexRoute
+  '/projects/uniform/uniform-1': typeof ProjectsUniformUniform1IndexRoute
+  '/projects/uniform/uniform-2': typeof ProjectsUniformUniform2IndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/projects/multi-stage-variable/': typeof ProjectsMultiStageVariableIndexRoute
-  '/projects/uniform/': typeof ProjectsUniformIndexRoute
+  '/projects/uniform/uniform-1/': typeof ProjectsUniformUniform1IndexRoute
+  '/projects/uniform/uniform-2/': typeof ProjectsUniformUniform2IndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/projects/multi-stage-variable/' | '/projects/uniform/'
+  fullPaths:
+    | '/'
+    | '/projects/multi-stage-variable/'
+    | '/projects/uniform/uniform-1/'
+    | '/projects/uniform/uniform-2/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/projects/multi-stage-variable' | '/projects/uniform'
+  to:
+    | '/'
+    | '/projects/multi-stage-variable'
+    | '/projects/uniform/uniform-1'
+    | '/projects/uniform/uniform-2'
   id:
     | '__root__'
     | '/'
     | '/projects/multi-stage-variable/'
-    | '/projects/uniform/'
+    | '/projects/uniform/uniform-1/'
+    | '/projects/uniform/uniform-2/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ProjectsMultiStageVariableIndexRoute: typeof ProjectsMultiStageVariableIndexRoute
-  ProjectsUniformIndexRoute: typeof ProjectsUniformIndexRoute
+  ProjectsUniformUniform1IndexRoute: typeof ProjectsUniformUniform1IndexRoute
+  ProjectsUniformUniform2IndexRoute: typeof ProjectsUniformUniform2IndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -73,18 +94,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/projects/uniform/': {
-      id: '/projects/uniform/'
-      path: '/projects/uniform'
-      fullPath: '/projects/uniform/'
-      preLoaderRoute: typeof ProjectsUniformIndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/projects/multi-stage-variable/': {
       id: '/projects/multi-stage-variable/'
       path: '/projects/multi-stage-variable'
       fullPath: '/projects/multi-stage-variable/'
       preLoaderRoute: typeof ProjectsMultiStageVariableIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/projects/uniform/uniform-2/': {
+      id: '/projects/uniform/uniform-2/'
+      path: '/projects/uniform/uniform-2'
+      fullPath: '/projects/uniform/uniform-2/'
+      preLoaderRoute: typeof ProjectsUniformUniform2IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/projects/uniform/uniform-1/': {
+      id: '/projects/uniform/uniform-1/'
+      path: '/projects/uniform/uniform-1'
+      fullPath: '/projects/uniform/uniform-1/'
+      preLoaderRoute: typeof ProjectsUniformUniform1IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -93,7 +121,8 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ProjectsMultiStageVariableIndexRoute: ProjectsMultiStageVariableIndexRoute,
-  ProjectsUniformIndexRoute: ProjectsUniformIndexRoute,
+  ProjectsUniformUniform1IndexRoute: ProjectsUniformUniform1IndexRoute,
+  ProjectsUniformUniform2IndexRoute: ProjectsUniformUniform2IndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

@@ -1,5 +1,6 @@
 import { Link, type ToOptions } from "@tanstack/react-router"
 import { Code, Gpu, Home, Microchip, Moon, Sun } from "lucide-react"
+import { match } from "ts-pattern"
 import { useTheme } from "@/components/theme-provider"
 import { Button } from "@/components/ui/button"
 import {
@@ -15,16 +16,73 @@ import {
 	SidebarMenuItem,
 } from "@/components/ui/sidebar"
 
-const projets: { name: string; to: ToOptions["to"] }[] = [
+type ProjectLinkItem = {
+	type: "item"
+	name: string
+	to: ToOptions["to"]
+}
+
+type ProjectLinkGroup = {
+	type: "group"
+	name: string
+	links: ProjectLinkItem[]
+}
+
+const projects: (ProjectLinkItem | ProjectLinkGroup)[] = [
 	{
+		type: "item",
 		name: "Multi Stage Variable",
 		to: "/projects/multi-stage-variable",
 	},
 	{
+		type: "group",
 		name: "Uniform",
-		to: "/projects/uniform",
+		links: [
+			{
+				type: "item",
+				name: "Uniform 1",
+				to: "/projects/uniform/uniform-1",
+			},
+			{
+				type: "item",
+				name: "Uniform 2",
+				to: "/projects/uniform/uniform-2",
+			},
+		],
 	},
 ]
+
+const SidebarElementByProjectLinkItem = (props: { item: ProjectLinkItem }) => {
+	return (
+		<SidebarMenuItem key={props.item.to}>
+			<Link to={props.item.to}>
+				{({ isActive }) => (
+					<SidebarMenuButton isActive={isActive}>
+						<Microchip />
+						{props.item.name}
+					</SidebarMenuButton>
+				)}
+			</Link>
+		</SidebarMenuItem>
+	)
+}
+
+const SidebarElementByProjectLinkGroup = (props: {
+	group: ProjectLinkGroup
+}) => {
+	return (
+		<SidebarGroup key={props.group.name}>
+			<SidebarGroupLabel>{props.group.name}</SidebarGroupLabel>
+			<SidebarGroupContent>
+				<SidebarMenu>
+					{props.group.links.map((link) => (
+						<SidebarElementByProjectLinkItem key={link.to} item={link} />
+					))}
+				</SidebarMenu>
+			</SidebarGroupContent>
+		</SidebarGroup>
+	)
+}
 
 export const AppSidebar = () => {
 	const { theme, setTheme } = useTheme()
@@ -58,18 +116,22 @@ export const AppSidebar = () => {
 					<SidebarGroupLabel>Projets</SidebarGroupLabel>
 					<SidebarGroupContent>
 						<SidebarMenu>
-							{projets.map((projet) => (
-								<SidebarMenuItem key={projet.to}>
-									<Link to={projet.to}>
-										{({ isActive }) => (
-											<SidebarMenuButton isActive={isActive}>
-												<Microchip />
-												{projet.name}
-											</SidebarMenuButton>
-										)}
-									</Link>
-								</SidebarMenuItem>
-							))}
+							{projects.map((projet) =>
+								match(projet)
+									.with({ type: "group" }, (project) => (
+										<SidebarElementByProjectLinkGroup
+											key={project.name}
+											group={project}
+										/>
+									))
+									.with({ type: "item" }, (project) => (
+										<SidebarElementByProjectLinkItem
+											key={project.to}
+											item={project}
+										/>
+									))
+									.exhaustive(),
+							)}
 						</SidebarMenu>
 					</SidebarGroupContent>
 				</SidebarGroup>

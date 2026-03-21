@@ -4,7 +4,7 @@ struct UniformData {
     color: vec3f,
 }
 
-@group(0) @binding(0) var<uniform> uniformData: UniformData;
+@group(0) @binding(0) var<storage> uniformData: UniformData;
 
 @vertex
 fn vs_main(@builtin(vertex_index) vertex_index: u32) -> @builtin(position) vec4f {

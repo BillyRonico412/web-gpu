@@ -11,8 +11,9 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ProjectsMultiStageVariableIndexRouteImport } from './routes/projects/multi-stage-variable/index'
-import { Route as ProjectsUniformUniform2IndexRouteImport } from './routes/projects/uniform/uniform-2/index'
-import { Route as ProjectsUniformUniform1IndexRouteImport } from './routes/projects/uniform/uniform-1/index'
+import { Route as ProjectsBufferVertexIndexRouteImport } from './routes/projects/buffer/vertex/index'
+import { Route as ProjectsBufferUniformIndexRouteImport } from './routes/projects/buffer/uniform/index'
+import { Route as ProjectsBufferStorageIndexRouteImport } from './routes/projects/buffer/storage/index'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -25,64 +26,77 @@ const ProjectsMultiStageVariableIndexRoute =
     path: '/projects/multi-stage-variable/',
     getParentRoute: () => rootRouteImport,
   } as any)
-const ProjectsUniformUniform2IndexRoute =
-  ProjectsUniformUniform2IndexRouteImport.update({
-    id: '/projects/uniform/uniform-2/',
-    path: '/projects/uniform/uniform-2/',
+const ProjectsBufferVertexIndexRoute =
+  ProjectsBufferVertexIndexRouteImport.update({
+    id: '/projects/buffer/vertex/',
+    path: '/projects/buffer/vertex/',
     getParentRoute: () => rootRouteImport,
   } as any)
-const ProjectsUniformUniform1IndexRoute =
-  ProjectsUniformUniform1IndexRouteImport.update({
-    id: '/projects/uniform/uniform-1/',
-    path: '/projects/uniform/uniform-1/',
+const ProjectsBufferUniformIndexRoute =
+  ProjectsBufferUniformIndexRouteImport.update({
+    id: '/projects/buffer/uniform/',
+    path: '/projects/buffer/uniform/',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ProjectsBufferStorageIndexRoute =
+  ProjectsBufferStorageIndexRouteImport.update({
+    id: '/projects/buffer/storage/',
+    path: '/projects/buffer/storage/',
     getParentRoute: () => rootRouteImport,
   } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/projects/multi-stage-variable/': typeof ProjectsMultiStageVariableIndexRoute
-  '/projects/uniform/uniform-1/': typeof ProjectsUniformUniform1IndexRoute
-  '/projects/uniform/uniform-2/': typeof ProjectsUniformUniform2IndexRoute
+  '/projects/buffer/storage/': typeof ProjectsBufferStorageIndexRoute
+  '/projects/buffer/uniform/': typeof ProjectsBufferUniformIndexRoute
+  '/projects/buffer/vertex/': typeof ProjectsBufferVertexIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/projects/multi-stage-variable': typeof ProjectsMultiStageVariableIndexRoute
-  '/projects/uniform/uniform-1': typeof ProjectsUniformUniform1IndexRoute
-  '/projects/uniform/uniform-2': typeof ProjectsUniformUniform2IndexRoute
+  '/projects/buffer/storage': typeof ProjectsBufferStorageIndexRoute
+  '/projects/buffer/uniform': typeof ProjectsBufferUniformIndexRoute
+  '/projects/buffer/vertex': typeof ProjectsBufferVertexIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/projects/multi-stage-variable/': typeof ProjectsMultiStageVariableIndexRoute
-  '/projects/uniform/uniform-1/': typeof ProjectsUniformUniform1IndexRoute
-  '/projects/uniform/uniform-2/': typeof ProjectsUniformUniform2IndexRoute
+  '/projects/buffer/storage/': typeof ProjectsBufferStorageIndexRoute
+  '/projects/buffer/uniform/': typeof ProjectsBufferUniformIndexRoute
+  '/projects/buffer/vertex/': typeof ProjectsBufferVertexIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
     | '/projects/multi-stage-variable/'
-    | '/projects/uniform/uniform-1/'
-    | '/projects/uniform/uniform-2/'
+    | '/projects/buffer/storage/'
+    | '/projects/buffer/uniform/'
+    | '/projects/buffer/vertex/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/projects/multi-stage-variable'
-    | '/projects/uniform/uniform-1'
-    | '/projects/uniform/uniform-2'
+    | '/projects/buffer/storage'
+    | '/projects/buffer/uniform'
+    | '/projects/buffer/vertex'
   id:
     | '__root__'
     | '/'
     | '/projects/multi-stage-variable/'
-    | '/projects/uniform/uniform-1/'
-    | '/projects/uniform/uniform-2/'
+    | '/projects/buffer/storage/'
+    | '/projects/buffer/uniform/'
+    | '/projects/buffer/vertex/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ProjectsMultiStageVariableIndexRoute: typeof ProjectsMultiStageVariableIndexRoute
-  ProjectsUniformUniform1IndexRoute: typeof ProjectsUniformUniform1IndexRoute
-  ProjectsUniformUniform2IndexRoute: typeof ProjectsUniformUniform2IndexRoute
+  ProjectsBufferStorageIndexRoute: typeof ProjectsBufferStorageIndexRoute
+  ProjectsBufferUniformIndexRoute: typeof ProjectsBufferUniformIndexRoute
+  ProjectsBufferVertexIndexRoute: typeof ProjectsBufferVertexIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -101,18 +115,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProjectsMultiStageVariableIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/projects/uniform/uniform-2/': {
-      id: '/projects/uniform/uniform-2/'
-      path: '/projects/uniform/uniform-2'
-      fullPath: '/projects/uniform/uniform-2/'
-      preLoaderRoute: typeof ProjectsUniformUniform2IndexRouteImport
+    '/projects/buffer/vertex/': {
+      id: '/projects/buffer/vertex/'
+      path: '/projects/buffer/vertex'
+      fullPath: '/projects/buffer/vertex/'
+      preLoaderRoute: typeof ProjectsBufferVertexIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/projects/uniform/uniform-1/': {
-      id: '/projects/uniform/uniform-1/'
-      path: '/projects/uniform/uniform-1'
-      fullPath: '/projects/uniform/uniform-1/'
-      preLoaderRoute: typeof ProjectsUniformUniform1IndexRouteImport
+    '/projects/buffer/uniform/': {
+      id: '/projects/buffer/uniform/'
+      path: '/projects/buffer/uniform'
+      fullPath: '/projects/buffer/uniform/'
+      preLoaderRoute: typeof ProjectsBufferUniformIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/projects/buffer/storage/': {
+      id: '/projects/buffer/storage/'
+      path: '/projects/buffer/storage'
+      fullPath: '/projects/buffer/storage/'
+      preLoaderRoute: typeof ProjectsBufferStorageIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -121,8 +142,9 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ProjectsMultiStageVariableIndexRoute: ProjectsMultiStageVariableIndexRoute,
-  ProjectsUniformUniform1IndexRoute: ProjectsUniformUniform1IndexRoute,
-  ProjectsUniformUniform2IndexRoute: ProjectsUniformUniform2IndexRoute,
+  ProjectsBufferStorageIndexRoute: ProjectsBufferStorageIndexRoute,
+  ProjectsBufferUniformIndexRoute: ProjectsBufferUniformIndexRoute,
+  ProjectsBufferVertexIndexRoute: ProjectsBufferVertexIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

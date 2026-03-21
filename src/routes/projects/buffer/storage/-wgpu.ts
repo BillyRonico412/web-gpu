@@ -1,5 +1,5 @@
 import { initWebGPU } from "@/lib/webgpu"
-import shaderCode from "@/routes/projects/uniform/uniform-2/-shader.wgsl?raw"
+import shaderCode from "@/routes/projects/buffer/storage/-shader.wgsl?raw"
 
 const rand = (x: number, y: number) => {
 	return Math.random() * (y - x) + x
@@ -76,7 +76,7 @@ export const run = async () => {
 		uniformData.set([rand(0, 1), rand(0, 1), rand(0, 1)], colorOffset)
 		const buffer = device.createBuffer({
 			size: uniformData.byteLength,
-			usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.UNIFORM,
+			usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.STORAGE,
 		})
 		device.queue.writeBuffer(buffer, 0, uniformData)
 		const bindGroup = device.createBindGroup({

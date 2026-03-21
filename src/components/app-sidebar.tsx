@@ -1,5 +1,14 @@
 import { Link, type ToOptions } from "@tanstack/react-router"
-import { Code, Gpu, Home, Microchip, Moon, Sun } from "lucide-react"
+import {
+	Code,
+	Database,
+	Gpu,
+	Home,
+	type LucideIcon,
+	Microchip,
+	Moon,
+	Sun,
+} from "lucide-react"
 import { match } from "ts-pattern"
 import { useTheme } from "@/components/theme-provider"
 import { Button } from "@/components/ui/button"
@@ -20,6 +29,7 @@ type ProjectLinkItem = {
 	type: "item"
 	name: string
 	to: ToOptions["to"]
+	icon: LucideIcon
 }
 
 type ProjectLinkGroup = {
@@ -33,20 +43,29 @@ const projects: (ProjectLinkItem | ProjectLinkGroup)[] = [
 		type: "item",
 		name: "Multi Stage Variable",
 		to: "/projects/multi-stage-variable",
+		icon: Microchip,
 	},
 	{
 		type: "group",
-		name: "Uniform",
+		name: "Buffers",
 		links: [
 			{
 				type: "item",
-				name: "Uniform 1",
-				to: "/projects/uniform/uniform-1",
+				name: "Uniform",
+				to: "/projects/buffer/uniform",
+				icon: Database,
 			},
 			{
 				type: "item",
-				name: "Uniform 2",
-				to: "/projects/uniform/uniform-2",
+				name: "Storage",
+				to: "/projects/buffer/storage",
+				icon: Database,
+			},
+			{
+				type: "item",
+				name: "Vertex",
+				to: "/projects/buffer/vertex",
+				icon: Database,
 			},
 		],
 	},
@@ -58,7 +77,7 @@ const SidebarElementByProjectLinkItem = (props: { item: ProjectLinkItem }) => {
 			<Link to={props.item.to}>
 				{({ isActive }) => (
 					<SidebarMenuButton isActive={isActive}>
-						<Microchip />
+						<props.item.icon />
 						{props.item.name}
 					</SidebarMenuButton>
 				)}
@@ -113,7 +132,7 @@ export const AppSidebar = () => {
 					</SidebarMenu>
 				</SidebarGroup>
 				<SidebarGroup>
-					<SidebarGroupLabel>Projets</SidebarGroupLabel>
+					<SidebarGroupLabel>Travaux pratiques</SidebarGroupLabel>
 					<SidebarGroupContent>
 						<SidebarMenu>
 							{projects.map((projet) =>

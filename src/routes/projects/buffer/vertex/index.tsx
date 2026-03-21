@@ -1,8 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router"
 import { useEffect } from "react"
-import { run } from "@/routes/projects/uniform/uniform-2/-wgpu"
+import { run } from "@/routes/projects/buffer/vertex/-wgpu"
 
-export const Route = createFileRoute("/projects/uniform/uniform-2/")({
+export const Route = createFileRoute("/projects/buffer/vertex/")({
 	component: RouteComponent,
 })
 
@@ -12,9 +12,9 @@ function RouteComponent() {
 	}, [])
 	return (
 		<div className="w-full h-full flex items-center-safe justify-center-safe">
-			<div className="flex flex-col items-center gap-4">
+			<div className="flex items-center mt-8">
 				<canvas
-					id="uniform-canvas"
+					id="vertex-canvas"
 					width="300"
 					height="300"
 					className="border"

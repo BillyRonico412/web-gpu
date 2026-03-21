@@ -1,5 +1,5 @@
 import { initWebGPU } from "@/lib/webgpu"
-import shaderCode from "@/routes/projects/uniform/uniform-1/-shader.wgsl?raw"
+import shaderCode from "@/routes/projects/buffer/uniform/-shader.wgsl?raw"
 
 export const init = async () => {
 	const { device } = await initWebGPU()

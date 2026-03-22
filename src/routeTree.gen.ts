@@ -9,142 +9,189 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as IndexRouteImport } from './routes/index'
-import { Route as ProjectsMultiStageVariableIndexRouteImport } from './routes/projects/multi-stage-variable/index'
-import { Route as ProjectsBufferVertexIndexRouteImport } from './routes/projects/buffer/vertex/index'
-import { Route as ProjectsBufferUniformIndexRouteImport } from './routes/projects/buffer/uniform/index'
-import { Route as ProjectsBufferStorageIndexRouteImport } from './routes/projects/buffer/storage/index'
+import { Route as WithSidebarRouteRouteImport } from './routes/_with-sidebar/route'
+import { Route as WithSidebarIndexRouteImport } from './routes/_with-sidebar/index'
+import { Route as TpGravitySwarmIndexRouteImport } from './routes/tp/gravity-swarm/index'
+import { Route as WithSidebarMultiStageVariableIndexRouteImport } from './routes/_with-sidebar/multi-stage-variable/index'
+import { Route as WithSidebarBufferVertexIndexRouteImport } from './routes/_with-sidebar/buffer/vertex/index'
+import { Route as WithSidebarBufferUniformIndexRouteImport } from './routes/_with-sidebar/buffer/uniform/index'
+import { Route as WithSidebarBufferStorageIndexRouteImport } from './routes/_with-sidebar/buffer/storage/index'
 
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const WithSidebarRouteRoute = WithSidebarRouteRouteImport.update({
+  id: '/_with-sidebar',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ProjectsMultiStageVariableIndexRoute =
-  ProjectsMultiStageVariableIndexRouteImport.update({
-    id: '/projects/multi-stage-variable/',
-    path: '/projects/multi-stage-variable/',
-    getParentRoute: () => rootRouteImport,
+const WithSidebarIndexRoute = WithSidebarIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => WithSidebarRouteRoute,
+} as any)
+const TpGravitySwarmIndexRoute = TpGravitySwarmIndexRouteImport.update({
+  id: '/tp/gravity-swarm/',
+  path: '/tp/gravity-swarm/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const WithSidebarMultiStageVariableIndexRoute =
+  WithSidebarMultiStageVariableIndexRouteImport.update({
+    id: '/multi-stage-variable/',
+    path: '/multi-stage-variable/',
+    getParentRoute: () => WithSidebarRouteRoute,
   } as any)
-const ProjectsBufferVertexIndexRoute =
-  ProjectsBufferVertexIndexRouteImport.update({
-    id: '/projects/buffer/vertex/',
-    path: '/projects/buffer/vertex/',
-    getParentRoute: () => rootRouteImport,
+const WithSidebarBufferVertexIndexRoute =
+  WithSidebarBufferVertexIndexRouteImport.update({
+    id: '/buffer/vertex/',
+    path: '/buffer/vertex/',
+    getParentRoute: () => WithSidebarRouteRoute,
   } as any)
-const ProjectsBufferUniformIndexRoute =
-  ProjectsBufferUniformIndexRouteImport.update({
-    id: '/projects/buffer/uniform/',
-    path: '/projects/buffer/uniform/',
-    getParentRoute: () => rootRouteImport,
+const WithSidebarBufferUniformIndexRoute =
+  WithSidebarBufferUniformIndexRouteImport.update({
+    id: '/buffer/uniform/',
+    path: '/buffer/uniform/',
+    getParentRoute: () => WithSidebarRouteRoute,
   } as any)
-const ProjectsBufferStorageIndexRoute =
-  ProjectsBufferStorageIndexRouteImport.update({
-    id: '/projects/buffer/storage/',
-    path: '/projects/buffer/storage/',
-    getParentRoute: () => rootRouteImport,
+const WithSidebarBufferStorageIndexRoute =
+  WithSidebarBufferStorageIndexRouteImport.update({
+    id: '/buffer/storage/',
+    path: '/buffer/storage/',
+    getParentRoute: () => WithSidebarRouteRoute,
   } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof IndexRoute
-  '/projects/multi-stage-variable/': typeof ProjectsMultiStageVariableIndexRoute
-  '/projects/buffer/storage/': typeof ProjectsBufferStorageIndexRoute
-  '/projects/buffer/uniform/': typeof ProjectsBufferUniformIndexRoute
-  '/projects/buffer/vertex/': typeof ProjectsBufferVertexIndexRoute
+  '/': typeof WithSidebarIndexRoute
+  '/multi-stage-variable/': typeof WithSidebarMultiStageVariableIndexRoute
+  '/tp/gravity-swarm/': typeof TpGravitySwarmIndexRoute
+  '/buffer/storage/': typeof WithSidebarBufferStorageIndexRoute
+  '/buffer/uniform/': typeof WithSidebarBufferUniformIndexRoute
+  '/buffer/vertex/': typeof WithSidebarBufferVertexIndexRoute
 }
 export interface FileRoutesByTo {
-  '/': typeof IndexRoute
-  '/projects/multi-stage-variable': typeof ProjectsMultiStageVariableIndexRoute
-  '/projects/buffer/storage': typeof ProjectsBufferStorageIndexRoute
-  '/projects/buffer/uniform': typeof ProjectsBufferUniformIndexRoute
-  '/projects/buffer/vertex': typeof ProjectsBufferVertexIndexRoute
+  '/': typeof WithSidebarIndexRoute
+  '/multi-stage-variable': typeof WithSidebarMultiStageVariableIndexRoute
+  '/tp/gravity-swarm': typeof TpGravitySwarmIndexRoute
+  '/buffer/storage': typeof WithSidebarBufferStorageIndexRoute
+  '/buffer/uniform': typeof WithSidebarBufferUniformIndexRoute
+  '/buffer/vertex': typeof WithSidebarBufferVertexIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  '/': typeof IndexRoute
-  '/projects/multi-stage-variable/': typeof ProjectsMultiStageVariableIndexRoute
-  '/projects/buffer/storage/': typeof ProjectsBufferStorageIndexRoute
-  '/projects/buffer/uniform/': typeof ProjectsBufferUniformIndexRoute
-  '/projects/buffer/vertex/': typeof ProjectsBufferVertexIndexRoute
+  '/_with-sidebar': typeof WithSidebarRouteRouteWithChildren
+  '/_with-sidebar/': typeof WithSidebarIndexRoute
+  '/_with-sidebar/multi-stage-variable/': typeof WithSidebarMultiStageVariableIndexRoute
+  '/tp/gravity-swarm/': typeof TpGravitySwarmIndexRoute
+  '/_with-sidebar/buffer/storage/': typeof WithSidebarBufferStorageIndexRoute
+  '/_with-sidebar/buffer/uniform/': typeof WithSidebarBufferUniformIndexRoute
+  '/_with-sidebar/buffer/vertex/': typeof WithSidebarBufferVertexIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/projects/multi-stage-variable/'
-    | '/projects/buffer/storage/'
-    | '/projects/buffer/uniform/'
-    | '/projects/buffer/vertex/'
+    | '/multi-stage-variable/'
+    | '/tp/gravity-swarm/'
+    | '/buffer/storage/'
+    | '/buffer/uniform/'
+    | '/buffer/vertex/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/projects/multi-stage-variable'
-    | '/projects/buffer/storage'
-    | '/projects/buffer/uniform'
-    | '/projects/buffer/vertex'
+    | '/multi-stage-variable'
+    | '/tp/gravity-swarm'
+    | '/buffer/storage'
+    | '/buffer/uniform'
+    | '/buffer/vertex'
   id:
     | '__root__'
-    | '/'
-    | '/projects/multi-stage-variable/'
-    | '/projects/buffer/storage/'
-    | '/projects/buffer/uniform/'
-    | '/projects/buffer/vertex/'
+    | '/_with-sidebar'
+    | '/_with-sidebar/'
+    | '/_with-sidebar/multi-stage-variable/'
+    | '/tp/gravity-swarm/'
+    | '/_with-sidebar/buffer/storage/'
+    | '/_with-sidebar/buffer/uniform/'
+    | '/_with-sidebar/buffer/vertex/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute
-  ProjectsMultiStageVariableIndexRoute: typeof ProjectsMultiStageVariableIndexRoute
-  ProjectsBufferStorageIndexRoute: typeof ProjectsBufferStorageIndexRoute
-  ProjectsBufferUniformIndexRoute: typeof ProjectsBufferUniformIndexRoute
-  ProjectsBufferVertexIndexRoute: typeof ProjectsBufferVertexIndexRoute
+  WithSidebarRouteRoute: typeof WithSidebarRouteRouteWithChildren
+  TpGravitySwarmIndexRoute: typeof TpGravitySwarmIndexRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/': {
-      id: '/'
+    '/_with-sidebar': {
+      id: '/_with-sidebar'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof WithSidebarRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_with-sidebar/': {
+      id: '/_with-sidebar/'
       path: '/'
       fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+      preLoaderRoute: typeof WithSidebarIndexRouteImport
+      parentRoute: typeof WithSidebarRouteRoute
+    }
+    '/tp/gravity-swarm/': {
+      id: '/tp/gravity-swarm/'
+      path: '/tp/gravity-swarm'
+      fullPath: '/tp/gravity-swarm/'
+      preLoaderRoute: typeof TpGravitySwarmIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/projects/multi-stage-variable/': {
-      id: '/projects/multi-stage-variable/'
-      path: '/projects/multi-stage-variable'
-      fullPath: '/projects/multi-stage-variable/'
-      preLoaderRoute: typeof ProjectsMultiStageVariableIndexRouteImport
-      parentRoute: typeof rootRouteImport
+    '/_with-sidebar/multi-stage-variable/': {
+      id: '/_with-sidebar/multi-stage-variable/'
+      path: '/multi-stage-variable'
+      fullPath: '/multi-stage-variable/'
+      preLoaderRoute: typeof WithSidebarMultiStageVariableIndexRouteImport
+      parentRoute: typeof WithSidebarRouteRoute
     }
-    '/projects/buffer/vertex/': {
-      id: '/projects/buffer/vertex/'
-      path: '/projects/buffer/vertex'
-      fullPath: '/projects/buffer/vertex/'
-      preLoaderRoute: typeof ProjectsBufferVertexIndexRouteImport
-      parentRoute: typeof rootRouteImport
+    '/_with-sidebar/buffer/vertex/': {
+      id: '/_with-sidebar/buffer/vertex/'
+      path: '/buffer/vertex'
+      fullPath: '/buffer/vertex/'
+      preLoaderRoute: typeof WithSidebarBufferVertexIndexRouteImport
+      parentRoute: typeof WithSidebarRouteRoute
     }
-    '/projects/buffer/uniform/': {
-      id: '/projects/buffer/uniform/'
-      path: '/projects/buffer/uniform'
-      fullPath: '/projects/buffer/uniform/'
-      preLoaderRoute: typeof ProjectsBufferUniformIndexRouteImport
-      parentRoute: typeof rootRouteImport
+    '/_with-sidebar/buffer/uniform/': {
+      id: '/_with-sidebar/buffer/uniform/'
+      path: '/buffer/uniform'
+      fullPath: '/buffer/uniform/'
+      preLoaderRoute: typeof WithSidebarBufferUniformIndexRouteImport
+      parentRoute: typeof WithSidebarRouteRoute
     }
-    '/projects/buffer/storage/': {
-      id: '/projects/buffer/storage/'
-      path: '/projects/buffer/storage'
-      fullPath: '/projects/buffer/storage/'
-      preLoaderRoute: typeof ProjectsBufferStorageIndexRouteImport
-      parentRoute: typeof rootRouteImport
+    '/_with-sidebar/buffer/storage/': {
+      id: '/_with-sidebar/buffer/storage/'
+      path: '/buffer/storage'
+      fullPath: '/buffer/storage/'
+      preLoaderRoute: typeof WithSidebarBufferStorageIndexRouteImport
+      parentRoute: typeof WithSidebarRouteRoute
     }
   }
 }
 
+interface WithSidebarRouteRouteChildren {
+  WithSidebarIndexRoute: typeof WithSidebarIndexRoute
+  WithSidebarMultiStageVariableIndexRoute: typeof WithSidebarMultiStageVariableIndexRoute
+  WithSidebarBufferStorageIndexRoute: typeof WithSidebarBufferStorageIndexRoute
+  WithSidebarBufferUniformIndexRoute: typeof WithSidebarBufferUniformIndexRoute
+  WithSidebarBufferVertexIndexRoute: typeof WithSidebarBufferVertexIndexRoute
+}
+
+const WithSidebarRouteRouteChildren: WithSidebarRouteRouteChildren = {
+  WithSidebarIndexRoute: WithSidebarIndexRoute,
+  WithSidebarMultiStageVariableIndexRoute:
+    WithSidebarMultiStageVariableIndexRoute,
+  WithSidebarBufferStorageIndexRoute: WithSidebarBufferStorageIndexRoute,
+  WithSidebarBufferUniformIndexRoute: WithSidebarBufferUniformIndexRoute,
+  WithSidebarBufferVertexIndexRoute: WithSidebarBufferVertexIndexRoute,
+}
+
+const WithSidebarRouteRouteWithChildren =
+  WithSidebarRouteRoute._addFileChildren(WithSidebarRouteRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
-  IndexRoute: IndexRoute,
-  ProjectsMultiStageVariableIndexRoute: ProjectsMultiStageVariableIndexRoute,
-  ProjectsBufferStorageIndexRoute: ProjectsBufferStorageIndexRoute,
-  ProjectsBufferUniformIndexRoute: ProjectsBufferUniformIndexRoute,
-  ProjectsBufferVertexIndexRoute: ProjectsBufferVertexIndexRoute,
+  WithSidebarRouteRoute: WithSidebarRouteRouteWithChildren,
+  TpGravitySwarmIndexRoute: TpGravitySwarmIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

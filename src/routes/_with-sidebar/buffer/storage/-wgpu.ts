@@ -1,5 +1,5 @@
 import { initWebGPU } from "@/lib/webgpu"
-import shaderCode from "@/routes/projects/buffer/storage/-shader.wgsl?raw"
+import shaderCode from "@/routes/_with-sidebar/buffer/storage/-shader.wgsl?raw"
 
 const rand = (x: number, y: number) => {
 	return Math.random() * (y - x) + x

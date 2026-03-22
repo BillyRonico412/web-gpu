@@ -4,9 +4,9 @@ import { useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { ButtonGroup } from "@/components/ui/button-group"
 import { Field, FieldLabel } from "@/components/ui/field"
-import { init } from "@/routes/projects/buffer/uniform/-wgpu"
+import { init } from "@/routes/_with-sidebar/buffer/uniform/-wgpu"
 
-export const Route = createFileRoute("/projects/buffer/uniform/")({
+export const Route = createFileRoute("/_with-sidebar/buffer/uniform/")({
 	component: RouteComponent,
 })
 

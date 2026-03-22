@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router"
 import { Code, User } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
-export const Route = createFileRoute("/")({
+export const Route = createFileRoute("/_with-sidebar/")({
 	component: RouteComponent,
 })
 

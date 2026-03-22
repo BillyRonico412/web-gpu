@@ -1,5 +1,6 @@
 import { Link, type ToOptions } from "@tanstack/react-router"
 import {
+	Atom,
 	Code,
 	Database,
 	Gpu,
@@ -42,7 +43,7 @@ const projects: (ProjectLinkItem | ProjectLinkGroup)[] = [
 	{
 		type: "item",
 		name: "Multi Stage Variable",
-		to: "/projects/multi-stage-variable",
+		to: "/multi-stage-variable",
 		icon: Microchip,
 	},
 	{
@@ -52,20 +53,32 @@ const projects: (ProjectLinkItem | ProjectLinkGroup)[] = [
 			{
 				type: "item",
 				name: "Uniform",
-				to: "/projects/buffer/uniform",
+				to: "/buffer/uniform",
 				icon: Database,
 			},
 			{
 				type: "item",
 				name: "Storage",
-				to: "/projects/buffer/storage",
+				to: "/buffer/storage",
 				icon: Database,
 			},
 			{
 				type: "item",
 				name: "Vertex",
-				to: "/projects/buffer/vertex",
+				to: "/buffer/vertex",
 				icon: Database,
+			},
+		],
+	},
+	{
+		type: "group",
+		name: "Travaux pratiques",
+		links: [
+			{
+				type: "item",
+				name: "Gravity swarm",
+				to: "/tp/gravity-swarm",
+				icon: Atom,
 			},
 		],
 	},
@@ -132,7 +145,6 @@ export const AppSidebar = () => {
 					</SidebarMenu>
 				</SidebarGroup>
 				<SidebarGroup>
-					<SidebarGroupLabel>Travaux pratiques</SidebarGroupLabel>
 					<SidebarGroupContent>
 						<SidebarMenu>
 							{projects.map((projet) =>

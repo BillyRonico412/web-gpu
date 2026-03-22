@@ -1,5 +1,5 @@
 import { initWebGPU } from "@/lib/webgpu"
-import shaderSource1 from "@/routes/projects/multi-stage-variable/-shader.wgsl?raw"
+import shaderSource1 from "@/routes/_with-sidebar/multi-stage-variable/-shader.wgsl?raw"
 
 export const run = async () => {
 	const { device } = await initWebGPU()

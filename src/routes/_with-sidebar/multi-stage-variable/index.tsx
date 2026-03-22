@@ -1,8 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router"
 import { useEffect } from "react"
-import { run } from "@/routes/projects/buffer/vertex/-wgpu"
+import { run } from "@/routes/_with-sidebar/multi-stage-variable/-wgpu"
 
-export const Route = createFileRoute("/projects/buffer/vertex/")({
+export const Route = createFileRoute("/_with-sidebar/multi-stage-variable/")({
 	component: RouteComponent,
 })
 
@@ -14,7 +14,7 @@ function RouteComponent() {
 		<div className="w-full h-full flex items-center-safe justify-center-safe">
 			<div className="flex items-center mt-8">
 				<canvas
-					id="vertex-canvas"
+					id="multi-stage-variable-canvas"
 					width="300"
 					height="300"
 					className="border"

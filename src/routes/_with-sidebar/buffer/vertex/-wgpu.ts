@@ -1,5 +1,5 @@
 import { initWebGPU } from "@/lib/webgpu"
-import shaderCode from "@/routes/projects/buffer/vertex/-shader.wgsl?raw"
+import shaderCode from "@/routes/_with-sidebar/buffer/vertex/-shader.wgsl?raw"
 
 export const run = async () => {
 	const { device } = await initWebGPU()

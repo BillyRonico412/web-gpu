@@ -1,8 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router"
 import { useEffect } from "react"
-import { run } from "@/routes/projects/multi-stage-variable/-wgpu"
+import { run } from "@/routes/_with-sidebar/buffer/storage/-wgpu"
 
-export const Route = createFileRoute("/projects/multi-stage-variable/")({
+export const Route = createFileRoute("/_with-sidebar/buffer/storage/")({
 	component: RouteComponent,
 })
 
@@ -12,9 +12,9 @@ function RouteComponent() {
 	}, [])
 	return (
 		<div className="w-full h-full flex items-center-safe justify-center-safe">
-			<div className="flex items-center mt-8">
+			<div className="flex flex-col items-center gap-4">
 				<canvas
-					id="multi-stage-variable-canvas"
+					id="uniform-canvas"
 					width="300"
 					height="300"
 					className="border"

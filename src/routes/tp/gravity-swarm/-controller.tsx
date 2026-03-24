@@ -26,7 +26,7 @@ export const Controller = () => {
 						https://birgus.itch.io/particles
 					</a>
 				</SheetDescription>
-				<Card>
+				<Card className="px-4 flex flex-col gap-2">
 					<strong>Click gauche:</strong> Attirer les particules vers le point
 					cliqué.
 					<br />

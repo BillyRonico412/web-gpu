@@ -5,14 +5,17 @@ import renderShaderCode from "@/routes/tp/gravity-swarm/-render-shader.wgsl?raw"
 
 const NB_PARTICLE = 1000
 const NB_PARTICLE_DIVISION = 6
+const NB_SUB_PARTICLE = 5
 const rand = (min: number, max: number) => {
 	return Math.random() * (max - min) + min
 }
+let timer = 0
 
 export type UpdateUniformDataParams = {
 	canvas: HTMLCanvasElement
 	clickPosition: [number, number]
 	clickState: ClickState
+	timer: number
 }
 
 export enum ClickState {
@@ -76,11 +79,12 @@ const getIndexElement = (device: GPUDevice) => {
 const getUniformElement = (device: GPUDevice) => {
 	// Canvas size buffer
 	// 2 float for canvas size, 2 for click position, 1 for click state
-	const uniformDataSize = 2 + 2 + 2
+	const uniformDataSize = 2 + 2 + 2 + 1
 	const uniformDataOffset = {
 		canvasSize: 0,
 		clickPosition: 2,
 		clickState: 4,
+		timer: 5,
 	}
 	const uniformData = new Float32Array(uniformDataSize)
 	const uniformBuffer = device.createBuffer({
@@ -115,6 +119,7 @@ const getUniformElement = (device: GPUDevice) => {
 		uniformData.set([canvas.width, canvas.height], uniformDataOffset.canvasSize)
 		uniformData.set(clickPosition, uniformDataOffset.clickPosition)
 		uniformData.set([clickState], uniformDataOffset.clickState)
+		uniformData.set([params.timer], uniformDataOffset.timer)
 		device.queue.writeBuffer(uniformBuffer, 0, uniformData)
 	}
 
@@ -129,21 +134,27 @@ const getUniformElement = (device: GPUDevice) => {
 }
 
 const getParticleElement = (device: GPUDevice, canvas: HTMLCanvasElement) => {
-	// 5 [float, float] for position, [float, float] for speed, [float, float, float] for color, 1 float for weight
-	const particleDataSize = 2 + 2 + 3 + 1
+	// 10 [float, float] for position, [float, float] for speed, [float, float, float] for color, 1 float for weight
+	const particleDataSize = 2 * NB_SUB_PARTICLE + 2 + 3 + 1
 	const particleDataOffset = {
 		position: 0,
-		speed: 2,
-		color: 4,
-		weight: 7,
+		speed: 10,
+		color: 12,
+		weight: 15,
 	}
 	const particleData = new Float32Array(particleDataSize * NB_PARTICLE)
 	for (let i = 0; i < NB_PARTICLE; i++) {
 		const startOffset = i * particleDataSize
-		particleData.set(
-			[Math.floor(rand(0, canvas.width)), Math.floor(rand(0, canvas.height))],
-			startOffset + particleDataOffset.position,
-		)
+		const position = [
+			Math.floor(rand(0, canvas.width)),
+			Math.floor(rand(0, canvas.height)),
+		]
+		for (let j = 0; j < NB_SUB_PARTICLE; j++) {
+			particleData.set(
+				position,
+				startOffset + particleDataOffset.position + j * 2,
+			)
+		}
 		particleData.set([0, 0], startOffset + particleDataOffset.speed)
 		particleData.set(
 			[rand(0.2, 1), rand(0.2, 1), rand(0.2, 1)],
@@ -337,6 +348,7 @@ export const initGravitySwarm = async () => {
 		updateUniformData({
 			...newUniformData,
 			canvas,
+			timer: ++timer,
 		})
 
 		const encoder = device.createCommandEncoder()
@@ -375,7 +387,7 @@ export const initGravitySwarm = async () => {
 		renderPass.setBindGroup(0, uniformBindGroup)
 		renderPass.setBindGroup(1, particleRenderBindGroup)
 
-		renderPass.drawIndexed(indexData.length, NB_PARTICLE)
+		renderPass.drawIndexed(indexData.length, NB_PARTICLE * NB_SUB_PARTICLE)
 		renderPass.end()
 		device.queue.submit([encoder.finish()])
 	}

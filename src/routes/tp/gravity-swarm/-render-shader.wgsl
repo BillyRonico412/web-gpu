@@ -1,5 +1,7 @@
+override NB_SUB_PARTICLE = 5u;
+
 struct Particle {
-    position: vec2f,
+    position: array<vec2f, 5>,
     speed: vec2f,
     color: vec3f,
     size: f32,
@@ -28,13 +30,14 @@ struct VsOutput {
 }
 
 @vertex fn vs_main(input: VsInput) -> VsOutput {
-    let index_particle = input.instance_index;
+    let index_particle = input.instance_index / NB_SUB_PARTICLE;
+    let index_sub_particle = input.instance_index % NB_SUB_PARTICLE;
     let particle = particles[index_particle];
-    let translation_vec = input.position * particle.size;
-    let position = particle.position + translation_vec;
+    let translation_vec = input.position * particle.size / (f32(index_sub_particle) * 0.1 + 1);
+    let position = particle.position[index_sub_particle] + translation_vec;
     var out: VsOutput;
     out.position = get_uv(position);
-    out.color = vec4f(particle.color, 1);
+    out.color = vec4f(particle.color, 1 - (0.03 * f32(index_sub_particle * index_sub_particle)));
     return out;
 }
 

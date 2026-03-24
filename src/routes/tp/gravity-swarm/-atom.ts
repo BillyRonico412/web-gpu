@@ -5,7 +5,9 @@ import {
 } from "@/routes/tp/gravity-swarm/-wgpu"
 
 export const jotaiStore = getDefaultStore()
-export const uniformAtom = atom<Omit<UpdateUniformDataParams, "canvas">>({
+export const uniformAtom = atom<
+	Pick<UpdateUniformDataParams, "clickPosition" | "clickState">
+>({
 	clickPosition: [0, 0],
 	clickState: ClickState.None,
 })

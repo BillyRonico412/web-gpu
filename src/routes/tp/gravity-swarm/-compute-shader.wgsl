@@ -20,7 +20,7 @@ fn get_acceleration(distance: f32, size: f32) -> f32 {
     if distance < 30 && uniform_data.click_state == 1 {
         return 0;
     }
-    return 50000 / (distance * distance * size + 1000);
+    return 20000 / (distance * distance * size);
 }
 
     @compute @workgroup_size(64) fn cs_main(

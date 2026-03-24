@@ -1,12 +1,9 @@
 import { initWebGPU } from "@/lib/webgpu"
-import {
-	jotaiStore,
-	nbParticlesAtom,
-	uniformAtom,
-} from "@/routes/tp/gravity-swarm/-atom"
+import { jotaiStore, uniformAtom } from "@/routes/tp/gravity-swarm/-atom"
 import computeShaderCode from "@/routes/tp/gravity-swarm/-compute-shader.wgsl?raw"
 import renderShaderCode from "@/routes/tp/gravity-swarm/-render-shader.wgsl?raw"
 
+const NB_PARTICLE = 1000
 const NB_PARTICLE_DIVISION = 6
 const rand = (min: number, max: number) => {
 	return Math.random() * (max - min) + min
@@ -132,18 +129,17 @@ const getUniformElement = (device: GPUDevice) => {
 }
 
 const getParticleElement = (device: GPUDevice, canvas: HTMLCanvasElement) => {
-	// Particles buffer
-	const nbParticles = jotaiStore.get(nbParticlesAtom)
-	const particleDataSize = 8 + 8 + 12 + 4
+	// 5 [float, float] for position, [float, float] for speed, [float, float, float] for color, 1 float for weight
+	const particleDataSize = 2 + 2 + 3 + 1
 	const particleDataOffset = {
 		position: 0,
 		speed: 2,
 		color: 4,
 		weight: 7,
 	}
-	const particleData = new Float32Array((particleDataSize / 4) * nbParticles)
-	for (let i = 0; i < nbParticles; i++) {
-		const startOffset = i * (particleDataSize / 4)
+	const particleData = new Float32Array(particleDataSize * NB_PARTICLE)
+	for (let i = 0; i < NB_PARTICLE; i++) {
+		const startOffset = i * particleDataSize
 		particleData.set(
 			[Math.floor(rand(0, canvas.width)), Math.floor(rand(0, canvas.height))],
 			startOffset + particleDataOffset.position,
@@ -212,36 +208,13 @@ const getParticleElement = (device: GPUDevice, canvas: HTMLCanvasElement) => {
 	}
 }
 
-export const initGravitySwarm = async () => {
-	const { device } = await initWebGPU()
-	const canvas = document.querySelector("#gravity-swarm-canvas") as
-		| HTMLCanvasElement
-		| undefined
-	if (!canvas) {
-		throw new Error("No canvas")
-	}
-	const context = canvas.getContext("webgpu")
-	if (!context) {
-		throw new Error("Error when get context")
-	}
-	const canvasFormat = navigator.gpu.getPreferredCanvasFormat()
-	context.configure({
-		format: canvasFormat,
-		device,
-		alphaMode: "opaque",
-	})
-
-	const { vertexBuffer } = getVertexElement(device)
-	const { indexBuffer, indexData } = getIndexElement(device)
-	const { uniformBindGroupLayout, uniformBindGroup, updateUniformData } =
-		getUniformElement(device)
-	const {
-		particleComputeBingGroupLayout,
-		particleComputeBindGroup,
-		particleRenderBindGroupLayout,
-		particleRenderBindGroup,
-	} = getParticleElement(device, canvas)
-
+const getComputePipeline = (params: {
+	device: GPUDevice
+	uniformBindGroupLayout: GPUBindGroupLayout
+	particleComputeBingGroupLayout: GPUBindGroupLayout
+}) => {
+	const { device, uniformBindGroupLayout, particleComputeBingGroupLayout } =
+		params
 	const computeShaderModule = device.createShaderModule({
 		label: "Compute shader",
 		code: computeShaderCode,
@@ -260,8 +233,23 @@ export const initGravitySwarm = async () => {
 			entryPoint: "cs_main",
 		},
 	})
+	return computePipeline
+}
 
+const getRenderPipeline = (params: {
+	device: GPUDevice
+	uniformBindGroupLayout: GPUBindGroupLayout
+	particleRenderBindGroupLayout: GPUBindGroupLayout
+	canvasFormat: GPUTextureFormat
+}) => {
+	const {
+		device,
+		uniformBindGroupLayout,
+		particleRenderBindGroupLayout,
+		canvasFormat,
+	} = params
 	const renderShaderModule = device.createShaderModule({
+		label: "Render shader",
 		code: renderShaderCode,
 	})
 	const renderPipeline = device.createRenderPipeline({
@@ -298,6 +286,51 @@ export const initGravitySwarm = async () => {
 			topology: "triangle-list",
 		},
 	})
+	return renderPipeline
+}
+
+export const initGravitySwarm = async () => {
+	const { device } = await initWebGPU()
+	const canvas = document.querySelector("#gravity-swarm-canvas") as
+		| HTMLCanvasElement
+		| undefined
+	if (!canvas) {
+		throw new Error("No canvas")
+	}
+	const context = canvas.getContext("webgpu")
+	if (!context) {
+		throw new Error("Error when get context")
+	}
+	const canvasFormat = navigator.gpu.getPreferredCanvasFormat()
+	context.configure({
+		format: canvasFormat,
+		device,
+		alphaMode: "opaque",
+	})
+
+	const { vertexBuffer } = getVertexElement(device)
+	const { indexBuffer, indexData } = getIndexElement(device)
+	const { uniformBindGroupLayout, uniformBindGroup, updateUniformData } =
+		getUniformElement(device)
+	const {
+		particleComputeBingGroupLayout,
+		particleComputeBindGroup,
+		particleRenderBindGroupLayout,
+		particleRenderBindGroup,
+	} = getParticleElement(device, canvas)
+
+	const computePipeline = getComputePipeline({
+		device,
+		uniformBindGroupLayout,
+		particleComputeBingGroupLayout,
+	})
+
+	const renderPipeline = getRenderPipeline({
+		device,
+		uniformBindGroupLayout,
+		particleRenderBindGroupLayout,
+		canvasFormat,
+	})
 
 	const draw = () => {
 		const newUniformData = jotaiStore.get(uniformAtom)
@@ -314,8 +347,7 @@ export const initGravitySwarm = async () => {
 		computePass.setBindGroup(0, uniformBindGroup)
 		computePass.setBindGroup(1, particleComputeBindGroup)
 
-		const nbParticles = jotaiStore.get(nbParticlesAtom)
-		computePass.dispatchWorkgroups(nbParticles / 64 + 1)
+		computePass.dispatchWorkgroups(NB_PARTICLE / 64 + 1)
 		computePass.end()
 
 		const textureView = context.getCurrentTexture()
@@ -343,7 +375,7 @@ export const initGravitySwarm = async () => {
 		renderPass.setBindGroup(0, uniformBindGroup)
 		renderPass.setBindGroup(1, particleRenderBindGroup)
 
-		renderPass.drawIndexed(indexData.length, nbParticles)
+		renderPass.drawIndexed(indexData.length, NB_PARTICLE)
 		renderPass.end()
 		device.queue.submit([encoder.finish()])
 	}

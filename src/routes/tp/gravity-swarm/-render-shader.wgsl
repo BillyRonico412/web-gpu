@@ -1,5 +1,5 @@
 struct Particle {
-    center: vec2f,
+    position: vec2f,
     speed: vec2f,
     color: vec3f,
     size: f32,
@@ -28,9 +28,10 @@ struct VsOutput {
 }
 
 @vertex fn vs_main(input: VsInput) -> VsOutput {
-    let particle = particles[input.instance_index];
+    let index_particle = input.instance_index;
+    let particle = particles[index_particle];
     let translation_vec = input.position * particle.size;
-    let position = particle.center + translation_vec;
+    let position = particle.position + translation_vec;
     var out: VsOutput;
     out.position = get_uv(position);
     out.color = vec4f(particle.color, 1);

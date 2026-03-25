@@ -13,6 +13,7 @@ import { Route as WithSidebarRouteRouteImport } from './routes/_with-sidebar/rou
 import { Route as WithSidebarIndexRouteImport } from './routes/_with-sidebar/index'
 import { Route as TpGravitySwarmIndexRouteImport } from './routes/tp/gravity-swarm/index'
 import { Route as WithSidebarMultiStageVariableIndexRouteImport } from './routes/_with-sidebar/multi-stage-variable/index'
+import { Route as WithSidebarTextureTexture1IndexRouteImport } from './routes/_with-sidebar/texture/texture-1/index'
 import { Route as WithSidebarBufferVertexIndexRouteImport } from './routes/_with-sidebar/buffer/vertex/index'
 import { Route as WithSidebarBufferUniformIndexRouteImport } from './routes/_with-sidebar/buffer/uniform/index'
 import { Route as WithSidebarBufferStorageIndexRouteImport } from './routes/_with-sidebar/buffer/storage/index'
@@ -35,6 +36,12 @@ const WithSidebarMultiStageVariableIndexRoute =
   WithSidebarMultiStageVariableIndexRouteImport.update({
     id: '/multi-stage-variable/',
     path: '/multi-stage-variable/',
+    getParentRoute: () => WithSidebarRouteRoute,
+  } as any)
+const WithSidebarTextureTexture1IndexRoute =
+  WithSidebarTextureTexture1IndexRouteImport.update({
+    id: '/texture/texture-1/',
+    path: '/texture/texture-1/',
     getParentRoute: () => WithSidebarRouteRoute,
   } as any)
 const WithSidebarBufferVertexIndexRoute =
@@ -63,6 +70,7 @@ export interface FileRoutesByFullPath {
   '/buffer/storage/': typeof WithSidebarBufferStorageIndexRoute
   '/buffer/uniform/': typeof WithSidebarBufferUniformIndexRoute
   '/buffer/vertex/': typeof WithSidebarBufferVertexIndexRoute
+  '/texture/texture-1/': typeof WithSidebarTextureTexture1IndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof WithSidebarIndexRoute
@@ -71,6 +79,7 @@ export interface FileRoutesByTo {
   '/buffer/storage': typeof WithSidebarBufferStorageIndexRoute
   '/buffer/uniform': typeof WithSidebarBufferUniformIndexRoute
   '/buffer/vertex': typeof WithSidebarBufferVertexIndexRoute
+  '/texture/texture-1': typeof WithSidebarTextureTexture1IndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -81,6 +90,7 @@ export interface FileRoutesById {
   '/_with-sidebar/buffer/storage/': typeof WithSidebarBufferStorageIndexRoute
   '/_with-sidebar/buffer/uniform/': typeof WithSidebarBufferUniformIndexRoute
   '/_with-sidebar/buffer/vertex/': typeof WithSidebarBufferVertexIndexRoute
+  '/_with-sidebar/texture/texture-1/': typeof WithSidebarTextureTexture1IndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -91,6 +101,7 @@ export interface FileRouteTypes {
     | '/buffer/storage/'
     | '/buffer/uniform/'
     | '/buffer/vertex/'
+    | '/texture/texture-1/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -99,6 +110,7 @@ export interface FileRouteTypes {
     | '/buffer/storage'
     | '/buffer/uniform'
     | '/buffer/vertex'
+    | '/texture/texture-1'
   id:
     | '__root__'
     | '/_with-sidebar'
@@ -108,6 +120,7 @@ export interface FileRouteTypes {
     | '/_with-sidebar/buffer/storage/'
     | '/_with-sidebar/buffer/uniform/'
     | '/_with-sidebar/buffer/vertex/'
+    | '/_with-sidebar/texture/texture-1/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -145,6 +158,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof WithSidebarMultiStageVariableIndexRouteImport
       parentRoute: typeof WithSidebarRouteRoute
     }
+    '/_with-sidebar/texture/texture-1/': {
+      id: '/_with-sidebar/texture/texture-1/'
+      path: '/texture/texture-1'
+      fullPath: '/texture/texture-1/'
+      preLoaderRoute: typeof WithSidebarTextureTexture1IndexRouteImport
+      parentRoute: typeof WithSidebarRouteRoute
+    }
     '/_with-sidebar/buffer/vertex/': {
       id: '/_with-sidebar/buffer/vertex/'
       path: '/buffer/vertex'
@@ -175,6 +195,7 @@ interface WithSidebarRouteRouteChildren {
   WithSidebarBufferStorageIndexRoute: typeof WithSidebarBufferStorageIndexRoute
   WithSidebarBufferUniformIndexRoute: typeof WithSidebarBufferUniformIndexRoute
   WithSidebarBufferVertexIndexRoute: typeof WithSidebarBufferVertexIndexRoute
+  WithSidebarTextureTexture1IndexRoute: typeof WithSidebarTextureTexture1IndexRoute
 }
 
 const WithSidebarRouteRouteChildren: WithSidebarRouteRouteChildren = {
@@ -184,6 +205,7 @@ const WithSidebarRouteRouteChildren: WithSidebarRouteRouteChildren = {
   WithSidebarBufferStorageIndexRoute: WithSidebarBufferStorageIndexRoute,
   WithSidebarBufferUniformIndexRoute: WithSidebarBufferUniformIndexRoute,
   WithSidebarBufferVertexIndexRoute: WithSidebarBufferVertexIndexRoute,
+  WithSidebarTextureTexture1IndexRoute: WithSidebarTextureTexture1IndexRoute,
 }
 
 const WithSidebarRouteRouteWithChildren =

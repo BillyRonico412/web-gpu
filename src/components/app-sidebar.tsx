@@ -9,6 +9,7 @@ import {
 	Microchip,
 	Moon,
 	Sun,
+	Wallpaper,
 } from "lucide-react"
 import { match } from "ts-pattern"
 import { useTheme } from "@/components/theme-provider"
@@ -67,6 +68,18 @@ const projects: (ProjectLinkItem | ProjectLinkGroup)[] = [
 				name: "Vertex",
 				to: "/buffer/vertex",
 				icon: Database,
+			},
+		],
+	},
+	{
+		type: "group",
+		name: "Textures",
+		links: [
+			{
+				type: "item",
+				name: "Texture 1",
+				to: "/texture/texture-1",
+				icon: Wallpaper,
 			},
 		],
 	},

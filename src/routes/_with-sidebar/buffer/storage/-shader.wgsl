@@ -15,6 +15,6 @@ fn vs_main(@builtin(vertex_index) vertex_index: u32) -> @builtin(position) vec4f
 }
 
 @fragment
-fn fs_main(@builtin(position) position: vec4f) -> @location(0) vec4f {
+fn fs_main() -> @location(0) vec4f {
     return vec4f(uniformData.color, 1);
 }

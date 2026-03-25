@@ -16,7 +16,7 @@ fn vs_main(@builtin(vertex_index) index: u32) -> @builtin(position) vec4f {
 }
 
 @fragment
-fn fs_main(@builtin(position) pos: vec4f) -> @location(0) vec4f {
+fn fs_main() -> @location(0) vec4f {
     let r = (sin(radians(params.time / 5)) + 1) / 2;
     let g = (sin(radians(params.time / 5 * 2)) + 1) / 2;
     let b = (sin(radians(params.time / 5 * 3)) + 1) / 2;

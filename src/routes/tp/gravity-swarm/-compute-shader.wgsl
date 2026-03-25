@@ -32,20 +32,21 @@ fn get_acceleration(distance: f32, size: f32) -> f32 {
     @builtin(global_invocation_id) id: vec3<u32>
 ) {
     let index = id.x;
+    let last_index = NB_SUB_PARTICLE - 1;
     if uniform_data.click_state != 0 {
-        let distance = distance(uniform_data.click_position, particles[index].position[0]);
+        let distance = distance(uniform_data.click_position, particles[index].position[last_index]);
         let size = particles[index].size;
         let acceleration = get_acceleration(distance, size);
-        let vitesse_normalize = normalize(uniform_data.click_position - particles[index].position[0]);
+        let vitesse_normalize = normalize(uniform_data.click_position - particles[index].position[last_index]);
         let sign = select(-1f, 1f, uniform_data.click_state == 1);
         particles[index].speed += vitesse_normalize * acceleration * sign;
     }
     particles[index].speed *= FRICTION;
-    let new_position = (particles[index].position[0] + particles[index].speed + uniform_data.canvas_size) % uniform_data.canvas_size;;
+    let new_position = (particles[index].position[last_index] + particles[index].speed + uniform_data.canvas_size) % uniform_data.canvas_size;;
     if uniform_data.timer % 2 == 0 {
-        for (var i = NB_SUB_PARTICLE - 1; i > 0; i--) {
-            particles[index].position[i] = particles[index].position[i - 1];
+        for (var i = 0u; i < NB_SUB_PARTICLE - 1; i++) {
+            particles[index].position[i] = particles[index].position[i + 1];
         }
     }
-    particles[index].position[0] = new_position;
+    particles[index].position[last_index] = new_position;
 }

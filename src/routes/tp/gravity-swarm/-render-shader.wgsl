@@ -33,11 +33,11 @@ struct VsOutput {
     let index_particle = input.instance_index / NB_SUB_PARTICLE;
     let index_sub_particle = input.instance_index % NB_SUB_PARTICLE;
     let particle = particles[index_particle];
-    let translation_vec = input.position * particle.size / (f32(index_sub_particle) * 0.1 + 1);
+    let translation_vec = input.position * particle.size / (2 - f32(index_sub_particle) / f32(NB_SUB_PARTICLE));
     let position = particle.position[index_sub_particle] + translation_vec;
     var out: VsOutput;
     out.position = get_uv(position);
-    out.color = vec4f(particle.color, 1 - (0.03 * f32(index_sub_particle * index_sub_particle)));
+    out.color = vec4f(particle.color, 1 / (2 - f32(index_sub_particle) / f32(NB_SUB_PARTICLE)));
     return out;
 }
 

@@ -51,8 +51,8 @@ export const run = async () => {
 	const sampler = device.createSampler({
 		magFilter: "nearest",
 		minFilter: "nearest",
-		addressModeU: "clamp-to-edge",
-		addressModeV: "clamp-to-edge",
+		addressModeU: "repeat",
+		addressModeV: "repeat",
 	})
 
 	const bindGroupLayout = device.createBindGroupLayout({

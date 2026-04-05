@@ -61,7 +61,10 @@ function RouteComponent() {
 							} else if (e.button === 2) {
 								draft.clickState = ClickState.Right
 							}
-							draft.clickPosition = [e.clientX, e.clientY]
+							draft.clickPosition = [
+								e.clientX * devicePixelRatio,
+								e.clientY * devicePixelRatio,
+							]
 						}),
 					)
 				}}

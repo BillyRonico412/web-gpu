@@ -1,18 +1,17 @@
 import { Link, type ToOptions } from "@tanstack/react-router"
 import {
 	Atom,
+	Biohazard,
 	Code,
 	Database,
 	Gpu,
 	Home,
 	type LucideIcon,
 	Microchip,
-	Moon,
-	Sun,
 	Wallpaper,
 } from "lucide-react"
 import { match } from "ts-pattern"
-import { useTheme } from "@/components/theme-provider"
+import { ThemeToggle } from "@/components/theme-toggle"
 import { Button } from "@/components/ui/button"
 import {
 	Sidebar,
@@ -93,6 +92,12 @@ const projects: (ProjectLinkItem | ProjectLinkGroup)[] = [
 				to: "/tp/gravity-swarm",
 				icon: Atom,
 			},
+			{
+				type: "item",
+				name: "Game of life",
+				to: "/tp/game-of-life",
+				icon: Biohazard,
+			},
 		],
 	},
 ]
@@ -130,7 +135,6 @@ const SidebarElementByProjectLinkGroup = (props: {
 }
 
 export const AppSidebar = () => {
-	const { theme, setTheme } = useTheme()
 	return (
 		<Sidebar variant="floating">
 			<SidebarHeader>
@@ -181,15 +185,7 @@ export const AppSidebar = () => {
 				</SidebarGroup>
 			</SidebarContent>
 			<SidebarFooter className="flex flex-row items-center justify-center">
-				<Button
-					variant="outline"
-					size="icon"
-					onClick={() => setTheme(theme === "light" ? "dark" : "light")}
-				>
-					<Sun className="h-[1.2rem] w-[1.2rem] scale-100 rotate-0 transition-all dark:scale-0 dark:-rotate-90" />
-					<Moon className="absolute h-[1.2rem] w-[1.2rem] scale-0 rotate-90 transition-all dark:scale-100 dark:rotate-0" />
-					<span className="sr-only">Toggle theme</span>
-				</Button>
+				<ThemeToggle />
 				<Button>
 					<Code />
 					Github

@@ -28,8 +28,8 @@ fn get_acceleration(distance: f32, size: f32) -> f32 {
     return FORCE / (distance * distance * size);
 }
 
-    @compute @workgroup_size(64) fn cs_main(
-    @builtin(global_invocation_id) id: vec3<u32>
+    @compute @workgroup_size(64)fn cs_main(
+    @builtin(global_invocation_id) id: vec3u
 ) {
     let index = id.x;
     let last_index = NB_SUB_PARTICLE - 1;

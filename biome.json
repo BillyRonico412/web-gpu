@@ -45,7 +45,8 @@
 				"useShorthandAssign": "on",
 				"useSingleVarDeclarator": "on",
 				"useThrowNewError": "on",
-				"useThrowOnlyError": "on"
+				"useThrowOnlyError": "on",
+				"useComponentExportOnlyModules": "off"
 			},
 			"correctness": {
 				"useUniqueElementIds": "off"

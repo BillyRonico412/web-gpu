@@ -1,6 +1,10 @@
 import { themeAtom } from "@/components/theme-provider"
 import { initWebGPU } from "@/lib/webgpu"
 import { cellPixelDensityAtom, timeAtom } from "@/routes/tp/game-of-life/-atom"
+import {
+	insertStructureToGrid,
+	type StructureType,
+} from "@/routes/tp/game-of-life/-structures"
 import computeShaderCode from "@/routes/tp/game-of-life/shaders/-compute-shader.wgsl?raw"
 import renderShaderCode from "@/routes/tp/game-of-life/shaders/-render-shader.wgsl?raw"
 import { jotaiStore } from "@/routes/tp/gravity-swarm/-atom"
@@ -66,7 +70,7 @@ let storage:
 	  }
 	| undefined
 
-const updateStorages = (device: GPUDevice, canvas: HTMLCanvasElement) => {
+const resetStorages = (device: GPUDevice, canvas: HTMLCanvasElement) => {
 	if (storage) {
 		storage.storageBuffer1.destroy()
 		storage.storageBuffer2.destroy()
@@ -115,6 +119,28 @@ const updateStorages = (device: GPUDevice, canvas: HTMLCanvasElement) => {
 		cellWidth,
 		cellHeight,
 	}
+}
+
+const updateStorageByStructure = (
+	device: GPUDevice,
+	structure: StructureType,
+) => {
+	if (!storage) {
+		throw new Error("Storage not initialized")
+	}
+	const { storageBuffer1, storageBuffer2, cellWidth, cellHeight } = storage
+	const storageData = new Uint32Array(cellWidth * cellHeight)
+	for (let i = 0; i < cellHeight; i++) {
+		const lineOffset = i * cellWidth
+		for (let j = 0; j < cellWidth; j++) {
+			const colOffset = lineOffset + j
+			storageData.set([0], colOffset)
+		}
+	}
+	insertStructureToGrid(structure, storageData, cellWidth, cellHeight)
+	;[storageBuffer1, storageBuffer2].forEach((storageBuffer) => {
+		device.queue.writeBuffer(storageBuffer, 0, storageData)
+	})
 }
 
 const getComputePipeline = (device: GPUDevice) => {
@@ -370,7 +396,8 @@ export interface GameOfLife {
 	randomize: () => void
 	toggle: (screenX: number, screenY: number) => void
 	updateUniformBuffer: () => void
-	updateStorages: () => void
+	resetStorages: () => void
+	updateStorageByStructure: (structure: StructureType) => void
 }
 
 export const initGameOfLife = async (): Promise<GameOfLife> => {
@@ -403,7 +430,7 @@ export const initGameOfLife = async (): Promise<GameOfLife> => {
 		createComputeUniformBindGroup,
 	} = getComputePipeline(device)
 
-	updateStorages(device, canvas)
+	resetStorages(device, canvas)
 
 	if (!storage) {
 		throw new Error("Storage not initialized")
@@ -438,7 +465,9 @@ export const initGameOfLife = async (): Promise<GameOfLife> => {
 		}
 		computePass.setBindGroup(0, computeUniformBindGroup)
 		computePass.setBindGroup(1, computeStorageBindGroup)
-		computePass.dispatchWorkgroups((cellWidth * cellHeight) / 64)
+		const nbWorkgroupsX = Math.ceil(cellWidth / 16)
+		const nbWorkgroupsY = Math.ceil(cellHeight / 16)
+		computePass.dispatchWorkgroups(nbWorkgroupsX, nbWorkgroupsY)
 		computePass.end()
 	}
 
@@ -611,6 +640,8 @@ export const initGameOfLife = async (): Promise<GameOfLife> => {
 		toggle,
 		canvas,
 		updateUniformBuffer,
-		updateStorages: () => updateStorages(device, canvas),
+		resetStorages: () => resetStorages(device, canvas),
+		updateStorageByStructure: (structure: StructureType) =>
+			updateStorageByStructure(device, structure),
 	}
 }

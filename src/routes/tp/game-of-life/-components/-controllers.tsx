@@ -12,6 +12,7 @@ import { ThemeToggle } from "@/components/theme-toggle"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { gameOfLifeAtom, isRunningAtom } from "@/routes/tp/game-of-life/-atom"
+import { StructuresDialog } from "@/routes/tp/game-of-life/-components/-structures-dialog"
 
 export const Controllers = () => {
 	const [isRunning, setIsRunning] = useAtom(isRunningAtom)
@@ -64,9 +65,19 @@ export const Controllers = () => {
 				>
 					<Shuffle />
 				</Button>
-				<Button size="icon-lg">
-					<BookOpenText />
-				</Button>
+				<StructuresDialog>
+					<Button
+						size="icon-lg"
+						disabled={isRunning}
+						onClick={() => {
+							if (isRunning) {
+								return
+							}
+						}}
+					>
+						<BookOpenText />
+					</Button>
+				</StructuresDialog>
 				<ThemeToggle />
 			</CardContent>
 		</Card>

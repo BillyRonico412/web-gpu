@@ -45,9 +45,9 @@ export const Sliders = () => {
 						{generationTime}ms
 					</FieldLabel>
 					<Slider
-						min={50}
+						min={20}
 						max={2000}
-						step={50}
+						step={10}
 						value={generationTime}
 						onValueChange={(value) => {
 							if (typeof value === "number") {

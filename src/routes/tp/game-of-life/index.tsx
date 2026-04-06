@@ -29,7 +29,7 @@ const canvasEffect = atomEffect((get) => {
 		drawLines()
 		if (gameOfLife) {
 			gameOfLife.updateUniformBuffer()
-			gameOfLife.updateStorages()
+			gameOfLife.resetStorages()
 		}
 	}
 	handleResize()
@@ -96,7 +96,7 @@ const updateStoragesEffect = atomEffect((get) => {
 	get(cellPixelDensityAtom)
 	drawLines()
 	gameOfLife.updateUniformBuffer()
-	gameOfLife.updateStorages()
+	gameOfLife.resetStorages()
 	gameOfLife.draw()
 })
 

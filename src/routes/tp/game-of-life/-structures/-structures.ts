@@ -1,6 +1,6 @@
 import { keepPreviousData } from "@tanstack/query-core"
 import { atom } from "jotai"
-import { atomWithMutation, atomWithQuery } from "jotai-tanstack-query"
+import { atomWithQuery } from "jotai-tanstack-query"
 import structurePath from "@/routes/tp/game-of-life/-structures/-structures.json"
 
 export type StructureType = {

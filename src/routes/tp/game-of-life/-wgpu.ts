@@ -4,7 +4,7 @@ import { cellPixelDensityAtom, timeAtom } from "@/routes/tp/game-of-life/-atom"
 import {
 	insertStructureToGrid,
 	type StructureType,
-} from "@/routes/tp/game-of-life/-structures"
+} from "@/routes/tp/game-of-life/-structures/-structures"
 import computeShaderCode from "@/routes/tp/game-of-life/shaders/-compute-shader.wgsl?raw"
 import renderShaderCode from "@/routes/tp/game-of-life/shaders/-render-shader.wgsl?raw"
 import { jotaiStore } from "@/routes/tp/gravity-swarm/-atom"

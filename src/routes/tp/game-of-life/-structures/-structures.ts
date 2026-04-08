@@ -1,6 +1,8 @@
 import { keepPreviousData } from "@tanstack/query-core"
 import { atom } from "jotai"
+import { atomEffect } from "jotai-effect"
 import { atomWithQuery } from "jotai-tanstack-query"
+import mustSeePath from "@/routes/tp/game-of-life/-structures/-must-see.json"
 import structurePath from "@/routes/tp/game-of-life/-structures/-structures.json"
 
 export type StructureType = {
@@ -129,34 +131,45 @@ export const insertStructureToGrid = (
 }
 
 export const pageAtom = atom(1)
+export const searchAtom = atom("")
 const NB_STRUCTURES_PER_PAGE = 50
+
+const getStructuresByPath = async (paths: string[]) => {
+	const links = paths.map(
+		(path) =>
+			`https://raw.githubusercontent.com/thomasdunn/cellular-automata-patterns/refs/heads/master/patterns/conwaylife/${path}`,
+	)
+	const responses = await Promise.all(links.map((link) => fetch(link)))
+	const rles = await Promise.all(responses.map((response) => response.text()))
+	const structures: StructureType[] = []
+	for (const rle of rles) {
+		const structure = parseRLE(rle)
+		if (structure) {
+			structures.push(structure)
+		}
+	}
+	return structures
+}
+
+export const structuresQueryEffect = atomEffect((get, set) => {
+	get(searchAtom)
+	set(pageAtom, 1)
+})
+
 export const structuresQueryAtom = atomWithQuery((get) => {
 	const page = get(pageAtom)
+	const search = get(searchAtom)
+	const searchLowerCase = search.toLowerCase()
 	return {
 		queryKey: ["game-of-life-structures", page],
 		queryFn: async () => {
-			const structuresPath = structurePath[0].conwaylife.slice(
-				(page - 1) * NB_STRUCTURES_PER_PAGE,
-				page * NB_STRUCTURES_PER_PAGE,
-			)
-			const sturcturesLinks = structuresPath.map(
-				(path) =>
-					`https://raw.githubusercontent.com/thomasdunn/cellular-automata-patterns/refs/heads/master/patterns/conwaylife/${path}`,
-			)
-			const responses = await Promise.all(
-				sturcturesLinks.map((link) => fetch(link)),
-			)
-			const rles = await Promise.all(
-				responses.map((response) => response.text()),
-			)
-			const structures: StructureType[] = []
-			for (const rle of rles) {
-				const structure = parseRLE(rle)
-				if (structure) {
-					structures.push(structure)
-				}
-			}
-			return structures
+			const structuresPath = structurePath[0].conwaylife
+				.filter((path) => path.toLowerCase().includes(searchLowerCase))
+				.slice(
+					(page - 1) * NB_STRUCTURES_PER_PAGE,
+					page * NB_STRUCTURES_PER_PAGE,
+				)
+			return getStructuresByPath(structuresPath)
 		},
 		placeholderData: keepPreviousData,
 	}
@@ -176,3 +189,12 @@ export const getRandomStructure = async () => {
 	}
 	return structure
 }
+
+export const mustSeeStructuresQueryAtom = atomWithQuery(() => {
+	return {
+		queryKey: ["game-of-life-must-see-structures"],
+		queryFn: async () => {
+			return getStructuresByPath(mustSeePath)
+		},
+	}
+})

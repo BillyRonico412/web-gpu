@@ -1,5 +1,6 @@
 import { useMutation } from "@tanstack/react-query"
 import { atom, useAtom, useAtomValue, useSetAtom } from "jotai"
+import type { AtomWithQueryResult } from "jotai-tanstack-query"
 import type { ReactNode } from "react"
 import { toast } from "sonner"
 import { match, P } from "ts-pattern"
@@ -13,11 +14,13 @@ import {
 import {
 	Dialog,
 	DialogContent,
+	DialogDescription,
 	DialogFooter,
 	DialogHeader,
 	DialogTitle,
 	DialogTrigger,
 } from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
 import {
 	Pagination,
 	PaginationContent,
@@ -27,18 +30,21 @@ import {
 	PaginationPrevious,
 } from "@/components/ui/pagination"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { gameOfLifeAtom } from "@/routes/tp/game-of-life/-atom"
 import {
 	getRandomStructure,
+	mustSeeStructuresQueryAtom,
 	pageAtom,
 	type StructureType,
+	searchAtom,
 	structuresQueryAtom,
+	structuresQueryEffect,
 } from "@/routes/tp/game-of-life/-structures/-structures"
 
 const openDialogAtom = atom(false)
 
 export const StructuresDialog = (props: { children: ReactNode }) => {
-	const structuresQuery = useAtomValue(structuresQueryAtom)
 	const [isOpen, setIsOpen] = useAtom(openDialogAtom)
 	const gameOfLife = useAtomValue(gameOfLifeAtom)
 	const randomMutation = useMutation({
@@ -71,23 +77,29 @@ export const StructuresDialog = (props: { children: ReactNode }) => {
 			<DialogTrigger>{props.children}</DialogTrigger>
 			<DialogContent className="h-[80dvh] w-[80vw] flex flex-col max-w-2xl!">
 				<DialogHeader>
-					<DialogTitle className="px-2">Structure's catalog</DialogTitle>
+					<DialogTitle>Structure's catalog</DialogTitle>
+					<DialogDescription>
+						Discover and insert predefined structures into the grid. These
+						structures are sourced from the{" "}
+						<a
+							href="https://github.com/thomasdunn/cellular-automata-patterns/"
+							target="_blank"
+							rel="noopener noreferrer"
+							className="underline"
+						>
+							Cellular Automata Patterns repository
+						</a>{" "}
+						.
+					</DialogDescription>
 				</DialogHeader>
-				<ScrollArea className="flex-1 overflow-hidden">
-					{match(structuresQuery)
-						.with({ isLoading: true }, () => <p>Loading...</p>)
-						.with({ isError: true }, () => <p>Error loading structures</p>)
-						.with({ data: P.nullish }, () => <p>Error loading structures</p>)
-						.with({ data: [] }, () => <p>No structures found</p>)
-						.otherwise(({ data }) => (
-							<div className="p-2 flex flex-col gap-2">
-								{data.map((structure) => (
-									<StructureCard key={structure.name} structure={structure} />
-								))}
-							</div>
-						))}
-				</ScrollArea>
-				<StructurePagination />
+				<Tabs className="flex-1 flex flex-col overflow-hidden">
+					<TabsList className="mx-auto">
+						<TabsTrigger value="must-see">Must see</TabsTrigger>
+						<TabsTrigger value="list">List</TabsTrigger>
+					</TabsList>
+					<StructureMustSeeTab />
+					<StructureCatalogTab />
+				</Tabs>
 				<DialogFooter>
 					<Button
 						onClick={() => {
@@ -176,5 +188,58 @@ const StructurePagination = () => {
 				</PaginationItem>
 			</PaginationContent>
 		</Pagination>
+	)
+}
+
+const StructureList = (props: {
+	structureQueryAtom: AtomWithQueryResult<StructureType[], Error>
+}) => {
+	return (
+		<ScrollArea className="flex-1 overflow-hidden">
+			{match(props.structureQueryAtom)
+				.with({ isLoading: true }, () => <p>Loading...</p>)
+				.with({ isError: true }, () => <p>Error loading structures</p>)
+				.with({ data: P.nullish }, () => <p>Error loading structures</p>)
+				.with({ data: [] }, () => <p>No structures found</p>)
+				.otherwise(({ data }) => (
+					<div className="p-2 flex flex-col gap-2">
+						{data.map((structure) => (
+							<StructureCard key={structure.name} structure={structure} />
+						))}
+					</div>
+				))}
+		</ScrollArea>
+	)
+}
+
+const StructureCatalogTab = () => {
+	const structuresQuery = useAtomValue(structuresQueryAtom)
+	useAtom(structuresQueryEffect)
+	const [search, setSearch] = useAtom(searchAtom)
+	return (
+		<TabsContent
+			value="list"
+			className="flex-1 flex flex-col gap-4 overflow-hidden"
+		>
+			<Input
+				placeholder="Search for a structure"
+				value={search}
+				onChange={(e) => setSearch(e.target.value)}
+			/>
+			<StructureList structureQueryAtom={structuresQuery} />
+			<StructurePagination />
+		</TabsContent>
+	)
+}
+
+const StructureMustSeeTab = () => {
+	const mustSeeStructuresQuery = useAtomValue(mustSeeStructuresQueryAtom)
+	return (
+		<TabsContent
+			value="must-see"
+			className="flex-1 flex flex-col gap-4 overflow-hidden"
+		>
+			<StructureList structureQueryAtom={mustSeeStructuresQuery} />
+		</TabsContent>
 	)
 }

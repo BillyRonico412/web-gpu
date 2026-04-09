@@ -1,9 +1,11 @@
 import { useMutation } from "@tanstack/react-query"
 import { atom, useAtom, useAtomValue, useSetAtom } from "jotai"
 import type { AtomWithQueryResult } from "jotai-tanstack-query"
+import { AlertCircleIcon } from "lucide-react"
 import type { ReactNode } from "react"
 import { toast } from "sonner"
 import { match, P } from "ts-pattern"
+import { Alert, AlertTitle } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import {
 	Card,
@@ -30,6 +32,7 @@ import {
 	PaginationPrevious,
 } from "@/components/ui/pagination"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import { Spinner } from "@/components/ui/spinner"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { gameOfLifeAtom } from "@/routes/tp/game-of-life/-atom"
 import {
@@ -74,7 +77,7 @@ export const StructuresDialog = (props: { children: ReactNode }) => {
 				setIsOpen(open)
 			}}
 		>
-			<DialogTrigger>{props.children}</DialogTrigger>
+			<DialogTrigger nativeButton={true}>{props.children}</DialogTrigger>
 			<DialogContent className="h-[80dvh] w-[80vw] flex flex-col max-w-2xl!">
 				<DialogHeader>
 					<DialogTitle>Structure's catalog</DialogTitle>
@@ -197,10 +200,35 @@ const StructureList = (props: {
 	return (
 		<ScrollArea className="flex-1 overflow-hidden">
 			{match(props.structureQueryAtom)
-				.with({ isLoading: true }, () => <p>Loading...</p>)
-				.with({ isError: true }, () => <p>Error loading structures</p>)
-				.with({ data: P.nullish }, () => <p>Error loading structures</p>)
-				.with({ data: [] }, () => <p>No structures found</p>)
+				.with({ isLoading: true }, () => (
+					<div className="h-full w-full flex justify-center items-center">
+						<Spinner />
+					</div>
+				))
+				.with({ isError: true }, () => (
+					<div className="flex justify-center items-center w-full h-full">
+						<Alert>
+							<AlertCircleIcon />
+							<AlertTitle>Error loading structures</AlertTitle>
+						</Alert>
+					</div>
+				))
+				.with({ data: P.nullish }, () => (
+					<div className="flex justify-center items-center w-full h-full">
+						<Alert>
+							<AlertCircleIcon />
+							<AlertTitle>Error loading structures</AlertTitle>
+						</Alert>
+					</div>
+				))
+				.with({ data: [] }, () => (
+					<div className="flex justify-center items-center w-full h-full">
+						<Alert>
+							<AlertCircleIcon />
+							<AlertTitle>No structures found</AlertTitle>
+						</Alert>
+					</div>
+				))
 				.otherwise(({ data }) => (
 					<div className="p-2 flex flex-col gap-2">
 						{data.map((structure) => (

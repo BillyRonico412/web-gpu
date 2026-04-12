@@ -35,7 +35,7 @@ fn fs_main(f_in: VertexOut) -> @location(0) vec4f {
     let l = normalize(-light_direction);
     let illumination = max(dot(n, l), 0);
     let base_color = vec3f(0.8, 0.8, 0.8);
-    let ambiant = 0.2;
+    let ambiant = 0.1;
     let final_color = base_color * (illumination + ambiant);
     return vec4f(final_color, 1);
 }

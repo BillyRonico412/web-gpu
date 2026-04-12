@@ -271,7 +271,7 @@ const createBindGroupBuffer = (
 			projectionMatrix,
 			mat4.multiply(viewMatrix, modelMatrix),
 		)
-		device.queue.writeBuffer(mvpMatrixBuffer, 0, mvpMatrix)
+		device.queue.writeBuffer(mvpMatrixBuffer, 0, mvpMatrix.buffer)
 	}
 
 	return {

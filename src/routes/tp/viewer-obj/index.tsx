@@ -6,6 +6,7 @@ import {
 	cameraMoveHandlerAtom,
 	cameraWheelHandlerAtom,
 	fitToViewAtom,
+	interpolateNormalsAtom,
 	lightDirectionAtom,
 	objTextAtom,
 	projectionMatrixAtom,
@@ -33,8 +34,14 @@ const canvasEffect = atomEffect((get) => {
 		const viewMatrix = get(viewMatrixAtom)
 		const projectionMatrix = get(projectionMatrixAtom)
 		const lightDirection = get(lightDirectionAtom)
+		const interpolateNormals = get(interpolateNormalsAtom)
 		viewerObj.updateDepthTexture()
-		viewerObj.draw({ viewMatrix, projectionMatrix, lightDirection })
+		viewerObj.draw({
+			viewMatrix,
+			projectionMatrix,
+			lightDirection,
+			interpolateNormals,
+		})
 	}
 	handleResize()
 	window.addEventListener("resize", handleResize)
@@ -63,7 +70,13 @@ const drawEffect = atomEffect((get) => {
 	const viewMatrix = get(viewMatrixAtom)
 	const projectionMatrix = get(projectionMatrixAtom)
 	const lightDirection = get(lightDirectionAtom)
-	viewerObj.draw({ viewMatrix, projectionMatrix, lightDirection })
+	const interpolateNormals = get(interpolateNormalsAtom)
+	viewerObj.draw({
+		viewMatrix,
+		projectionMatrix,
+		lightDirection,
+		interpolateNormals,
+	})
 })
 
 function RouteComponent() {
@@ -80,6 +93,9 @@ function RouteComponent() {
 					id={CANVAS_ID}
 					className="w-full h-full"
 					onContextMenu={(e) => e.preventDefault()}
+					onTouchMove={(e) => {
+						e.preventDefault()
+					}}
 					onMouseMove={(e) => {
 						e.preventDefault()
 						e.stopPropagation()

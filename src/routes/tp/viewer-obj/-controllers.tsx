@@ -1,20 +1,35 @@
-import { useAtom, useSetAtom } from "jotai"
+import { useAtom, useAtomValue, useSetAtom } from "jotai"
 import { Camera, SlidersIcon, Torus } from "lucide-react"
 import { vec3 } from "wgpu-matrix"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Field, FieldLabel } from "@/components/ui/field"
 import { Slider } from "@/components/ui/slider"
+import { Switch } from "@/components/ui/switch"
 import {
 	fitToViewAtom,
+	interpolateNormalsAtom,
 	lightDirectionAtom,
 	objTextAtom,
+	viewerObjAtom,
 } from "@/routes/tp/viewer-obj/-atom"
+
+const ObjInfo = () => {
+	const viewerObj = useAtomValue(viewerObjAtom)
+	if (!viewerObj) {
+		return null
+	}
+	return (
+		<Field>
+			<FieldLabel>Triangle count: {viewerObj.obj.faceData.length}</FieldLabel>
+		</Field>
+	)
+}
 
 const LightDirectionSlider = () => {
 	const [lightDirection, setLightDirection] = useAtom(lightDirectionAtom)
 	return (
-		<div>
+		<div className="flex flex-col gap-1">
 			<p>
 				Light direction ({lightDirection[0]}, {lightDirection[1]},{" "}
 				{lightDirection[2]})
@@ -103,9 +118,26 @@ const LoadObjButton = () => {
 	)
 }
 
+const InterpolateNormalsSwitch = () => {
+	const [interpolateNormals, setInterpolateNormals] = useAtom(
+		interpolateNormalsAtom,
+	)
+	return (
+		<Field orientation="horizontal">
+			<FieldLabel>Interpolate normals</FieldLabel>
+			<Switch
+				checked={interpolateNormals}
+				onCheckedChange={(checked) => {
+					setInterpolateNormals(checked)
+				}}
+			/>
+		</Field>
+	)
+}
+
 export const Controllers = () => {
 	return (
-		<Card>
+		<Card className="min-w-64">
 			<CardHeader>
 				<CardTitle className="flex items-center gap-2">
 					<SlidersIcon className="size-4" />
@@ -113,9 +145,9 @@ export const Controllers = () => {
 				</CardTitle>
 			</CardHeader>
 			<CardContent className="flex flex-col gap-4">
-				<div>
-					<LightDirectionSlider />
-				</div>
+				<ObjInfo />
+				<LightDirectionSlider />
+				<InterpolateNormalsSwitch />
 				<div className="flex flex-col gap-2">
 					<FitToViewButton />
 					<LoadObjButton />

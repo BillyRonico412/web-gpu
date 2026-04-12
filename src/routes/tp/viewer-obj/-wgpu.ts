@@ -55,49 +55,49 @@ const parseObj = (objText: string) => {
 }
 
 const createObjBuffer = (device: GPUDevice, objText: string) => {
-	const cubeObj = parseObj(objText)
+	const obj = parseObj(objText)
 
 	const vertexBuffer = device.createBuffer({
 		label: "Vertex buffer",
-		size: cubeObj.vertexes.length * 4 * 4,
+		size: obj.vertexes.length * 4 * 4,
 		usage:
 			GPUBufferUsage.STORAGE | GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
 	})
-	const vertexData = new Float32Array(cubeObj.vertexes.length * 4)
-	for (let i = 0; i < cubeObj.vertexes.length; i++) {
-		const vertex = cubeObj.vertexes[i]
+	const vertexData = new Float32Array(obj.vertexes.length * 4)
+	for (let i = 0; i < obj.vertexes.length; i++) {
+		const vertex = obj.vertexes[i]
 		vertexData.set(vertex, i * 4)
 	}
 	device.queue.writeBuffer(vertexBuffer, 0, vertexData)
 
 	const normalBuffer = device.createBuffer({
 		label: "Normal buffer",
-		size: cubeObj.normals.length * 4 * 4,
+		size: obj.normals.length * 4 * 4,
 		usage:
 			GPUBufferUsage.STORAGE | GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
 	})
-	const normalData = new Float32Array(cubeObj.normals.length * 4)
-	for (let i = 0; i < cubeObj.normals.length; i++) {
-		const normal = cubeObj.normals[i]
+	const normalData = new Float32Array(obj.normals.length * 4)
+	for (let i = 0; i < obj.normals.length; i++) {
+		const normal = obj.normals[i]
 		normalData.set(normal, i * 4)
 	}
 	device.queue.writeBuffer(normalBuffer, 0, normalData)
 
 	const faceBuffer = device.createBuffer({
 		label: "Face buffer",
-		size: cubeObj.faceData.length * 4 * 2,
+		size: obj.faceData.length * 4 * 2,
 		usage:
 			GPUBufferUsage.STORAGE | GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
 	})
-	const faceData = new Uint32Array(cubeObj.faceData.length * 2)
-	for (let i = 0; i < cubeObj.faceData.length; i++) {
-		const face = cubeObj.faceData[i]
+	const faceData = new Uint32Array(obj.faceData.length * 2)
+	for (let i = 0; i < obj.faceData.length; i++) {
+		const face = obj.faceData[i]
 		faceData.set([face.vertexIndex, face.normalIndex], i * 2)
 	}
 	device.queue.writeBuffer(faceBuffer, 0, faceData)
 
 	return {
-		cubeObj,
+		obj,
 		vertexBuffer,
 		normalBuffer,
 		faceBuffer,
@@ -127,7 +127,7 @@ const createMvpMatrixBuffer = (device: GPUDevice) => {
 			mat4.multiply(projectionMatrix, viewMatrix),
 			modelMatrix,
 		)
-		device.queue.writeBuffer(mvpMatrixBuffer, 0, mvpMatrix)
+		device.queue.writeBuffer(mvpMatrixBuffer, 0, mvpMatrix.buffer)
 	}
 	return {
 		mvpMatrixBuffer,
@@ -154,6 +154,25 @@ const createLightDirectionBuffer = (device: GPUDevice) => {
 	}
 }
 
+const createInterpolateNormalsBuffer = (device: GPUDevice) => {
+	const interpolateNormalsBuffer = device.createBuffer({
+		label: "Interpolate normals buffer",
+		size: 4,
+		usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+	})
+	const updateInterpolateNormalsBuffer = (interpolateNormals: boolean) => {
+		device.queue.writeBuffer(
+			interpolateNormalsBuffer,
+			0,
+			new Uint32Array([interpolateNormals ? 1 : 0]),
+		)
+	}
+	return {
+		interpolateNormalsBuffer,
+		updateInterpolateNormalsBuffer,
+	}
+}
+
 const getRenderPipeline = (device: GPUDevice) => {
 	const uniformBindGroupLayout = device.createBindGroupLayout({
 		label: "Render matrix bind group layout",
@@ -169,6 +188,14 @@ const getRenderPipeline = (device: GPUDevice) => {
 			// Light direction
 			{
 				binding: 1,
+				visibility: GPUShaderStage.FRAGMENT,
+				buffer: {
+					type: "uniform",
+				},
+			},
+			// Interpolate normals
+			{
+				binding: 2,
 				visibility: GPUShaderStage.FRAGMENT,
 				buffer: {
 					type: "uniform",
@@ -231,7 +258,7 @@ const getRenderPipeline = (device: GPUDevice) => {
 		},
 		primitive: {
 			topology: "triangle-list",
-			// cullMode: "back",
+			cullMode: "back",
 		},
 		depthStencil: {
 			format: "depth24plus",
@@ -260,7 +287,7 @@ export const initViewerObj = async (objText: string) => {
 		format: navigator.gpu.getPreferredCanvasFormat(),
 		alphaMode: "premultiplied",
 	})
-	const { vertexBuffer, normalBuffer, faceBuffer, cubeObj } = createObjBuffer(
+	const { vertexBuffer, normalBuffer, faceBuffer, obj } = createObjBuffer(
 		device,
 		objText,
 	)
@@ -271,15 +298,20 @@ export const initViewerObj = async (objText: string) => {
 		createMvpMatrixBuffer(device)
 	const { lightDirectionBuffer, updateLightDirectionBuffer } =
 		createLightDirectionBuffer(device)
+	const { interpolateNormalsBuffer, updateInterpolateNormalsBuffer } =
+		createInterpolateNormalsBuffer(device)
 
 	const draw = (params: {
 		viewMatrix: Mat4
 		projectionMatrix: Mat4
 		lightDirection: Vec3
+		interpolateNormals: boolean
 	}) => {
-		const { viewMatrix, projectionMatrix, lightDirection } = params
+		const { viewMatrix, projectionMatrix, lightDirection, interpolateNormals } =
+			params
 		updateMvpMatrixBuffer(viewMatrix, projectionMatrix)
 		updateLightDirectionBuffer(lightDirection)
+		updateInterpolateNormalsBuffer(interpolateNormals)
 		const commandEncoder = device.createCommandEncoder()
 		const renderPassDescriptor: GPURenderPassDescriptor = {
 			colorAttachments: [
@@ -316,6 +348,12 @@ export const initViewerObj = async (objText: string) => {
 						buffer: lightDirectionBuffer,
 					},
 				},
+				{
+					binding: 2,
+					resource: {
+						buffer: interpolateNormalsBuffer,
+					},
+				},
 			],
 		})
 
@@ -346,7 +384,7 @@ export const initViewerObj = async (objText: string) => {
 		renderPass.setBindGroup(0, renderMatrixBindGroup)
 		renderPass.setBindGroup(1, storageBindGroup)
 		renderPass.setVertexBuffer(0, vertexBuffer)
-		renderPass.draw(cubeObj.faceData.length)
+		renderPass.draw(obj.faceData.length)
 		renderPass.end()
 		device.queue.submit([commandEncoder.finish()])
 	}
@@ -362,7 +400,7 @@ export const initViewerObj = async (objText: string) => {
 			Number.NEGATIVE_INFINITY,
 			Number.NEGATIVE_INFINITY,
 		)
-		cubeObj.vertexes.forEach((vertex) => {
+		obj.vertexes.forEach((vertex) => {
 			vec3.min(min, vertex, min)
 			vec3.max(max, vertex, max)
 		})
@@ -387,5 +425,6 @@ export const initViewerObj = async (objText: string) => {
 		draw,
 		getAABBObj,
 		updateDepthTexture,
+		obj,
 	}
 }

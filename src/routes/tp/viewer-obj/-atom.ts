@@ -59,6 +59,7 @@ export const projectionMatrixAtom = atom((get) => {
 })
 
 export const lightDirectionAtom = atom(vec3.create(1, -2, -1))
+export const interpolateNormalsAtom = atom(true)
 
 export const fitToViewAtom = atom(null, (get, set) => {
 	const viewerObj = get(viewerObjAtom)

@@ -2,12 +2,14 @@ import { Link, type ToOptions } from "@tanstack/react-router"
 import {
 	Atom,
 	Biohazard,
+	Box,
 	Code,
 	Database,
 	Gpu,
 	Home,
 	type LucideIcon,
 	Microchip,
+	MonitorPlay,
 	Wallpaper,
 } from "lucide-react"
 import { match } from "ts-pattern"
@@ -84,6 +86,18 @@ const projects: (ProjectLinkItem | ProjectLinkGroup)[] = [
 	},
 	{
 		type: "group",
+		name: "3D",
+		links: [
+			{
+				type: "item",
+				name: "Cube",
+				to: "/3d/cube",
+				icon: Box,
+			},
+		],
+	},
+	{
+		type: "group",
 		name: "Travaux pratiques",
 		links: [
 			{
@@ -97,6 +111,12 @@ const projects: (ProjectLinkItem | ProjectLinkGroup)[] = [
 				name: "Game of life",
 				to: "/tp/game-of-life",
 				icon: Biohazard,
+			},
+			{
+				type: "item",
+				name: "Viewer obj",
+				to: "/tp/viewer-obj",
+				icon: MonitorPlay,
 			},
 		],
 	},

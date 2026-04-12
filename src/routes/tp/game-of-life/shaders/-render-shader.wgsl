@@ -1,7 +1,8 @@
 struct Uniform {
     canvas_size: vec2u,
     cell_pixel_density: u32,
-    is_dark_mode: u32}
+    is_dark_mode: u32,
+}
 
 @group(0) @binding(0) var<uniform> uniform_data: Uniform;
 @group(1) @binding(0) var<storage, read> grid: array<u32>;

@@ -1,3 +1,4 @@
+import { useMutation } from "@tanstack/react-query"
 import { atom, useAtom, useSetAtom } from "jotai"
 import { FileDown, MousePointerClick } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -10,6 +11,7 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select"
+import { Spinner } from "@/components/ui/spinner"
 import { loadObjFileAtom, objTextAtom } from "@/routes/tp/viewer-obj/-atom"
 
 const opts: Record<string, { name: string; url: string }> = {
@@ -51,6 +53,15 @@ export const ChooseObjDialog = () => {
 	const [objText, setObjText] = useAtom(objTextAtom)
 	const loadObjFile = useSetAtom(loadObjFileAtom)
 	const [selectedOpt, setSelectedOpt] = useAtom(selectObjAtom)
+	const loadObjMutation = useMutation({
+		mutationFn: async () => {
+			if (!selectedOpt) {
+				return
+			}
+			const response = await import(opts[selectedOpt].url)
+			setObjText(response.default)
+		},
+	})
 
 	if (objText) {
 		return null
@@ -83,22 +94,19 @@ export const ChooseObjDialog = () => {
 				</Field>
 				<div className="flex flex-col gap-2">
 					<Button
-						disabled={!selectedOpt}
-						onClick={async () => {
-							if (!selectedOpt) {
-								return
-							}
-							const response = await import(opts[selectedOpt].url)
-							setObjText(response.default)
+						disabled={!selectedOpt || loadObjMutation.isPending}
+						onClick={() => {
+							loadObjMutation.mutate()
 						}}
 					>
-						<MousePointerClick />
+						{loadObjMutation.isPending ? <Spinner /> : <MousePointerClick />}
 						Choose File
 					</Button>
 					<Button
 						onClick={() => {
 							loadObjFile()
 						}}
+						disabled={loadObjMutation.isPending}
 					>
 						<FileDown />
 						Load local file

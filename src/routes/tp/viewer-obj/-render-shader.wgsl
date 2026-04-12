@@ -9,7 +9,6 @@ struct VertexIn {
 
 struct VertexOut {
     @builtin(position) position: vec4f,
-    @location(0) color: vec4f,
     @location(1) normal: vec3f,
 }
 
@@ -35,8 +34,8 @@ fn fs_main(f_in: VertexOut) -> @location(0) vec4f {
     let n = normalize(f_in.normal);
     let l = normalize(-light_direction);
     let illumination = max(dot(n, l), 0);
-    let base_color = vec3f(1, 1, 1);
-    let ambiant = 0.1;
+    let base_color = vec3f(0.8, 0.8, 0.8);
+    let ambiant = 0.2;
     let final_color = base_color * (illumination + ambiant);
     return vec4f(final_color, 1);
 }

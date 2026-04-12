@@ -1,4 +1,3 @@
-import { useMutation } from "@tanstack/react-query"
 import { atom, useAtom, useSetAtom } from "jotai"
 import { FileDown, MousePointerClick } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -11,37 +10,29 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select"
-import { Spinner } from "@/components/ui/spinner"
 import { loadObjFileAtom, objTextAtom } from "@/routes/tp/viewer-obj/-atom"
 
-const opts: Record<string, { name: string; url: string }> = {
-	armadillo: {
-		name: "Armadillo",
-		url: "./-obj/armadillo.obj?raw",
-	},
+import bodyPart from "@/routes/tp/viewer-obj/-obj/bp.obj?raw"
+import bunny from "@/routes/tp/viewer-obj/-obj/bunny.obj?raw"
+import cruiser from "@/routes/tp/viewer-obj/-obj/cruiser.obj?raw"
+import f16 from "@/routes/tp/viewer-obj/-obj/f-16.obj?raw"
+
+const opts: Record<string, { name: string; data: string }> = {
 	bodyPart: {
 		name: "Body Part",
-		url: "./-obj/bp.obj?raw",
+		data: bodyPart,
 	},
 	bunny: {
 		name: "Bunny",
-		url: "./-obj/bunny.obj?raw",
+		data: bunny,
 	},
 	cruiser: {
 		name: "Cruiser",
-		url: "./-obj/cruiser.obj?raw",
+		data: cruiser,
 	},
 	f16: {
 		name: "F-16",
-		url: "./-obj/f-16.obj?raw",
-	},
-	sikorsky: {
-		name: "Sikorsky",
-		url: "./-obj/sikorsky.obj?raw",
-	},
-	tyra: {
-		name: "Tyra",
-		url: "./-obj/tyra.obj?raw",
+		data: f16,
 	},
 }
 
@@ -53,15 +44,6 @@ export const ChooseObjDialog = () => {
 	const [objText, setObjText] = useAtom(objTextAtom)
 	const loadObjFile = useSetAtom(loadObjFileAtom)
 	const [selectedOpt, setSelectedOpt] = useAtom(selectObjAtom)
-	const loadObjMutation = useMutation({
-		mutationFn: async () => {
-			if (!selectedOpt) {
-				return
-			}
-			const response = await import(opts[selectedOpt].url)
-			setObjText(response.default)
-		},
-	})
 
 	if (objText) {
 		return null
@@ -94,19 +76,20 @@ export const ChooseObjDialog = () => {
 				</Field>
 				<div className="flex flex-col gap-2">
 					<Button
-						disabled={!selectedOpt || loadObjMutation.isPending}
+						disabled={!selectedOpt}
 						onClick={() => {
-							loadObjMutation.mutate()
+							if (selectedOpt) {
+								setObjText(opts[selectedOpt].data)
+							}
 						}}
 					>
-						{loadObjMutation.isPending ? <Spinner /> : <MousePointerClick />}
+						<MousePointerClick />
 						Choose File
 					</Button>
 					<Button
 						onClick={() => {
 							loadObjFile()
 						}}
-						disabled={loadObjMutation.isPending}
 					>
 						<FileDown />
 						Load local file

@@ -11,13 +11,22 @@ import {
 	SelectValue,
 } from "@/components/ui/select"
 import { loadObjFileAtom, objTextAtom } from "@/routes/tp/viewer-obj/-atom"
-
 import bodyPart from "@/routes/tp/viewer-obj/-obj/bp.obj?raw"
 import bunny from "@/routes/tp/viewer-obj/-obj/bunny.obj?raw"
 import cruiser from "@/routes/tp/viewer-obj/-obj/cruiser.obj?raw"
+import cube from "@/routes/tp/viewer-obj/-obj/cube.obj?raw"
 import f16 from "@/routes/tp/viewer-obj/-obj/f-16.obj?raw"
+import suzanne from "@/routes/tp/viewer-obj/-obj/suzanne.obj?raw"
 
 const opts: Record<string, { name: string; data: string }> = {
+	cube: {
+		name: "Cube",
+		data: cube,
+	},
+	suzanne: {
+		name: "Suzanne",
+		data: suzanne,
+	},
 	bodyPart: {
 		name: "Body Part",
 		data: bodyPart,

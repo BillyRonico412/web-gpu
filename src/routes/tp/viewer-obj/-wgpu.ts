@@ -319,7 +319,7 @@ export const initViewerObj = async (objText: string) => {
 					view: context.getCurrentTexture(),
 					loadOp: "clear",
 					storeOp: "store",
-					clearValue: { r: 0.3, g: 0.3, b: 0.3, a: 1 },
+					clearValue: { r: 0.4, g: 0.4, b: 0.4, a: 1 },
 				},
 			],
 			depthStencilAttachment: {

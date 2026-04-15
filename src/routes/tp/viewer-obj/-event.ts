@@ -112,8 +112,8 @@ export const canvasEventEffect = atomEffect((_, set) => {
 			} else {
 				set(cameraActionAtom, {
 					type: "pan",
-					deltaX: (delta1[0] + delta2[0]) / 2,
-					deltaY: (delta1[1] + delta2[1]) / 2,
+					deltaX: (delta1[0] + delta2[0]) * 2,
+					deltaY: (delta1[1] + delta2[1]) * 2,
 					ctrlKey: false,
 					shiftKey: false,
 				})

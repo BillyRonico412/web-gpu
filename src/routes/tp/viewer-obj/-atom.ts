@@ -1,5 +1,6 @@
 import { atom } from "jotai"
 import { withAtomEffect } from "jotai-effect"
+import { match } from "ts-pattern"
 import { mat4, utils, type Vec3, vec3 } from "wgpu-matrix"
 import type { ViewerObj } from "@/routes/tp/viewer-obj/-wgpu"
 
@@ -51,61 +52,130 @@ const canvasSizeAtom = withAtomEffect(
 )
 
 export const fovAtom = atom(45)
+export const farAtom = atom((get) => {
+	const viewerObj = get(viewerObjAtom)
+	if (!viewerObj) {
+		return 1000
+	}
+	const aabb = viewerObj.getAABBObj()
+	if (!aabb) {
+		return 1000
+	}
+	return aabb.radius * 10
+})
 export const projectionMatrixAtom = atom((get) => {
 	const fov = get(fovAtom)
+	const far = get(farAtom)
 	const canvasSize = get(canvasSizeAtom)
 	const aspect = canvasSize.width / canvasSize.height
-	return mat4.perspective(utils.degToRad(fov), aspect, 0.1, 1000)
+	return mat4.perspective(utils.degToRad(fov), aspect, 0.1, far)
 })
 
 export const lightDirectionAtom = atom(vec3.create(1, -2, -1))
 export const interpolateNormalsAtom = atom(true)
 
-export const fitToViewAtom = atom(null, (get, set) => {
-	const viewerObj = get(viewerObjAtom)
-	if (!viewerObj) {
-		return
-	}
-	const aabb = viewerObj.getAABBObj()
-	if (!aabb) {
-		return
-	}
-	const fov = get(fovAtom)
-	const radius = (aabb.radius * 2) / Math.sin(utils.degToRad(fov))
-	set(targetAtom, aabb.center)
-	set(radiusAtom, radius)
-	set(azimuthAtom, 0)
-	set(elevationAtom, 0)
-})
+type CameraActionType =
+	| {
+			type: "rotate"
+			deltaX: number
+			deltaY: number
+	  }
+	| {
+			type: "zoom"
+			delta: number
+			ctrlKey: boolean
+			shiftKey: boolean
+	  }
+	| {
+			type: "pan"
+			deltaX: number
+			deltaY: number
+			ctrlKey: boolean
+			shiftKey: boolean
+	  }
+	| {
+			type: "fitToView"
+	  }
 
-export const cameraMoveHandlerAtom = atom(
+export const cameraActionAtom = atom(
 	null,
-	(get, set, event: MouseEvent) => {
-		const viewerObj = get(viewerObjAtom)
-		if (!viewerObj) {
-			return
-		}
-		if (event.buttons === 2) {
-			const deltaX = -event.movementX
-			const deltaY = event.movementY
-			const nextAzimuth = get(azimuthAtom) + deltaX * 0.5
-			const nextElevation = get(elevationAtom) + deltaY * 0.5
-			set(azimuthAtom, ((nextAzimuth % 360) + 360) % 360)
-			set(elevationAtom, Math.max(-89.9, Math.min(89.9, nextElevation)))
-		}
-	},
-)
-
-export const cameraWheelHandlerAtom = atom(
-	null,
-	(get, set, event: WheelEvent) => {
-		const viewerObj = get(viewerObjAtom)
-		if (!viewerObj) {
-			return
-		}
-		const delta = event.deltaY
-		const nextRadius = get(radiusAtom) + delta * 0.01
-		set(radiusAtom, Math.max(0.1, nextRadius))
+	(get, set, cameraAction: CameraActionType) => {
+		match(cameraAction)
+			.with({ type: "rotate" }, (cameraAction) => {
+				const { deltaX, deltaY } = cameraAction
+				const nextAzimuth = get(azimuthAtom) - deltaX * 0.5
+				const nextElevation = get(elevationAtom) + deltaY * 0.5
+				set(azimuthAtom, ((nextAzimuth % 360) + 360) % 360)
+				set(elevationAtom, Math.max(-89.9, Math.min(89.9, nextElevation)))
+			})
+			.with({ type: "zoom" }, (cameraAction) => {
+				const viewerObj = get(viewerObjAtom)
+				if (!viewerObj) {
+					return
+				}
+				const aabb = viewerObj.getAABBObj()
+				if (!aabb) {
+					return
+				}
+				const { delta, ctrlKey, shiftKey } = cameraAction
+				const far = get(farAtom)
+				let zoomSpeed = 0.001
+				if (ctrlKey) {
+					zoomSpeed *= 0.1
+				} else if (shiftKey) {
+					zoomSpeed *= 10
+				}
+				const nextRadius = get(radiusAtom) + delta * aabb.radius * zoomSpeed
+				if (nextRadius < 0.1 || nextRadius > far) {
+					return
+				}
+				set(radiusAtom, Math.max(0.1, nextRadius))
+			})
+			.with({ type: "pan" }, (cameraAction) => {
+				const viewerObj = get(viewerObjAtom)
+				if (!viewerObj) {
+					return
+				}
+				const aabb = viewerObj.getAABBObj()
+				if (!aabb) {
+					return
+				}
+				const { deltaX, deltaY } = cameraAction
+				const target = get(targetAtom)
+				const viewMatrix = get(viewMatrixAtom)
+				const right = vec3.fromValues(
+					viewMatrix[0],
+					viewMatrix[4],
+					viewMatrix[8],
+				)
+				const up = vec3.fromValues(viewMatrix[1], viewMatrix[5], viewMatrix[9])
+				let panSpeed = 0.001
+				if (cameraAction.ctrlKey) {
+					panSpeed *= 0.1
+				} else if (cameraAction.shiftKey) {
+					panSpeed *= 10
+				}
+				const panRight = vec3.scale(right, -deltaX * aabb.radius * panSpeed)
+				const panUp = vec3.scale(up, deltaY * aabb.radius * panSpeed)
+				const pan = vec3.add(panRight, panUp)
+				const nextTarget = vec3.add(target, pan)
+				set(targetAtom, nextTarget)
+			})
+			.with({ type: "fitToView" }, () => {
+				const viewerObj = get(viewerObjAtom)
+				if (!viewerObj) {
+					return
+				}
+				const aabb = viewerObj.getAABBObj()
+				if (!aabb) {
+					return
+				}
+				const fov = get(fovAtom)
+				const radius = (aabb.radius * 2) / Math.sin(utils.degToRad(fov))
+				set(targetAtom, aabb.center)
+				set(radiusAtom, radius)
+			})
+			.exhaustive()
 	},
 )
 

@@ -1,5 +1,5 @@
-import { useAtom, useAtomValue, useSetAtom } from "jotai"
-import { Camera, SlidersIcon, Torus } from "lucide-react"
+import { atom, useAtom, useAtomValue, useSetAtom } from "jotai"
+import { Camera, SlidersIcon, Torus, X } from "lucide-react"
 import { vec3 } from "wgpu-matrix"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -7,7 +7,7 @@ import { Field, FieldLabel } from "@/components/ui/field"
 import { Slider } from "@/components/ui/slider"
 import { Switch } from "@/components/ui/switch"
 import {
-	fitToViewAtom,
+	cameraActionAtom,
 	interpolateNormalsAtom,
 	lightDirectionAtom,
 	objTextAtom,
@@ -87,13 +87,13 @@ const LightDirectionSlider = () => {
 }
 
 const FitToViewButton = () => {
-	const fitToView = useSetAtom(fitToViewAtom)
+	const cameraAction = useSetAtom(cameraActionAtom)
 	return (
 		<Button
 			variant="outline"
 			size="sm"
 			onClick={() => {
-				fitToView()
+				cameraAction({ type: "fitToView" })
 			}}
 		>
 			<Camera />
@@ -135,13 +135,38 @@ const InterpolateNormalsSwitch = () => {
 	)
 }
 
+const isOpenAtom = atom(false)
+
 export const Controllers = () => {
+	const [isOpen, setIsOpen] = useAtom(isOpenAtom)
+	if (!isOpen) {
+		return (
+			<Button
+				variant="outline"
+				onClick={() => {
+					setIsOpen(true)
+				}}
+			>
+				<SlidersIcon className="size-4" />
+				Show controllers
+			</Button>
+		)
+	}
 	return (
 		<Card className="min-w-64">
 			<CardHeader>
 				<CardTitle className="flex items-center gap-2">
 					<SlidersIcon className="size-4" />
-					Controllers
+					<span>Controllers</span>
+					<Button
+						variant="destructive"
+						size="icon-xs"
+						onClick={() => {
+							setIsOpen(false)
+						}}
+					>
+						<X />
+					</Button>
 				</CardTitle>
 			</CardHeader>
 			<CardContent className="flex flex-col gap-4">

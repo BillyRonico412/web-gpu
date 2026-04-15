@@ -1,11 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router"
-import { useAtom, useSetAtom } from "jotai"
+import { useAtom } from "jotai"
 import { atomEffect } from "jotai-effect"
 import {
 	CANVAS_ID,
-	cameraMoveHandlerAtom,
-	cameraWheelHandlerAtom,
-	fitToViewAtom,
+	cameraActionAtom,
 	interpolateNormalsAtom,
 	lightDirectionAtom,
 	objTextAtom,
@@ -15,6 +13,7 @@ import {
 } from "@/routes/tp/viewer-obj/-atom"
 import { ChooseObjDialog } from "@/routes/tp/viewer-obj/-choose-obj-dialog"
 import { Controllers } from "@/routes/tp/viewer-obj/-controllers"
+import { canvasEventEffect } from "@/routes/tp/viewer-obj/-event"
 import { initViewerObj } from "@/routes/tp/viewer-obj/-wgpu"
 
 export const Route = createFileRoute("/tp/viewer-obj/")({
@@ -58,7 +57,7 @@ const initViewerObjEffect = atomEffect((get, set) => {
 	;(async () => {
 		const viewerObj = await initViewerObj(objText)
 		set(viewerObjAtom, viewerObj)
-		set(fitToViewAtom)
+		set(cameraActionAtom, { type: "fitToView" })
 	})()
 })
 
@@ -80,11 +79,10 @@ const drawEffect = atomEffect((get) => {
 })
 
 function RouteComponent() {
-	const cameraMoveHandler = useSetAtom(cameraMoveHandlerAtom)
-	const cameraWheelHandler = useSetAtom(cameraWheelHandlerAtom)
 	useAtom(canvasEffect)
 	useAtom(initViewerObjEffect)
 	useAtom(drawEffect)
+	useAtom(canvasEventEffect)
 	return (
 		<main className="relative w-dvw h-dvh">
 			<ChooseObjDialog />
@@ -93,18 +91,6 @@ function RouteComponent() {
 					id={CANVAS_ID}
 					className="w-full h-full"
 					onContextMenu={(e) => e.preventDefault()}
-					onTouchMove={(e) => {
-						e.preventDefault()
-					}}
-					onMouseMove={(e) => {
-						e.preventDefault()
-						e.stopPropagation()
-						cameraMoveHandler(e.nativeEvent)
-					}}
-					onWheel={(e) => {
-						e.stopPropagation()
-						cameraWheelHandler(e.nativeEvent)
-					}}
 				/>
 			</div>
 			<div className="absolute top-4 right-4 z-10">

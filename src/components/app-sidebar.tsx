@@ -114,8 +114,8 @@ const projects: (ProjectLinkItem | ProjectLinkGroup)[] = [
 			},
 			{
 				type: "item",
-				name: "Viewer obj",
-				to: "/tp/viewer-obj",
+				name: "Viewer",
+				to: "/tp/viewer",
 				icon: MonitorPlay,
 			},
 		],

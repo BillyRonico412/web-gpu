@@ -1,6 +1,7 @@
 import { atomEffect } from "jotai-effect"
 import { vec2 } from "wgpu-matrix"
-import { CANVAS_ID, cameraActionAtom } from "@/routes/tp/viewer-obj/-atom"
+import { cameraAtoms } from "@/routes/tp/viewer/-camera/-camera-atoms"
+import { CANVAS_ID } from "@/routes/tp/viewer/-gpu/-gpu-atoms"
 
 export const canvasEventEffect = atomEffect((_, set) => {
 	const canvas = document.querySelector(`#${CANVAS_ID}`) as HTMLCanvasElement
@@ -9,14 +10,14 @@ export const canvasEventEffect = atomEffect((_, set) => {
 		e.preventDefault()
 		e.stopPropagation()
 		if (e.buttons === 2) {
-			set(cameraActionAtom, {
+			set(cameraAtoms.cameraActionAtom, {
 				type: "rotate",
 				deltaX: e.movementX,
 				deltaY: e.movementY,
 			})
 		}
 		if (e.buttons === 4) {
-			set(cameraActionAtom, {
+			set(cameraAtoms.cameraActionAtom, {
 				type: "pan",
 				deltaX: e.movementX,
 				deltaY: e.movementY,
@@ -29,7 +30,7 @@ export const canvasEventEffect = atomEffect((_, set) => {
 	const handleWheel = (e: WheelEvent) => {
 		e.stopPropagation()
 		e.preventDefault()
-		set(cameraActionAtom, {
+		set(cameraAtoms.cameraActionAtom, {
 			type: "zoom",
 			delta: e.deltaY,
 			ctrlKey: e.ctrlKey,
@@ -40,7 +41,7 @@ export const canvasEventEffect = atomEffect((_, set) => {
 	const handleDblClick = (e: MouseEvent) => {
 		e.preventDefault()
 		e.stopPropagation()
-		set(cameraActionAtom, { type: "fitToView" })
+		set(cameraAtoms.cameraActionAtom, { type: "fitToView" })
 	}
 
 	type TouchPoint = { x: number; y: number }
@@ -76,7 +77,7 @@ export const canvasEventEffect = atomEffect((_, set) => {
 			const lastTouch = lastTouches[0]
 			const deltaX = touch.clientX - lastTouch.x
 			const deltaY = touch.clientY - lastTouch.y
-			set(cameraActionAtom, {
+			set(cameraAtoms.cameraActionAtom, {
 				type: "rotate",
 				deltaX,
 				deltaY,
@@ -102,7 +103,7 @@ export const canvasEventEffect = atomEffect((_, set) => {
 					touch2.clientY - touch1.clientY,
 				)
 				const delta = (dist - lastDist) * -10
-				set(cameraActionAtom, {
+				set(cameraAtoms.cameraActionAtom, {
 					type: "zoom",
 					delta,
 					ctrlKey: false,
@@ -110,7 +111,7 @@ export const canvasEventEffect = atomEffect((_, set) => {
 				})
 				lastDist = dist
 			} else {
-				set(cameraActionAtom, {
+				set(cameraAtoms.cameraActionAtom, {
 					type: "pan",
 					deltaX: (delta1[0] + delta2[0]) * 2,
 					deltaY: (delta1[1] + delta2[1]) * 2,

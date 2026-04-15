@@ -1,7 +1,7 @@
 import { type Mat4, mat4, type Vec3, vec3 } from "wgpu-matrix"
 import { initWebGPU } from "@/lib/webgpu"
-import { CANVAS_ID } from "@/routes/tp/viewer-obj/-atom"
-import renderShaderCode from "@/routes/tp/viewer-obj/-render-shader.wgsl?raw"
+import { CANVAS_ID } from "@/routes/tp/viewer/-gpu/-gpu-atoms"
+import renderShaderCode from "@/routes/tp/viewer/-gpu/-shaders/-render-shader.wgsl?raw"
 
 const parseObj = (objText: string) => {
 	const vertexes: Vec3[] = []
@@ -273,9 +273,9 @@ const getRenderPipeline = (device: GPUDevice) => {
 	}
 }
 
-export type ViewerObj = Awaited<ReturnType<typeof initViewerObj>>
+export type Viewer = Awaited<ReturnType<typeof initViewer>>
 
-export const initViewerObj = async (objText: string) => {
+export const initViewer = async (objText: string) => {
 	const { device } = await initWebGPU()
 	const canvas = document.querySelector(`#${CANVAS_ID}`) as HTMLCanvasElement
 	const context = canvas.getContext("webgpu")
@@ -389,7 +389,7 @@ export const initViewerObj = async (objText: string) => {
 		device.queue.submit([commandEncoder.finish()])
 	}
 
-	const getAABBObj = () => {
+	const getAABB = () => {
 		const min = vec3.create(
 			Number.POSITIVE_INFINITY,
 			Number.POSITIVE_INFINITY,
@@ -423,7 +423,7 @@ export const initViewerObj = async (objText: string) => {
 
 	return {
 		draw,
-		getAABBObj,
+		getAABB,
 		updateDepthTexture,
 		obj,
 	}

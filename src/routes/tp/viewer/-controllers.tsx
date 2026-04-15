@@ -6,28 +6,26 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Field, FieldLabel } from "@/components/ui/field"
 import { Slider } from "@/components/ui/slider"
 import { Switch } from "@/components/ui/switch"
-import {
-	cameraActionAtom,
-	interpolateNormalsAtom,
-	lightDirectionAtom,
-	objTextAtom,
-	viewerObjAtom,
-} from "@/routes/tp/viewer-obj/-atom"
+import { cameraAtoms } from "@/routes/tp/viewer/-camera/-camera-atoms"
+import { gpuAtoms } from "@/routes/tp/viewer/-gpu/-gpu-atoms"
+import { lightAtoms } from "@/routes/tp/viewer/-light/-light-atoms"
 
-const ObjInfo = () => {
-	const viewerObj = useAtomValue(viewerObjAtom)
-	if (!viewerObj) {
+const ViewerInfo = () => {
+	const viewer = useAtomValue(gpuAtoms.viewerAtom)
+	if (!viewer) {
 		return null
 	}
 	return (
 		<Field>
-			<FieldLabel>Triangle count: {viewerObj.obj.faceData.length}</FieldLabel>
+			<FieldLabel>Triangle count: {viewer.obj.faceData.length}</FieldLabel>
 		</Field>
 	)
 }
 
 const LightDirectionSlider = () => {
-	const [lightDirection, setLightDirection] = useAtom(lightDirectionAtom)
+	const [lightDirection, setLightDirection] = useAtom(
+		lightAtoms.lightDirectionAtom,
+	)
 	return (
 		<div className="flex flex-col gap-1">
 			<p>
@@ -87,7 +85,7 @@ const LightDirectionSlider = () => {
 }
 
 const FitToViewButton = () => {
-	const cameraAction = useSetAtom(cameraActionAtom)
+	const cameraAction = useSetAtom(cameraAtoms.cameraActionAtom)
 	return (
 		<Button
 			variant="outline"
@@ -102,25 +100,25 @@ const FitToViewButton = () => {
 	)
 }
 
-const LoadObjButton = () => {
-	const setObjText = useSetAtom(objTextAtom)
+const LoadFileButton = () => {
+	const setFileData = useSetAtom(gpuAtoms.fileDataAtom)
 
 	return (
 		<Button
 			size="sm"
 			onClick={() => {
-				setObjText(undefined)
+				setFileData(undefined)
 			}}
 		>
 			<Torus />
-			Load another obj
+			Load another
 		</Button>
 	)
 }
 
 const InterpolateNormalsSwitch = () => {
 	const [interpolateNormals, setInterpolateNormals] = useAtom(
-		interpolateNormalsAtom,
+		lightAtoms.interpolateNormalsAtom,
 	)
 	return (
 		<Field orientation="horizontal">
@@ -161,6 +159,7 @@ export const Controllers = () => {
 					<Button
 						variant="destructive"
 						size="icon-xs"
+						className="ml-auto"
 						onClick={() => {
 							setIsOpen(false)
 						}}
@@ -170,12 +169,12 @@ export const Controllers = () => {
 				</CardTitle>
 			</CardHeader>
 			<CardContent className="flex flex-col gap-4">
-				<ObjInfo />
+				<ViewerInfo />
 				<LightDirectionSlider />
 				<InterpolateNormalsSwitch />
 				<div className="flex flex-col gap-2">
 					<FitToViewButton />
-					<LoadObjButton />
+					<LoadFileButton />
 				</div>
 			</CardContent>
 		</Card>

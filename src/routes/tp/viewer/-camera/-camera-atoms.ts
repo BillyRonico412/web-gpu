@@ -1,19 +1,13 @@
 import { atom } from "jotai"
-import { withAtomEffect } from "jotai-effect"
 import { match } from "ts-pattern"
 import { mat4, utils, type Vec3, vec3 } from "wgpu-matrix"
-import type { ViewerObj } from "@/routes/tp/viewer-obj/-wgpu"
+import { gpuAtoms } from "@/routes/tp/viewer/-gpu/-gpu-atoms"
 
-export const CANVAS_ID = "viewer-obj-canvas"
-
-export const objTextAtom = atom<string | undefined>()
-export const viewerObjAtom = atom<ViewerObj | undefined>()
-
-export const targetAtom = atom<Vec3>(vec3.create(0, 0, 0))
-export const radiusAtom = atom(50)
-export const azimuthAtom = atom(0)
-export const elevationAtom = atom(0)
-export const viewMatrixAtom = atom((get) => {
+const targetAtom = atom<Vec3>(vec3.create(0, 0, 0))
+const radiusAtom = atom(50)
+const azimuthAtom = atom(0)
+const elevationAtom = atom(0)
+const viewMatrixAtom = atom((get) => {
 	const target = get(targetAtom)
 	const radius = get(radiusAtom)
 	const azimuth = get(azimuthAtom)
@@ -33,46 +27,26 @@ export const viewMatrixAtom = atom((get) => {
 	return mat4.lookAt(eye, target, up)
 })
 
-const canvasSizeAtom = withAtomEffect(
-	atom({ width: 0, height: 0 }),
-	(_, set) => {
-		const canvas = document.querySelector(`#${CANVAS_ID}`) as HTMLCanvasElement
-		const handleResize = () => {
-			const dpr = window.devicePixelRatio || 1
-			const width = canvas.clientWidth * dpr
-			const height = canvas.clientHeight * dpr
-			set(canvasSizeAtom, { width, height })
-		}
-		handleResize()
-		window.addEventListener("resize", handleResize)
-		return () => {
-			window.removeEventListener("resize", handleResize)
-		}
-	},
-)
-
-export const fovAtom = atom(45)
-export const farAtom = atom((get) => {
-	const viewerObj = get(viewerObjAtom)
-	if (!viewerObj) {
+const fovAtom = atom(45)
+const farAtom = atom((get) => {
+	const viewer = get(gpuAtoms.viewerAtom)
+	if (!viewer) {
 		return 1000
 	}
-	const aabb = viewerObj.getAABBObj()
+	const aabb = viewer.getAABB()
 	if (!aabb) {
 		return 1000
 	}
 	return aabb.radius * 10
 })
-export const projectionMatrixAtom = atom((get) => {
+
+const projectionMatrixAtom = atom((get) => {
 	const fov = get(fovAtom)
 	const far = get(farAtom)
-	const canvasSize = get(canvasSizeAtom)
+	const canvasSize = get(gpuAtoms.canvasSizeAtom)
 	const aspect = canvasSize.width / canvasSize.height
 	return mat4.perspective(utils.degToRad(fov), aspect, 0.1, far)
 })
-
-export const lightDirectionAtom = atom(vec3.create(1, -2, -1))
-export const interpolateNormalsAtom = atom(true)
 
 type CameraActionType =
 	| {
@@ -109,11 +83,11 @@ export const cameraActionAtom = atom(
 				set(elevationAtom, Math.max(-89.9, Math.min(89.9, nextElevation)))
 			})
 			.with({ type: "zoom" }, (cameraAction) => {
-				const viewerObj = get(viewerObjAtom)
-				if (!viewerObj) {
+				const viewer = get(gpuAtoms.viewerAtom)
+				if (!viewer) {
 					return
 				}
-				const aabb = viewerObj.getAABBObj()
+				const aabb = viewer.getAABB()
 				if (!aabb) {
 					return
 				}
@@ -132,11 +106,11 @@ export const cameraActionAtom = atom(
 				set(radiusAtom, Math.max(0.1, nextRadius))
 			})
 			.with({ type: "pan" }, (cameraAction) => {
-				const viewerObj = get(viewerObjAtom)
-				if (!viewerObj) {
+				const viewer = get(gpuAtoms.viewerAtom)
+				if (!viewer) {
 					return
 				}
-				const aabb = viewerObj.getAABBObj()
+				const aabb = viewer.getAABB()
 				if (!aabb) {
 					return
 				}
@@ -162,11 +136,11 @@ export const cameraActionAtom = atom(
 				set(targetAtom, nextTarget)
 			})
 			.with({ type: "fitToView" }, () => {
-				const viewerObj = get(viewerObjAtom)
-				if (!viewerObj) {
+				const viewer = get(gpuAtoms.viewerAtom)
+				if (!viewer) {
 					return
 				}
-				const aabb = viewerObj.getAABBObj()
+				const aabb = viewer.getAABB()
 				if (!aabb) {
 					return
 				}
@@ -179,22 +153,14 @@ export const cameraActionAtom = atom(
 	},
 )
 
-export const loadObjFileAtom = atom(null, (_, set) => {
-	const input = document.createElement("input")
-	input.type = "file"
-	input.accept = ".obj"
-	input.onchange = (e) => {
-		const file = (e.target as HTMLInputElement).files?.[0]
-		if (file) {
-			const reader = new FileReader()
-			reader.onload = async (e) => {
-				const content = e.target?.result
-				if (typeof content === "string") {
-					set(objTextAtom, content)
-				}
-			}
-			reader.readAsText(file)
-		}
-	}
-	input.click()
-})
+export const cameraAtoms = {
+	targetAtom,
+	radiusAtom,
+	azimuthAtom,
+	elevationAtom,
+	viewMatrixAtom,
+	fovAtom,
+	projectionMatrixAtom,
+	farAtom,
+	cameraActionAtom,
+}

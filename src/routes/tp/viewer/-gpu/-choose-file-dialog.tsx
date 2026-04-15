@@ -10,13 +10,13 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select"
-import { loadObjFileAtom, objTextAtom } from "@/routes/tp/viewer-obj/-atom"
-import bodyPart from "@/routes/tp/viewer-obj/-obj/bp.obj?raw"
-import bunny from "@/routes/tp/viewer-obj/-obj/bunny.obj?raw"
-import cruiser from "@/routes/tp/viewer-obj/-obj/cruiser.obj?raw"
-import cube from "@/routes/tp/viewer-obj/-obj/cube.obj?raw"
-import f16 from "@/routes/tp/viewer-obj/-obj/f-16.obj?raw"
-import suzanne from "@/routes/tp/viewer-obj/-obj/suzanne.obj?raw"
+import { gpuAtoms } from "@/routes/tp/viewer/-gpu/-gpu-atoms"
+import bodyPart from "@/routes/tp/viewer/-obj/bp.obj?raw"
+import bunny from "@/routes/tp/viewer/-obj/bunny.obj?raw"
+import cruiser from "@/routes/tp/viewer/-obj/cruiser.obj?raw"
+import cube from "@/routes/tp/viewer/-obj/cube.obj?raw"
+import f16 from "@/routes/tp/viewer/-obj/f-16.obj?raw"
+import suzanne from "@/routes/tp/viewer/-obj/suzanne.obj?raw"
 
 const opts: Record<string, { name: string; data: string }> = {
 	cube: {
@@ -47,23 +47,23 @@ const opts: Record<string, { name: string; data: string }> = {
 
 type OptKey = keyof typeof opts
 
-const selectObjAtom = atom<OptKey | undefined>(undefined)
+const selectFileAtom = atom<OptKey | undefined>(undefined)
 
-export const ChooseObjDialog = () => {
-	const [objText, setObjText] = useAtom(objTextAtom)
-	const loadObjFile = useSetAtom(loadObjFileAtom)
-	const [selectedOpt, setSelectedOpt] = useAtom(selectObjAtom)
+export const ChooseFileDialog = () => {
+	const [fileData, setFileData] = useAtom(gpuAtoms.fileDataAtom)
+	const loadFile = useSetAtom(gpuAtoms.loadFileAtom)
+	const [selectedOpt, setSelectedOpt] = useAtom(selectFileAtom)
 
-	if (objText) {
+	if (fileData) {
 		return null
 	}
 
 	return (
 		<Dialog open={true}>
 			<DialogContent>
-				<h2 className="text-lg font-semibold">Choose an OBJ file</h2>
+				<h2 className="text-lg font-semibold">Choose a file</h2>
 				<Field>
-					<FieldLabel>Select an obj file to view.</FieldLabel>
+					<FieldLabel>Select a file to view.</FieldLabel>
 					<Select
 						onValueChange={(value) => {
 							setSelectedOpt(value as OptKey)
@@ -71,7 +71,7 @@ export const ChooseObjDialog = () => {
 					>
 						<SelectTrigger>
 							<SelectValue>
-								{selectedOpt ? opts[selectedOpt].name : "Select an obj file"}
+								{selectedOpt ? opts[selectedOpt].name : "Select a file"}
 							</SelectValue>
 						</SelectTrigger>
 						<SelectContent>
@@ -88,7 +88,7 @@ export const ChooseObjDialog = () => {
 						disabled={!selectedOpt}
 						onClick={() => {
 							if (selectedOpt) {
-								setObjText(opts[selectedOpt].data)
+								setFileData(opts[selectedOpt].data)
 							}
 						}}
 					>
@@ -97,7 +97,7 @@ export const ChooseObjDialog = () => {
 					</Button>
 					<Button
 						onClick={() => {
-							loadObjFile()
+							loadFile()
 						}}
 					>
 						<FileDown />

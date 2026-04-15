@@ -81,7 +81,7 @@ export const canvasEventEffect = atomEffect((_, set) => {
 				touch2.clientX - touch1.clientX,
 				touch2.clientY - touch1.clientY,
 			)
-			const delta = dist - lastDist
+			const delta = dist - lastDist * -10
 			set(cameraActionAtom, {
 				type: "zoom",
 				delta,

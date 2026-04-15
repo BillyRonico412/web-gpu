@@ -1,4 +1,5 @@
 import { atomEffect } from "jotai-effect"
+import { vec2 } from "wgpu-matrix"
 import { CANVAS_ID, cameraActionAtom } from "@/routes/tp/viewer-obj/-atom"
 
 export const canvasEventEffect = atomEffect((_, set) => {
@@ -42,7 +43,9 @@ export const canvasEventEffect = atomEffect((_, set) => {
 		set(cameraActionAtom, { type: "fitToView" })
 	}
 
-	let lastTouch = { x: 0, y: 0 }
+	type TouchPoint = { x: number; y: number }
+
+	let lastTouches: TouchPoint[] = []
 	let lastDist = 0
 
 	const handleTouchStart = (e: TouchEvent) => {
@@ -50,10 +53,14 @@ export const canvasEventEffect = atomEffect((_, set) => {
 		e.stopPropagation()
 		if (e.touches.length === 1) {
 			const touch = e.touches[0]
-			lastTouch = { x: touch.clientX, y: touch.clientY }
+			lastTouches = [{ x: touch.clientX, y: touch.clientY }]
 		} else if (e.touches.length === 2) {
 			const touch1 = e.touches[0]
 			const touch2 = e.touches[1]
+			lastTouches = [
+				{ x: touch1.clientX, y: touch1.clientY },
+				{ x: touch2.clientX, y: touch2.clientY },
+			]
 			lastDist = Math.hypot(
 				touch2.clientX - touch1.clientX,
 				touch2.clientY - touch1.clientY,
@@ -64,8 +71,9 @@ export const canvasEventEffect = atomEffect((_, set) => {
 	const handleTouchMove = (e: TouchEvent) => {
 		e.preventDefault()
 		e.stopPropagation()
-		if (e.touches.length === 1) {
+		if (e.touches.length === 1 && lastTouches.length === 1) {
 			const touch = e.touches[0]
+			const lastTouch = lastTouches[0]
 			const deltaX = touch.clientX - lastTouch.x
 			const deltaY = touch.clientY - lastTouch.y
 			set(cameraActionAtom, {
@@ -73,22 +81,47 @@ export const canvasEventEffect = atomEffect((_, set) => {
 				deltaX,
 				deltaY,
 			})
-			lastTouch = { x: touch.clientX, y: touch.clientY }
-		} else if (e.touches.length === 2) {
+			lastTouches = [{ x: touch.clientX, y: touch.clientY }]
+		} else if (e.touches.length === 2 && lastTouches.length === 2) {
 			const touch1 = e.touches[0]
 			const touch2 = e.touches[1]
-			const dist = Math.hypot(
-				touch2.clientX - touch1.clientX,
-				touch2.clientY - touch1.clientY,
+			const lastTouch1 = lastTouches[0]
+			const lastTouch2 = lastTouches[1]
+			const delta1 = vec2.fromValues(
+				touch1.clientX - lastTouch1.x,
+				touch1.clientY - lastTouch1.y,
 			)
-			const delta = dist - lastDist * -10
-			set(cameraActionAtom, {
-				type: "zoom",
-				delta,
-				ctrlKey: false,
-				shiftKey: false,
-			})
-			lastDist = dist
+			const delta2 = vec2.fromValues(
+				touch2.clientX - lastTouch2.x,
+				touch2.clientY - lastTouch2.y,
+			)
+			const dot = vec2.dot(delta1, delta2)
+			if (dot < 0) {
+				const dist = Math.hypot(
+					touch2.clientX - touch1.clientX,
+					touch2.clientY - touch1.clientY,
+				)
+				const delta = (dist - lastDist) * -10
+				set(cameraActionAtom, {
+					type: "zoom",
+					delta,
+					ctrlKey: false,
+					shiftKey: false,
+				})
+				lastDist = dist
+			} else {
+				set(cameraActionAtom, {
+					type: "pan",
+					deltaX: (delta1[0] + delta2[0]) / 2,
+					deltaY: (delta1[1] + delta2[1]) / 2,
+					ctrlKey: false,
+					shiftKey: false,
+				})
+			}
+			lastTouches = [
+				{ x: touch1.clientX, y: touch1.clientY },
+				{ x: touch2.clientX, y: touch2.clientY },
+			]
 		}
 	}
 

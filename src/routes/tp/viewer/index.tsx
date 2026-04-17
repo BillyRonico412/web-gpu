@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router"
 import { useAtom } from "jotai"
-import { Controllers } from "@/routes/tp/viewer/-controllers"
+import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
+import { ViewerSidebar } from "@/routes/tp/viewer/-components/-sidebar"
 import { canvasEventEffect } from "@/routes/tp/viewer/-event"
 import { ChooseFileDialog } from "@/routes/tp/viewer/-gpu/-choose-file-dialog"
 import { CANVAS_ID } from "@/routes/tp/viewer/-gpu/-gpu-atoms"
@@ -16,18 +17,24 @@ function RouteComponent() {
 	useAtom(gpuEffects.drawEffect)
 	useAtom(canvasEventEffect)
 	return (
-		<main className="relative w-dvw h-dvh">
-			<ChooseFileDialog />
-			<div className="w-full h-full">
+		<SidebarProvider
+			style={
+				{
+					"--sidebar-width": "20rem",
+					"--sidebar-width-mobile": "20rem",
+				} as React.CSSProperties
+			}
+		>
+			<ViewerSidebar />
+			<main className="relative w-full h-dvh">
+				<SidebarTrigger className="absolute" />
 				<canvas
 					id={CANVAS_ID}
 					className="w-full h-full"
 					onContextMenu={(e) => e.preventDefault()}
 				/>
-			</div>
-			<div className="absolute top-4 right-4 z-10">
-				<Controllers />
-			</div>
-		</main>
+			</main>
+			<ChooseFileDialog />
+		</SidebarProvider>
 	)
 }

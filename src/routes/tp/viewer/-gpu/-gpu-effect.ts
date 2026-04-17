@@ -25,11 +25,13 @@ const drawEffect = atomEffect((get) => {
 	const projectionMatrix = get(cameraAtoms.projectionMatrixAtom)
 	const lightDirection = get(lightAtoms.lightDirectionAtom)
 	const interpolateNormals = get(lightAtoms.interpolateNormalsAtom)
+	const backgroundVec3 = get(gpuAtoms.backgroundVec3Atom)
 	viewer.draw({
 		viewMatrix,
 		projectionMatrix,
 		lightDirection,
 		interpolateNormals,
+		backgroundVec3,
 	})
 })
 
@@ -47,18 +49,21 @@ const canvasEffect = atomEffect((get) => {
 		const projectionMatrix = get(cameraAtoms.projectionMatrixAtom)
 		const lightDirection = get(lightAtoms.lightDirectionAtom)
 		const interpolateNormals = get(lightAtoms.interpolateNormalsAtom)
+		const backgroundVec3 = get(gpuAtoms.backgroundVec3Atom)
 		viewer.updateDepthTexture()
 		viewer.draw({
 			viewMatrix,
 			projectionMatrix,
 			lightDirection,
 			interpolateNormals,
+			backgroundVec3,
 		})
 	}
 	handleResize()
-	window.addEventListener("resize", handleResize)
+	const resizeObserver = new ResizeObserver(handleResize)
+	resizeObserver.observe(canvas)
 	return () => {
-		window.removeEventListener("resize", handleResize)
+		resizeObserver.unobserve(canvas)
 	}
 })
 

@@ -306,9 +306,15 @@ export const initViewer = async (objText: string) => {
 		projectionMatrix: Mat4
 		lightDirection: Vec3
 		interpolateNormals: boolean
+		backgroundVec3: Vec3
 	}) => {
-		const { viewMatrix, projectionMatrix, lightDirection, interpolateNormals } =
-			params
+		const {
+			viewMatrix,
+			backgroundVec3,
+			projectionMatrix,
+			lightDirection,
+			interpolateNormals,
+		} = params
 		updateMvpMatrixBuffer(viewMatrix, projectionMatrix)
 		updateLightDirectionBuffer(lightDirection)
 		updateInterpolateNormalsBuffer(interpolateNormals)
@@ -319,7 +325,12 @@ export const initViewer = async (objText: string) => {
 					view: context.getCurrentTexture(),
 					loadOp: "clear",
 					storeOp: "store",
-					clearValue: { r: 0.2, g: 0.2, b: 0.2, a: 1 },
+					clearValue: {
+						r: backgroundVec3[0],
+						g: backgroundVec3[1],
+						b: backgroundVec3[2],
+						a: 1,
+					},
 				},
 			],
 			depthStencilAttachment: {

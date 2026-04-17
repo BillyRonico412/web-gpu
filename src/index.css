@@ -1,8 +1,7 @@
+@import url("https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&display=swap");
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
-@import "@fontsource-variable/geist";
-
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
@@ -45,7 +44,7 @@
 	--color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
 	--color-sidebar-border: var(--sidebar-border);
 	--color-sidebar-ring: var(--sidebar-ring);
-	--font-sans: "Geist Variable", sans-serif;
+	--font-sans: "Outfit", sans-serif;
 }
 
 :root {

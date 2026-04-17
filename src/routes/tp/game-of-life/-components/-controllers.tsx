@@ -23,14 +23,14 @@ export const Controllers = () => {
 	return (
 		<Card>
 			<CardContent className="flex items-center gap-2">
-				<Button onClick={() => setIsRunning(!isRunning)} size="icon-lg">
+				<Button onClick={() => setIsRunning(!isRunning)} size="icon">
 					{match(isRunning)
 						.with(true, () => <Pause />)
 						.with(false, () => <Play />)
 						.exhaustive()}
 				</Button>
 				<Button
-					size="icon-lg"
+					size="icon"
 					disabled={isRunning}
 					onClick={() => {
 						if (isRunning) {
@@ -42,7 +42,7 @@ export const Controllers = () => {
 					<Redo />
 				</Button>
 				<Button
-					size="icon-lg"
+					size="icon"
 					disabled={isRunning}
 					onClick={() => {
 						if (isRunning) {
@@ -54,7 +54,7 @@ export const Controllers = () => {
 					<RotateCcw />
 				</Button>
 				<Button
-					size="icon-lg"
+					size="icon"
 					disabled={isRunning}
 					onClick={() => {
 						if (isRunning) {
@@ -67,7 +67,7 @@ export const Controllers = () => {
 				</Button>
 				<StructuresDialog>
 					<Button
-						size="icon-lg"
+						size="icon"
 						disabled={isRunning}
 						onClick={() => {
 							if (isRunning) {

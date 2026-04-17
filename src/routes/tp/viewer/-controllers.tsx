@@ -1,5 +1,5 @@
 import { atom, useAtom, useAtomValue, useSetAtom } from "jotai"
-import { Camera, SlidersIcon, Torus, X } from "lucide-react"
+import { Camera, SlidersIcon, X } from "lucide-react"
 import { vec3 } from "wgpu-matrix"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -100,22 +100,6 @@ const FitToViewButton = () => {
 	)
 }
 
-const LoadFileButton = () => {
-	const setFileData = useSetAtom(gpuAtoms.fileDataAtom)
-
-	return (
-		<Button
-			size="sm"
-			onClick={() => {
-				setFileData(undefined)
-			}}
-		>
-			<Torus />
-			Load another
-		</Button>
-	)
-}
-
 const InterpolateNormalsSwitch = () => {
 	const [interpolateNormals, setInterpolateNormals] = useAtom(
 		lightAtoms.interpolateNormalsAtom,
@@ -174,7 +158,6 @@ export const Controllers = () => {
 				<InterpolateNormalsSwitch />
 				<div className="flex flex-col gap-2">
 					<FitToViewButton />
-					<LoadFileButton />
 				</div>
 			</CardContent>
 		</Card>

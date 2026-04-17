@@ -7,6 +7,8 @@ const targetAtom = atom<Vec3>(vec3.create(0, 0, 0))
 const radiusAtom = atom(50)
 const azimuthAtom = atom(0)
 const elevationAtom = atom(0)
+const projectionTypeAtom = atom<"perspective" | "orthographic">("perspective")
+
 const viewMatrixAtom = atom((get) => {
 	const target = get(targetAtom)
 	const radius = get(radiusAtom)
@@ -41,11 +43,27 @@ const farAtom = atom((get) => {
 })
 
 const projectionMatrixAtom = atom((get) => {
-	const fov = get(fovAtom)
 	const far = get(farAtom)
 	const canvasSize = get(gpuAtoms.canvasSizeAtom)
 	const aspect = canvasSize.width / canvasSize.height
-	return mat4.perspective(utils.degToRad(fov), aspect, 0.1, far)
+	const projectionType = get(projectionTypeAtom)
+	switch (projectionType) {
+		case "perspective": {
+			const fov = get(fovAtom)
+			return mat4.perspective(utils.degToRad(fov), aspect, 0.1, far)
+		}
+		case "orthographic": {
+			const radius = get(radiusAtom)
+			return mat4.ortho(
+				-radius * aspect,
+				radius * aspect,
+				-radius,
+				radius,
+				0.1,
+				far,
+			)
+		}
+	}
 })
 
 type CameraActionType =
@@ -163,4 +181,5 @@ export const cameraAtoms = {
 	projectionMatrixAtom,
 	farAtom,
 	cameraActionAtom,
+	projectionTypeAtom,
 }

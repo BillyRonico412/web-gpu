@@ -1,0 +1,120 @@
+{
+  "buffers": [
+    {
+      "byteLength": 240
+    }
+  ],
+  "asset": {
+    "generator": "github.com/mikedh/trimesh",
+    "version": "2.0"
+  },
+  "nodes": [
+    {
+      "children": [
+        1
+      ],
+      "name": "world"
+    },
+    {
+      "mesh": 0,
+      "name": "geometry_0_0",
+      "matrix": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    }
+  ],
+  "meshes": [
+    {
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 1
+          },
+          "indices": 0,
+          "mode": 4,
+          "material": 0
+        }
+      ],
+      "name": "geometry_0"
+    }
+  ],
+  "bufferViews": [
+    {
+      "byteOffset": 0,
+      "buffer": 0,
+      "byteLength": 144
+    },
+    {
+      "byteOffset": 144,
+      "buffer": 0,
+      "byteLength": 96
+    }
+  ],
+  "scene": 0,
+  "accessors": [
+    {
+      "count": 36,
+      "type": "SCALAR",
+      "max": [
+        7
+      ],
+      "componentType": 5125,
+      "min": [
+        0
+      ],
+      "bufferView": 0
+    },
+    {
+      "count": 8,
+      "type": "VEC3",
+      "max": [
+        1.0,
+        1.0,
+        1.000001
+      ],
+      "componentType": 5126,
+      "min": [
+        -1.0,
+        -1.0,
+        -1.0
+      ],
+      "bufferView": 1
+    }
+  ],
+  "scenes": [
+    {
+      "nodes": [
+        0
+      ]
+    }
+  ],
+  "materials": [
+    {
+      "pbrMetallicRoughness": {
+        "metallicFactor": 0.02,
+        "baseColorFactor": [
+          0.3984375,
+          0.3984375,
+          0.3984375,
+          0.99609375
+        ],
+        "roughnessFactor": 0.1
+      }
+    }
+  ]
+}

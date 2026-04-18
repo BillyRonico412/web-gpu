@@ -1,14 +1,14 @@
 import { useSetAtom } from "jotai"
 import { Box } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { gpuAtoms } from "@/routes/tp/viewer/-gpu/-gpu-atoms"
+import { chooseFileDialogOpenAtom } from "@/routes/tp/viewer/-gpu/-choose-file-dialog"
 
 export const LoadFileButton = () => {
-	const setFileData = useSetAtom(gpuAtoms.fileDataAtom)
+	const setChooseDialogFileOpen = useSetAtom(chooseFileDialogOpenAtom)
 	return (
 		<Button
 			onClick={() => {
-				setFileData(undefined)
+				setChooseDialogFileOpen(true)
 			}}
 		>
 			<Box />

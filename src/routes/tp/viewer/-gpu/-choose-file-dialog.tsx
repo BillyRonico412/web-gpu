@@ -48,18 +48,16 @@ const opts: Record<string, { name: string; data: string }> = {
 type OptKey = keyof typeof opts
 
 const selectFileAtom = atom<OptKey | undefined>(undefined)
+export const chooseFileDialogOpenAtom = atom(false)
 
 export const ChooseFileDialog = () => {
-	const [fileData, setFileData] = useAtom(gpuAtoms.fileDataAtom)
+	const setFileData = useSetAtom(gpuAtoms.fileDataAtom)
 	const loadFile = useSetAtom(gpuAtoms.loadFileAtom)
 	const [selectedOpt, setSelectedOpt] = useAtom(selectFileAtom)
-
-	if (fileData) {
-		return null
-	}
+	const [open, setOpen] = useAtom(chooseFileDialogOpenAtom)
 
 	return (
-		<Dialog open={true}>
+		<Dialog open={open} onOpenChange={setOpen}>
 			<DialogContent>
 				<h2 className="text-lg font-semibold">Choose a file</h2>
 				<Field>
@@ -89,6 +87,7 @@ export const ChooseFileDialog = () => {
 						onClick={() => {
 							if (selectedOpt) {
 								setFileData(opts[selectedOpt].data)
+								setOpen(false)
 							}
 						}}
 					>
@@ -98,6 +97,7 @@ export const ChooseFileDialog = () => {
 					<Button
 						onClick={() => {
 							loadFile()
+							setOpen(false)
 						}}
 					>
 						<FileDown />

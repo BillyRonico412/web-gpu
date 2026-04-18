@@ -1,4 +1,5 @@
 import { useAtom } from "jotai"
+import { Axis3D, Telescope } from "lucide-react"
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import { cameraAtoms } from "@/routes/tp/viewer/-camera/-camera-atoms"
@@ -22,9 +23,11 @@ export const CameraSection = () => {
 					}}
 				>
 					<ToggleGroupItem value="perspective" className="flex-1">
+						<Telescope className="size-3" />
 						Perspective
 					</ToggleGroupItem>
 					<ToggleGroupItem value="orthographic" className="flex-1">
+						<Axis3D className="size-3" /> 
 						Orthographic
 					</ToggleGroupItem>
 				</ToggleGroup>

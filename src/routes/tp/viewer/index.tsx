@@ -6,6 +6,7 @@ import { canvasEventEffect } from "@/routes/tp/viewer/-event"
 import { ChooseFileDialog } from "@/routes/tp/viewer/-gpu/-choose-file-dialog"
 import { CANVAS_ID } from "@/routes/tp/viewer/-gpu/-gpu-atoms"
 import { gpuEffects } from "@/routes/tp/viewer/-gpu/-gpu-effect"
+import { lightAtoms } from "@/routes/tp/viewer/-light/-light-atoms"
 
 export const Route = createFileRoute("/tp/viewer/")({
 	component: RouteComponent,
@@ -17,6 +18,7 @@ function RouteComponent() {
 	useAtom(gpuEffects.drawEffect)
 	useAtom(gpuEffects.drawEffect)
 	useAtom(gpuEffects.msaaCountEffect)
+	useAtom(lightAtoms.lightModeEffect)
 	useAtom(canvasEventEffect)
 	return (
 		<SidebarProvider

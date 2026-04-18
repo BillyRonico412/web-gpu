@@ -7,7 +7,7 @@ import bodyPart from "@/routes/tp/viewer/-obj/bp.obj?raw"
 
 export const CANVAS_ID = "viewer-canvas"
 
-const fileDataAtom = atom<string | undefined>(bodyPart)
+const fileDataAtom = atom<string>(bodyPart)
 const viewerAtom = atom<Viewer | undefined>()
 const backgroundHexAtom = atom<string>("#444")
 const backgroundVec3Atom = atom((get) => {

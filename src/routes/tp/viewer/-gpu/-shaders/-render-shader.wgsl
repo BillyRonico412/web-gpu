@@ -36,9 +36,9 @@ fn vs_main(v_in: VertexIn) -> VertexOut {
 fn fs_main(f_in: VertexOut) -> @location(0) vec4f {
     let n = normalize(select(f_in.normal_flatten, f_in.normal_interpollated, interpolate_normals == 1));
     let l = normalize(-light_direction);
-    let illumination = (dot(n, l) + 1) / 2;
+    let diffuse = max(dot(n, l), 0.0);
+    let ambient = 0.15;
     let base_color = vec3f(0.7, 0.75, 0.8);
-    let ambiant = 0.1;
-    let final_color = base_color * (illumination + ambiant);
+    let final_color = base_color * (ambient + 0.85 * diffuse);
     return vec4f(final_color, 1);
 }

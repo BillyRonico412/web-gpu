@@ -15,6 +15,7 @@ import {
 import { BackgroundSection } from "@/routes/tp/viewer/-background/-background-section"
 import { CameraSection } from "@/routes/tp/viewer/-camera/-camera-section"
 import { LoadFileButton } from "@/routes/tp/viewer/-components/-load-file-button"
+import { LightSection } from "@/routes/tp/viewer/-light/-light-section"
 import { RenderingSection } from "@/routes/tp/viewer/-rendering/-rendering-section"
 
 export const ViewerSidebar = () => {
@@ -51,7 +52,9 @@ export const ViewerSidebar = () => {
 							<Lightbulb className="size-5 text-muted-foreground" />
 							Light
 						</AccordionTrigger>
-						<AccordionContent>Hello world</AccordionContent>
+						<AccordionContent>
+							<LightSection />
+						</AccordionContent>
 					</AccordionItem>
 					<AccordionItem>
 						<AccordionTrigger>

@@ -104,12 +104,17 @@ const createObjBuffer = (device: GPUDevice, objText: string) => {
 	}
 }
 
-const createDepthTexture = (device: GPUDevice, canvas: HTMLCanvasElement) => {
+const createDepthTexture = (
+	device: GPUDevice,
+	canvas: HTMLCanvasElement,
+	msaa: boolean,
+) => {
 	const depthTexture = device.createTexture({
 		label: "Depth texture",
 		size: [canvas.width, canvas.height],
 		format: "depth24plus",
 		usage: GPUTextureUsage.RENDER_ATTACHMENT,
+		sampleCount: msaa ? 4 : undefined,
 	})
 	return depthTexture
 }
@@ -173,7 +178,7 @@ const createInterpolateNormalsBuffer = (device: GPUDevice) => {
 	}
 }
 
-const getRenderPipeline = (device: GPUDevice) => {
+const createRenderPipeline = (device: GPUDevice) => {
 	const uniformBindGroupLayout = device.createBindGroupLayout({
 		label: "Render matrix bind group layout",
 		entries: [
@@ -240,36 +245,67 @@ const getRenderPipeline = (device: GPUDevice) => {
 		label: "Shader module",
 		code: renderShaderCode,
 	})
-	const renderPipeline = device.createRenderPipeline({
-		label: "Render pipeline",
-		layout: renderPipelineLayout,
-		vertex: {
-			module: shaderModule,
-			entryPoint: "vs_main",
-		},
-		fragment: {
-			module: shaderModule,
-			entryPoint: "fs_main",
-			targets: [
-				{
-					format: navigator.gpu.getPreferredCanvasFormat(),
-				},
-			],
-		},
-		primitive: {
-			topology: "triangle-list",
-			cullMode: "back",
-		},
-		depthStencil: {
-			format: "depth24plus",
-			depthWriteEnabled: true,
-			depthCompare: "less",
-		},
-	})
+
+	const getRenderPipeline = (msaa: boolean) => {
+		let multisample: GPUMultisampleState | undefined
+		if (msaa) {
+			multisample = {
+				count: 4,
+			}
+		}
+		const renderPipeline = device.createRenderPipeline({
+			label: "Render pipeline",
+			layout: renderPipelineLayout,
+			vertex: {
+				module: shaderModule,
+				entryPoint: "vs_main",
+			},
+			fragment: {
+				module: shaderModule,
+				entryPoint: "fs_main",
+				targets: [
+					{
+						format: navigator.gpu.getPreferredCanvasFormat(),
+					},
+				],
+			},
+			primitive: {
+				topology: "triangle-list",
+				cullMode: "back",
+			},
+			multisample,
+			depthStencil: {
+				format: "depth24plus",
+				depthWriteEnabled: true,
+				depthCompare: "less",
+			},
+		})
+		return renderPipeline
+	}
+
+	const getMssaView = (
+		msaa: boolean,
+		canvas: HTMLCanvasElement,
+		context: GPUCanvasContext,
+	) => {
+		if (!msaa) {
+			return context.getCurrentTexture().createView()
+		}
+		const msaaTexture = device.createTexture({
+			label: "MSAA texture",
+			size: [canvas.width, canvas.height],
+			format: navigator.gpu.getPreferredCanvasFormat(),
+			usage: GPUTextureUsage.RENDER_ATTACHMENT,
+			sampleCount: 4,
+		})
+		return msaaTexture.createView()
+	}
+
 	return {
 		uniformBindGroupLayout,
 		storageBindGroupLayout,
-		renderPipeline,
+		getRenderPipeline,
+		getMssaView,
 	}
 }
 
@@ -291,9 +327,12 @@ export const initViewer = async (objText: string) => {
 		device,
 		objText,
 	)
-	const { uniformBindGroupLayout, renderPipeline, storageBindGroupLayout } =
-		getRenderPipeline(device)
-	let depthTexture = createDepthTexture(device, canvas)
+	const {
+		uniformBindGroupLayout,
+		getRenderPipeline,
+		storageBindGroupLayout,
+		getMssaView,
+	} = createRenderPipeline(device)
 	const { mvpMatrixBuffer, updateMvpMatrixBuffer } =
 		createMvpMatrixBuffer(device)
 	const { lightDirectionBuffer, updateLightDirectionBuffer } =
@@ -301,12 +340,17 @@ export const initViewer = async (objText: string) => {
 	const { interpolateNormalsBuffer, updateInterpolateNormalsBuffer } =
 		createInterpolateNormalsBuffer(device)
 
+	let depthTexture = createDepthTexture(device, canvas, true)
+	let renderPipeline = getRenderPipeline(true)
+	let msaaView = getMssaView(true, canvas, context)
+
 	const draw = (params: {
 		viewMatrix: Mat4
 		projectionMatrix: Mat4
 		lightDirection: Vec3
 		interpolateNormals: boolean
 		backgroundVec3: Vec3
+		msaa: boolean
 	}) => {
 		const {
 			viewMatrix,
@@ -314,6 +358,7 @@ export const initViewer = async (objText: string) => {
 			projectionMatrix,
 			lightDirection,
 			interpolateNormals,
+			msaa,
 		} = params
 		updateMvpMatrixBuffer(viewMatrix, projectionMatrix)
 		updateLightDirectionBuffer(lightDirection)
@@ -322,7 +367,7 @@ export const initViewer = async (objText: string) => {
 		const renderPassDescriptor: GPURenderPassDescriptor = {
 			colorAttachments: [
 				{
-					view: context.getCurrentTexture(),
+					view: msaaView,
 					loadOp: "clear",
 					storeOp: "store",
 					clearValue: {
@@ -331,6 +376,9 @@ export const initViewer = async (objText: string) => {
 						b: backgroundVec3[2],
 						a: 1,
 					},
+					resolveTarget: msaa
+						? context.getCurrentTexture().createView()
+						: undefined,
 				},
 			],
 			depthStencilAttachment: {
@@ -427,15 +475,25 @@ export const initViewer = async (objText: string) => {
 		}
 	}
 
-	const updateDepthTexture = () => {
+	const updateDepthTexture = (msaa: boolean) => {
 		depthTexture.destroy()
-		depthTexture = createDepthTexture(device, canvas)
+		depthTexture = createDepthTexture(device, canvas, msaa)
+	}
+
+	const updateRenderPipeline = (msaa: boolean) => {
+		renderPipeline = getRenderPipeline(msaa)
+	}
+
+	const updateMsaaView = (msaa: boolean) => {
+		msaaView = getMssaView(msaa, canvas, context)
 	}
 
 	return {
 		draw,
 		getAABB,
 		updateDepthTexture,
+		updateRenderPipeline,
+		updateMsaaView,
 		obj,
 	}
 }

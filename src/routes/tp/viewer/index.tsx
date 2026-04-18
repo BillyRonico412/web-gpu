@@ -15,6 +15,8 @@ function RouteComponent() {
 	useAtom(gpuEffects.canvasEffect)
 	useAtom(gpuEffects.initViewerEffect)
 	useAtom(gpuEffects.drawEffect)
+	useAtom(gpuEffects.drawEffect)
+	useAtom(gpuEffects.msaaCountEffect)
 	useAtom(canvasEventEffect)
 	return (
 		<SidebarProvider

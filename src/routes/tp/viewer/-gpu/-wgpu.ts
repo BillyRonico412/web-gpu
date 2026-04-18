@@ -283,13 +283,9 @@ const createRenderPipeline = (device: GPUDevice) => {
 		return renderPipeline
 	}
 
-	const getMssaView = (
-		msaa: boolean,
-		canvas: HTMLCanvasElement,
-		context: GPUCanvasContext,
-	) => {
+	const getMsaaTexture = (msaa: boolean, canvas: HTMLCanvasElement) => {
 		if (!msaa) {
-			return context.getCurrentTexture().createView()
+			return
 		}
 		const msaaTexture = device.createTexture({
 			label: "MSAA texture",
@@ -298,14 +294,14 @@ const createRenderPipeline = (device: GPUDevice) => {
 			usage: GPUTextureUsage.RENDER_ATTACHMENT,
 			sampleCount: 4,
 		})
-		return msaaTexture.createView()
+		return msaaTexture
 	}
 
 	return {
 		uniformBindGroupLayout,
 		storageBindGroupLayout,
 		getRenderPipeline,
-		getMssaView,
+		getMsaaTexture,
 	}
 }
 
@@ -331,7 +327,7 @@ export const initViewer = async (objText: string) => {
 		uniformBindGroupLayout,
 		getRenderPipeline,
 		storageBindGroupLayout,
-		getMssaView,
+		getMsaaTexture,
 	} = createRenderPipeline(device)
 	const { mvpMatrixBuffer, updateMvpMatrixBuffer } =
 		createMvpMatrixBuffer(device)
@@ -342,7 +338,7 @@ export const initViewer = async (objText: string) => {
 
 	let depthTexture = createDepthTexture(device, canvas, true)
 	let renderPipeline = getRenderPipeline(true)
-	let msaaView = getMssaView(true, canvas, context)
+	let msaaTexture = getMsaaTexture(true, canvas)
 
 	const draw = (params: {
 		viewMatrix: Mat4
@@ -367,7 +363,9 @@ export const initViewer = async (objText: string) => {
 		const renderPassDescriptor: GPURenderPassDescriptor = {
 			colorAttachments: [
 				{
-					view: msaaView,
+					view: msaaTexture
+						? msaaTexture.createView()
+						: context.getCurrentTexture().createView(),
 					loadOp: "clear",
 					storeOp: "store",
 					clearValue: {
@@ -485,7 +483,10 @@ export const initViewer = async (objText: string) => {
 	}
 
 	const updateMsaaView = (msaa: boolean) => {
-		msaaView = getMssaView(msaa, canvas, context)
+		if (msaaTexture) {
+			msaaTexture.destroy()
+		}
+		msaaTexture = getMsaaTexture(msaa, canvas)
 	}
 
 	return {

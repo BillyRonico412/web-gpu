@@ -17,7 +17,7 @@ const initViewerEffect = atomEffect((get, set) => {
 	})()
 })
 
-const msaaCountEffect = atomEffect((get) => {
+const msaaEffect = atomEffect((get) => {
 	const viewer = get(gpuAtoms.viewerAtom)
 	if (!viewer) {
 		return
@@ -26,20 +26,6 @@ const msaaCountEffect = atomEffect((get) => {
 	viewer.updateMsaaView(msaa)
 	viewer.updateDepthTexture(msaa)
 	viewer.updateRenderPipeline(msaa)
-
-	const viewMatrix = get.peek(cameraAtoms.viewMatrixAtom)
-	const projectionMatrix = get.peek(cameraAtoms.projectionMatrixAtom)
-	const lightDirection = get.peek(lightAtoms.lightDirectionAtom)
-	const interpolateNormals = get.peek(lightAtoms.interpolateNormalsAtom)
-	const backgroundVec3 = get.peek(gpuAtoms.backgroundVec3Atom)
-	viewer.draw({
-		viewMatrix,
-		projectionMatrix,
-		lightDirection,
-		interpolateNormals,
-		backgroundVec3,
-		msaa,
-	})
 })
 
 const drawEffect = atomEffect((get) => {
@@ -102,5 +88,5 @@ export const gpuEffects = {
 	initViewerEffect,
 	drawEffect,
 	canvasEffect,
-	msaaCountEffect,
+	msaaCountEffect: msaaEffect,
 }

@@ -2,61 +2,10 @@ import { type Mat4, mat4, type Vec3, vec3 } from "wgpu-matrix"
 import { initWebGPU } from "@/lib/webgpu"
 import { CANVAS_ID } from "@/routes/tp/viewer/-gpu/-gpu-atoms"
 import renderShaderCode from "@/routes/tp/viewer/-gpu/-shaders/-render-shader.wgsl?raw"
+import type { Object3D } from "@/routes/tp/viewer/-gpu/-types"
 
-const parseObj = (objText: string) => {
-	const vertexes: Vec3[] = []
-	const normals: Vec3[] = []
-	const faceData: { vertexIndex: number; normalIndex: number }[] = []
-	const lines = objText.split("\n")
-	for (const line of lines) {
-		const parts = line.trim().split(/\s+/)
-		if (parts[0] === "v") {
-			const vertex = vec3.create()
-			parts.slice(1, 4).forEach((it, i) => {
-				vertex[i] = Number(it)
-			})
-			vertexes.push(vertex)
-		} else if (parts[0] === "vn") {
-			const normal = vec3.create()
-			parts.slice(1, 4).forEach((it, i) => {
-				normal[i] = Number(it)
-			})
-			normals.push(normal)
-		} else if (parts[0] === "f") {
-			const face = parts.slice(1).map((it) => {
-				const [vertexIndex, , normalIndex] = it
-					.split("/")
-					.map((part) => Number(part) - 1)
-				return { vertexIndex, normalIndex }
-			})
-			for (let i = 0; i < face.length - 2; i++) {
-				faceData.push(
-					{
-						vertexIndex: face[0].vertexIndex,
-						normalIndex: face[0].normalIndex,
-					},
-					{
-						vertexIndex: face[i + 1].vertexIndex,
-						normalIndex: face[i + 1].normalIndex,
-					},
-					{
-						vertexIndex: face[i + 2].vertexIndex,
-						normalIndex: face[i + 2].normalIndex,
-					},
-				)
-			}
-		}
-	}
-	return {
-		vertexes,
-		normals,
-		faceData,
-	}
-}
-
-const createObjBuffer = (device: GPUDevice, objText: string) => {
-	const obj = parseObj(objText)
-
+const createObjBuffer = (device: GPUDevice, objects3D: Object3D[]) => {
+	const obj = objects3D[0]
 	const vertexBuffer = device.createBuffer({
 		label: "Vertex buffer",
 		size: obj.vertexes.length * 4 * 4,
@@ -83,24 +32,30 @@ const createObjBuffer = (device: GPUDevice, objText: string) => {
 	}
 	device.queue.writeBuffer(normalBuffer, 0, normalData)
 
-	const faceBuffer = device.createBuffer({
+	const vertexIndexesBuffer = device.createBuffer({
 		label: "Face buffer",
-		size: obj.faceData.length * 4 * 2,
+		size: obj.vertexIndexes.length * 4,
 		usage:
 			GPUBufferUsage.STORAGE | GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
 	})
-	const faceData = new Uint32Array(obj.faceData.length * 2)
-	for (let i = 0; i < obj.faceData.length; i++) {
-		const face = obj.faceData[i]
-		faceData.set([face.vertexIndex, face.normalIndex], i * 2)
-	}
-	device.queue.writeBuffer(faceBuffer, 0, faceData)
+	const vertexIndexesData = new Uint32Array(obj.vertexIndexes)
+	device.queue.writeBuffer(vertexIndexesBuffer, 0, vertexIndexesData)
+
+	const normalIndexesBuffer = device.createBuffer({
+		label: "Normal index buffer",
+		size: obj.normalIndexes.length * 4,
+		usage:
+			GPUBufferUsage.STORAGE | GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
+	})
+	const normalIndexesData = new Uint32Array(obj.normalIndexes)
+	device.queue.writeBuffer(normalIndexesBuffer, 0, normalIndexesData)
 
 	return {
 		obj,
 		vertexBuffer,
 		normalBuffer,
-		faceBuffer,
+		vertexIndexesBuffer,
+		normalIndexesBuffer,
 	}
 }
 
@@ -227,9 +182,17 @@ const createRenderPipeline = (device: GPUDevice) => {
 					type: "read-only-storage",
 				},
 			},
-			// Face buffer
+			// Vertex index buffer
 			{
 				binding: 2,
+				visibility: GPUShaderStage.VERTEX,
+				buffer: {
+					type: "read-only-storage",
+				},
+			},
+			// Normal index buffer
+			{
+				binding: 3,
 				visibility: GPUShaderStage.VERTEX,
 				buffer: {
 					type: "read-only-storage",
@@ -307,7 +270,7 @@ const createRenderPipeline = (device: GPUDevice) => {
 
 export type Viewer = Awaited<ReturnType<typeof initViewer>>
 
-export const initViewer = async (objText: string) => {
+export const initViewer = async (objects3D: Object3D[]) => {
 	const { device } = await initWebGPU()
 	const canvas = document.querySelector(`#${CANVAS_ID}`) as HTMLCanvasElement
 	const context = canvas.getContext("webgpu")
@@ -319,10 +282,13 @@ export const initViewer = async (objText: string) => {
 		format: navigator.gpu.getPreferredCanvasFormat(),
 		alphaMode: "premultiplied",
 	})
-	const { vertexBuffer, normalBuffer, faceBuffer, obj } = createObjBuffer(
-		device,
-		objText,
-	)
+	const {
+		vertexBuffer,
+		normalBuffer,
+		normalIndexesBuffer,
+		vertexIndexesBuffer,
+		obj,
+	} = createObjBuffer(device, objects3D)
 	const {
 		uniformBindGroupLayout,
 		getRenderPipeline,
@@ -433,7 +399,13 @@ export const initViewer = async (objText: string) => {
 				{
 					binding: 2,
 					resource: {
-						buffer: faceBuffer,
+						buffer: vertexIndexesBuffer,
+					},
+				},
+				{
+					binding: 3,
+					resource: {
+						buffer: normalIndexesBuffer,
 					},
 				},
 			],
@@ -441,7 +413,7 @@ export const initViewer = async (objText: string) => {
 		renderPass.setBindGroup(0, renderMatrixBindGroup)
 		renderPass.setBindGroup(1, storageBindGroup)
 		renderPass.setVertexBuffer(0, vertexBuffer)
-		renderPass.draw(obj.faceData.length)
+		renderPass.draw(obj.vertexIndexes.length)
 		renderPass.end()
 		device.queue.submit([commandEncoder.finish()])
 	}
@@ -489,6 +461,20 @@ export const initViewer = async (objText: string) => {
 		msaaTexture = getMsaaTexture(msaa, canvas)
 	}
 
+	const cleanup = () => {
+		vertexBuffer.destroy()
+		normalBuffer.destroy()
+		vertexIndexesBuffer.destroy()
+		normalIndexesBuffer.destroy()
+		mvpMatrixBuffer.destroy()
+		lightDirectionBuffer.destroy()
+		interpolateNormalsBuffer.destroy()
+		depthTexture.destroy()
+		if (msaaTexture) {
+			msaaTexture.destroy()
+		}
+	}
+
 	return {
 		draw,
 		getAABB,
@@ -496,5 +482,6 @@ export const initViewer = async (objText: string) => {
 		updateRenderPipeline,
 		updateMsaaView,
 		obj,
+		cleanup,
 	}
 }

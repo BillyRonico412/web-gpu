@@ -6,6 +6,7 @@ import { canvasEventEffect } from "@/routes/tp/viewer/-event"
 import { ChooseFileDialog } from "@/routes/tp/viewer/-gpu/-choose-file-dialog"
 import { CANVAS_ID } from "@/routes/tp/viewer/-gpu/-gpu-atoms"
 import { gpuEffects } from "@/routes/tp/viewer/-gpu/-gpu-effect"
+import { LoadFileEmpty } from "@/routes/tp/viewer/-gpu/-load-file-empty"
 import { lightAtoms } from "@/routes/tp/viewer/-light/-light-atoms"
 
 export const Route = createFileRoute("/tp/viewer/")({
@@ -37,6 +38,7 @@ function RouteComponent() {
 					className="w-full h-full"
 					onContextMenu={(e) => e.preventDefault()}
 				/>
+				<LoadFileEmpty />
 			</main>
 			<ChooseFileDialog />
 		</SidebarProvider>

@@ -6,13 +6,18 @@ import { lightAtoms } from "@/routes/tp/viewer/-light/-light-atoms"
 import { renderingAtoms } from "@/routes/tp/viewer/-rendering/-rendering-atoms"
 
 const initViewerEffect = atomEffect((get, set) => {
-	const fileData = get(gpuAtoms.fileDataAtom)
-	if (fileData === undefined) {
+	const objects3D = get(gpuAtoms.objects3DAtom)
+	if (objects3D === undefined) {
 		return
 	}
 	;(async () => {
-		const viewer = await initViewer(fileData)
-		set(gpuAtoms.viewerAtom, viewer)
+		const viewer = await initViewer(objects3D)
+		set(gpuAtoms.viewerAtom, (prev) => {
+			if (prev) {
+				prev.cleanup()
+			}
+			return viewer
+		})
 		set(cameraAtoms.cameraActionAtom, { type: "fitToView" })
 	})()
 })

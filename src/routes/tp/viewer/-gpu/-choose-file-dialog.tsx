@@ -1,5 +1,6 @@
 import { atom, useAtom, useSetAtom } from "jotai"
 import { FileDown, MousePointerClick } from "lucide-react"
+import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent } from "@/components/ui/dialog"
 import { Field, FieldLabel } from "@/components/ui/field"
@@ -10,50 +11,45 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select"
+import { parseGLB } from "@/routes/tp/viewer/-glb/-parser"
 import { gpuAtoms } from "@/routes/tp/viewer/-gpu/-gpu-atoms"
-import bodyPart from "@/routes/tp/viewer/-obj/bp.obj?raw"
-import bunny from "@/routes/tp/viewer/-obj/bunny.obj?raw"
-import cruiser from "@/routes/tp/viewer/-obj/cruiser.obj?raw"
-import cube from "@/routes/tp/viewer/-obj/cube.obj?raw"
-import f16 from "@/routes/tp/viewer/-obj/f-16.obj?raw"
-import suzanne from "@/routes/tp/viewer/-obj/suzanne.obj?raw"
+import { parseObj } from "@/routes/tp/viewer/-obj/-parser"
 
-const opts: Record<string, { name: string; data: string }> = {
-	cube: {
-		name: "Cube",
-		data: cube,
-	},
-	suzanne: {
-		name: "Suzanne",
-		data: suzanne,
-	},
-	bodyPart: {
-		name: "Body Part",
-		data: bodyPart,
-	},
-	bunny: {
-		name: "Bunny",
-		data: bunny,
-	},
-	cruiser: {
-		name: "Cruiser",
-		data: cruiser,
-	},
-	f16: {
-		name: "F-16",
-		data: f16,
-	},
+type Option = {
+	name: string
+	url: string
 }
 
-type OptKey = keyof typeof opts
+const files: Option[] = [
+	{
+		name: "Cube",
+		url: "/obj/cube.obj",
+	},
+	{
+		name: "Suzanne",
+		url: "/obj/suzanne.obj",
+	},
+	{
+		name: "Body Part",
+		url: "/obj/bp.obj",
+	},
+	{
+		name: "Bunny",
+		url: "/obj/bunny.obj",
+	},
+	{
+		name: "Cube (.glb)",
+		url: "/glb/cube.glb",
+	},
+]
 
-const selectFileAtom = atom<OptKey | undefined>(undefined)
+const selectedFileAtom = atom<Option | undefined>(undefined)
 export const chooseFileDialogOpenAtom = atom(false)
 
 export const ChooseFileDialog = () => {
-	const setFileData = useSetAtom(gpuAtoms.fileDataAtom)
+	const setObjects3D = useSetAtom(gpuAtoms.objects3DAtom)
 	const loadFile = useSetAtom(gpuAtoms.loadFileAtom)
-	const [selectedOpt, setSelectedOpt] = useAtom(selectFileAtom)
+	const [selectedFile, setSelectedFile] = useAtom(selectedFileAtom)
 	const [open, setOpen] = useAtom(chooseFileDialogOpenAtom)
 
 	return (
@@ -63,19 +59,23 @@ export const ChooseFileDialog = () => {
 				<Field>
 					<FieldLabel>Select a file to view.</FieldLabel>
 					<Select
-						onValueChange={(value) => {
-							setSelectedOpt(value as OptKey)
+						onValueChange={(value: Option | null) => {
+							if (!value) {
+								setSelectedFile(undefined)
+								return
+							}
+							setSelectedFile(value)
 						}}
 					>
 						<SelectTrigger>
 							<SelectValue>
-								{selectedOpt ? opts[selectedOpt].name : "Select a file"}
+								{selectedFile ? selectedFile.name : "Select a file"}
 							</SelectValue>
 						</SelectTrigger>
 						<SelectContent>
-							{Object.entries(opts).map(([key, value]) => (
-								<SelectItem key={key} value={key}>
-									{value.name}
+							{files.map((file) => (
+								<SelectItem key={file.url} value={file}>
+									{file.name}
 								</SelectItem>
 							))}
 						</SelectContent>
@@ -83,10 +83,24 @@ export const ChooseFileDialog = () => {
 				</Field>
 				<div className="flex flex-col gap-2">
 					<Button
-						disabled={!selectedOpt}
-						onClick={() => {
-							if (selectedOpt) {
-								setFileData(opts[selectedOpt].data)
+						disabled={!selectedFile}
+						onClick={async () => {
+							if (selectedFile) {
+								const data = await fetch(selectedFile.url)
+								if (!data.ok) {
+									toast.error("Failed to load file")
+									return
+								}
+								if (selectedFile.url.endsWith(".glb")) {
+									const arrayBuffer = await data.arrayBuffer()
+									const uint8Array = new Uint8Array(arrayBuffer)
+									const objects3D = await parseGLB(uint8Array)
+									setObjects3D(objects3D)
+								} else if (selectedFile.url.endsWith(".obj")) {
+									const text = await data.text()
+									const objects3D = await parseObj(text)
+									setObjects3D(objects3D)
+								}
 								setOpen(false)
 							}
 						}}
@@ -101,7 +115,7 @@ export const ChooseFileDialog = () => {
 						}}
 					>
 						<FileDown />
-						Load local file
+						Load OBJ file
 					</Button>
 				</div>
 			</DialogContent>

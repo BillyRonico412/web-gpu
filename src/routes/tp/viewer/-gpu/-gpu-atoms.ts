@@ -1,13 +1,16 @@
 import hexRgb from "hex-rgb"
 import { atom } from "jotai"
 import { withAtomEffect } from "jotai-effect"
+import { toast } from "sonner"
 import { vec3 } from "wgpu-matrix"
+import { parseGLB } from "@/routes/tp/viewer/-glb/-parser"
+import type { Object3D } from "@/routes/tp/viewer/-gpu/-types"
 import type { Viewer } from "@/routes/tp/viewer/-gpu/-wgpu"
-import bodyPart from "@/routes/tp/viewer/-obj/bp.obj?raw"
+import { parseObj } from "@/routes/tp/viewer/-obj/-parser"
 
 export const CANVAS_ID = "viewer-canvas"
 
-const fileDataAtom = atom<string>(bodyPart)
+const objects3DAtom = atom<Object3D[] | undefined>(undefined)
 const viewerAtom = atom<Viewer | undefined>()
 const backgroundHexAtom = atom<string>("#444")
 const backgroundVec3Atom = atom((get) => {
@@ -43,9 +46,23 @@ const loadFileAtom = atom(null, (_, set) => {
 		if (file) {
 			const reader = new FileReader()
 			reader.onload = async (e) => {
-				const content = e.target?.result
-				if (typeof content === "string") {
-					set(fileDataAtom, content)
+				if (!e.target) {
+					toast.error("Failed to read file")
+					return
+				}
+				const content = e.target.result
+				if (typeof content === "string" && file.name.endsWith(".obj")) {
+					const objects3D = await parseObj(content)
+					set(objects3DAtom, objects3D)
+				} else if (
+					content instanceof ArrayBuffer &&
+					file.name.endsWith(".glb")
+				) {
+					const uint8Array = new Uint8Array(content)
+					const objects3D = await parseGLB(uint8Array)
+					set(objects3DAtom, objects3D)
+				} else {
+					toast.error("Unsupported file type or content")
 				}
 			}
 			reader.readAsText(file)
@@ -55,7 +72,7 @@ const loadFileAtom = atom(null, (_, set) => {
 })
 
 export const gpuAtoms = {
-	fileDataAtom,
+	objects3DAtom,
 	viewerAtom,
 	canvasSizeAtom,
 	loadFileAtom,

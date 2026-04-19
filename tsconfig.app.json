@@ -21,11 +21,10 @@
 		"noUnusedParameters": true,
 		"noFallthroughCasesInSwitch": true,
 		"noUncheckedSideEffectImports": true,
-		"baseUrl": ".",
 		"paths": {
 			"@/*": ["./src/*"]
 		},
-		"types": ["vite/client", "@webgpu/types"]
+		"types": ["vite/client", "@webgpu/types", "node", "vitest/globals"]
 	},
 	"include": ["src"]
 }

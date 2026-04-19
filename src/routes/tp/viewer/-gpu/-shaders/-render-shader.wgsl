@@ -18,13 +18,15 @@ struct VertexOut {
 @group(0) @binding(2) var<uniform> interpolate_normals: u32;
 @group(1) @binding(0) var<storage, read> vertex_array: array<vec3f>;
 @group(1) @binding(1) var<storage, read> normal_array: array<vec3f>;
-@group(1) @binding(2) var<storage, read> face_array: array<Face>;
+@group(1) @binding(2) var<storage, read> vertex_indexes_array: array<u32>;
+@group(1) @binding(3) var<storage, read> normal_indexes_array: array<u32>;
 
 @vertex
 fn vs_main(v_in: VertexIn) -> VertexOut {
-    let face = face_array[v_in.vertex_index];
-    let vertex = vertex_array[face.vertex_index];
-    let normal = normal_array[face.normal_index];
+    let vertex_index = vertex_indexes_array[v_in.vertex_index];
+    let normal_index = normal_indexes_array[v_in.vertex_index];
+    let vertex = vertex_array[vertex_index];
+    let normal = normal_array[normal_index];
     var v_out: VertexOut;
     v_out.position = mvp_matrix * vec4f(vertex, 1);
     v_out.normal_interpollated = normal;

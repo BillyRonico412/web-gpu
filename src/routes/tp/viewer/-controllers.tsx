@@ -17,7 +17,7 @@ const ViewerInfo = () => {
 	}
 	return (
 		<Field>
-			<FieldLabel>Triangle count: {viewer.obj.faceData.length}</FieldLabel>
+			<FieldLabel>Triangle count: {viewer.obj.vertexIndexes.length}</FieldLabel>
 		</Field>
 	)
 }

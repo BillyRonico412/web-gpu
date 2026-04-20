@@ -147,19 +147,26 @@ export const parseGLB = async (data: Uint8Array): Promise<Object3D[]> => {
 			const positionAccessorIndex = primitive.attributes.POSITION
 			const positionAccessor = json.accessors[positionAccessorIndex]
 			const positionBufferView = json.bufferViews[positionAccessor.bufferView]
+			const positionByteOffset =
+				bin.byteOffset +
+				positionBufferView.byteOffset +
+				positionAccessor.byteOffset
+			const positionByteLength = positionAccessor.count * 3 * 4
 			const vertexesFloat32Array = new Float32Array(
-				bin.buffer,
-				positionBufferView.byteOffset + positionAccessor.byteOffset,
-				positionAccessor.count * 3,
+				bin.buffer.slice(
+					positionByteOffset,
+					positionByteOffset + positionByteLength,
+				),
 			)
 			const vertexIndexes: number[] = []
 			if (primitive.indices !== undefined) {
 				const indexAccessor = json.accessors[primitive.indices]
 				const indexBufferView = json.bufferViews[indexAccessor.bufferView]
-				const indices = new Uint16Array(
-					bin.buffer,
-					indexBufferView.byteOffset + indexAccessor.byteOffset,
-					indexAccessor.count,
+				const indexByteOffset =
+					bin.byteOffset + indexBufferView.byteOffset + indexAccessor.byteOffset
+				const indexByteLength = indexAccessor.count * 4
+				const indices = new Uint32Array(
+					bin.buffer.slice(indexByteOffset, indexByteOffset + indexByteLength),
 				)
 				for (let i = 0; i < indices.length; i++) {
 					vertexIndexes.push(indices[i])

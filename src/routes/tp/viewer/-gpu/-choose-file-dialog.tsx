@@ -115,7 +115,7 @@ export const ChooseFileDialog = () => {
 						}}
 					>
 						<FileDown />
-						Load OBJ file
+						Load file
 					</Button>
 				</div>
 			</DialogContent>

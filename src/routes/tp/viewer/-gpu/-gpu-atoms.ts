@@ -40,7 +40,7 @@ const canvasSizeAtom = withAtomEffect(
 const loadFileAtom = atom(null, (_, set) => {
 	const input = document.createElement("input")
 	input.type = "file"
-	input.accept = ".obj"
+	input.accept = ".obj, .glb"
 	input.onchange = (e) => {
 		const file = (e.target as HTMLInputElement).files?.[0]
 		if (file) {
@@ -65,7 +65,11 @@ const loadFileAtom = atom(null, (_, set) => {
 					toast.error("Unsupported file type or content")
 				}
 			}
-			reader.readAsText(file)
+			if (file.name.endsWith(".obj")) {
+				reader.readAsText(file)
+			} else if (file.name.endsWith(".glb")) {
+				reader.readAsArrayBuffer(file)
+			}
 		}
 	}
 	input.click()

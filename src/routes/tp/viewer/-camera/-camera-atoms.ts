@@ -8,6 +8,7 @@ const radiusAtom = atom(50)
 const azimuthAtom = atom(0)
 const elevationAtom = atom(0)
 const projectionTypeAtom = atom<"perspective" | "orthographic">("perspective")
+const upAtom = atom<Vec3>(vec3.create(0, 1, 0))
 
 const viewMatrixAtom = atom((get) => {
 	const target = get(targetAtom)
@@ -25,7 +26,7 @@ const viewMatrixAtom = atom((get) => {
 				Math.cos(utils.degToRad(elevation)) *
 				Math.cos(utils.degToRad(azimuth)),
 	)
-	const up = vec3.create(0, 1, 0)
+	const up = get(upAtom)
 	return mat4.lookAt(eye, target, up)
 })
 
@@ -171,6 +172,25 @@ export const cameraActionAtom = atom(
 	},
 )
 
+const turnUpAtom = atom(
+	null,
+	(get, set, axis: "x" | "z", direction: "cw" | "ccw") => {
+		const up = get(upAtom)
+		const angle = direction === "cw" ? -Math.PI / 2 : Math.PI / 2
+		set(targetAtom, vec3.create(0, 0, 0))
+		set(azimuthAtom, 0)
+		set(elevationAtom, 0)
+		const rotationMatrix = mat4.create()
+		if (axis === "x") {
+			mat4.rotateX(rotationMatrix, angle)
+		} else {
+			mat4.rotateZ(rotationMatrix, angle)
+		}
+		const nextUp = vec3.transformMat4(up, rotationMatrix)
+		set(upAtom, nextUp)
+	},
+)
+
 export const cameraAtoms = {
 	targetAtom,
 	radiusAtom,
@@ -182,4 +202,6 @@ export const cameraAtoms = {
 	farAtom,
 	cameraActionAtom,
 	projectionTypeAtom,
+	upAtom,
+	turnUpAtom,
 }

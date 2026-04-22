@@ -1,8 +1,8 @@
-import { type Mat4, mat4, type Vec3, vec3 } from "wgpu-matrix"
 import { initWebGPU } from "@/lib/webgpu"
 import { CANVAS_ID } from "@/routes/tp/viewer/-gpu/-gpu-atoms"
 import renderShaderCode from "@/routes/tp/viewer/-gpu/-shaders/-render-shader.wgsl?raw"
 import type { Object3D } from "@/routes/tp/viewer/-gpu/-types"
+import { type Mat4, mat4, type Vec3, vec3 } from "wgpu-matrix"
 
 const createObjBuffer = (device: GPUDevice, objects3D: Object3D[]) => {
 	const obj = objects3D[0]
@@ -111,25 +111,6 @@ const createLightDirectionBuffer = (device: GPUDevice) => {
 	return {
 		lightDirectionBuffer,
 		updateLightDirectionBuffer,
-	}
-}
-
-const createInterpolateNormalsBuffer = (device: GPUDevice) => {
-	const interpolateNormalsBuffer = device.createBuffer({
-		label: "Interpolate normals buffer",
-		size: 4,
-		usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
-	})
-	const updateInterpolateNormalsBuffer = (interpolateNormals: boolean) => {
-		device.queue.writeBuffer(
-			interpolateNormalsBuffer,
-			0,
-			new Uint32Array([interpolateNormals ? 1 : 0]),
-		)
-	}
-	return {
-		interpolateNormalsBuffer,
-		updateInterpolateNormalsBuffer,
 	}
 }
 
@@ -299,8 +280,6 @@ export const initViewer = async (objects3D: Object3D[]) => {
 		createMvpMatrixBuffer(device)
 	const { lightDirectionBuffer, updateLightDirectionBuffer } =
 		createLightDirectionBuffer(device)
-	const { interpolateNormalsBuffer, updateInterpolateNormalsBuffer } =
-		createInterpolateNormalsBuffer(device)
 
 	let depthTexture = createDepthTexture(device, canvas, true)
 	let renderPipeline = getRenderPipeline(true)
@@ -310,7 +289,6 @@ export const initViewer = async (objects3D: Object3D[]) => {
 		viewMatrix: Mat4
 		projectionMatrix: Mat4
 		lightDirection: Vec3
-		interpolateNormals: boolean
 		backgroundVec3: Vec3
 		msaa: boolean
 	}) => {
@@ -319,12 +297,10 @@ export const initViewer = async (objects3D: Object3D[]) => {
 			backgroundVec3,
 			projectionMatrix,
 			lightDirection,
-			interpolateNormals,
 			msaa,
 		} = params
 		updateMvpMatrixBuffer(viewMatrix, projectionMatrix)
 		updateLightDirectionBuffer(lightDirection)
-		updateInterpolateNormalsBuffer(interpolateNormals)
 		const commandEncoder = device.createCommandEncoder()
 		const renderPassDescriptor: GPURenderPassDescriptor = {
 			colorAttachments: [
@@ -369,12 +345,6 @@ export const initViewer = async (objects3D: Object3D[]) => {
 					binding: 1,
 					resource: {
 						buffer: lightDirectionBuffer,
-					},
-				},
-				{
-					binding: 2,
-					resource: {
-						buffer: interpolateNormalsBuffer,
 					},
 				},
 			],
@@ -468,7 +438,6 @@ export const initViewer = async (objects3D: Object3D[]) => {
 		normalIndexesBuffer.destroy()
 		mvpMatrixBuffer.destroy()
 		lightDirectionBuffer.destroy()
-		interpolateNormalsBuffer.destroy()
 		depthTexture.destroy()
 		if (msaaTexture) {
 			msaaTexture.destroy()

@@ -9,13 +9,11 @@ struct VertexIn {
 
 struct VertexOut {
     @builtin(position) position: vec4f,
-    @location(1) normal_interpollated: vec3f,
-    @interpolate(flat) @location(2) normal_flatten: vec3f,
+    @location(1) normal: vec3f,
 }
 
 @group(0) @binding(0) var<uniform> mvp_matrix: mat4x4f;
 @group(0) @binding(1) var<uniform> light_direction: vec3f;
-@group(0) @binding(2) var<uniform> interpolate_normals: u32;
 @group(1) @binding(0) var<storage, read> vertex_array: array<vec3f>;
 @group(1) @binding(1) var<storage, read> normal_array: array<vec3f>;
 @group(1) @binding(2) var<storage, read> vertex_indexes_array: array<u32>;
@@ -29,14 +27,13 @@ fn vs_main(v_in: VertexIn) -> VertexOut {
     let normal = normal_array[normal_index];
     var v_out: VertexOut;
     v_out.position = mvp_matrix * vec4f(vertex, 1);
-    v_out.normal_interpollated = normal;
-    v_out.normal_flatten = normal;
+    v_out.normal = normal;
     return v_out;
 }
 
 @fragment
 fn fs_main(f_in: VertexOut) -> @location(0) vec4f {
-    let n = normalize(select(f_in.normal_flatten, f_in.normal_interpollated, interpolate_normals == 1));
+    let n = normalize(f_in.normal);
     let l = normalize(-light_direction);
     let diffuse = max(dot(n, l), 0.0);
     let ambient = 0.15;

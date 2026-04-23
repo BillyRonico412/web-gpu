@@ -17,9 +17,14 @@ export const createRenderResources = (device: GPUDevice) => {
 		return depthTexture
 	}
 
-	const createMsaaTexture = (canvas: HTMLCanvasElement, msaa: boolean) => {
+	const createViewTexture = (params: {
+		canvas: HTMLCanvasElement
+		msaa: boolean
+		context: GPUCanvasContext
+	}) => {
+		const { canvas, msaa } = params
 		if (!msaa) {
-			return
+			return undefined
 		}
 		const msaaTexture = device.createTexture({
 			label: "MSAA texture",
@@ -220,19 +225,23 @@ export const createRenderResources = (device: GPUDevice) => {
 		commandEncoder: GPUCommandEncoder
 		uniformBuffer: GPUBuffer
 		objectResources: ObjectResources
-		msaaTexture: GPUTexture | undefined
+		viewTexture: GPUTexture | undefined
 		depthTexture: GPUTexture
 		backgroundVec3: Vec3
 		context: GPUCanvasContext
 		msaa: boolean
 		objects3D: Object3D[]
 	}) => {
+		let viewTexture: GPUTexture
+		if (params.viewTexture) {
+			viewTexture = params.viewTexture
+		} else {
+			viewTexture = params.context.getCurrentTexture()
+		}
 		const renderPassDescriptor: GPURenderPassDescriptor = {
 			colorAttachments: [
 				{
-					view: params.msaaTexture
-						? params.msaaTexture.createView()
-						: params.context.getCurrentTexture().createView(),
+					view: viewTexture.createView(),
 					loadOp: "clear",
 					storeOp: "store",
 					clearValue: {
@@ -277,6 +286,6 @@ export const createRenderResources = (device: GPUDevice) => {
 		createRenderPipeline,
 		doRenderPass,
 		createDepthTexture,
-		createMsaaTexture,
+		createViewTexture,
 	}
 }

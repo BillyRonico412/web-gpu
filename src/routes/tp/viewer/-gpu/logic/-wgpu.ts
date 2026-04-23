@@ -48,11 +48,15 @@ export const initViewer = async (objects3D: Object3D[]) => {
 		createRenderPipeline,
 		doRenderPass,
 		createDepthTexture,
-		createMsaaTexture,
+		createViewTexture,
 	} = createRenderResources(device)
 	const { uniformBuffer, updateUniformBuffer } = createUniformBuffer(device)
 	let depthTexture = createDepthTexture(canvas, true)
-	let msaaTexture = createMsaaTexture(canvas, true)
+	let viewTexture = createViewTexture({
+		canvas,
+		msaa: true,
+		context,
+	})
 	let renderPipeline = createRenderPipeline(true)
 
 	const draw = (params: {
@@ -76,7 +80,7 @@ export const initViewer = async (objects3D: Object3D[]) => {
 			commandEncoder,
 			uniformBuffer,
 			objectResources,
-			msaaTexture,
+			viewTexture,
 			depthTexture,
 			backgroundVec3,
 			context,
@@ -95,11 +99,15 @@ export const initViewer = async (objects3D: Object3D[]) => {
 		renderPipeline = createRenderPipeline(msaa)
 	}
 
-	const updateMsaaView = (msaa: boolean) => {
-		if (msaaTexture) {
-			msaaTexture.destroy()
+	const updateViewTexture = (msaa: boolean) => {
+		if (viewTexture) {
+			viewTexture.destroy()
 		}
-		msaaTexture = createMsaaTexture(canvas, msaa)
+		viewTexture = createViewTexture({
+			canvas,
+			msaa,
+			context,
+		})
 	}
 
 	const cleanup = () => {
@@ -111,8 +119,8 @@ export const initViewer = async (objects3D: Object3D[]) => {
 		objectResources.materialIndexesBuffer.destroy()
 		uniformBuffer.destroy()
 		depthTexture.destroy()
-		if (msaaTexture) {
-			msaaTexture.destroy()
+		if (viewTexture) {
+			viewTexture.destroy()
 		}
 	}
 
@@ -120,7 +128,7 @@ export const initViewer = async (objects3D: Object3D[]) => {
 		draw,
 		updateDepthTexture,
 		updateRenderPipeline,
-		updateMsaaView,
+		updateViewTexture,
 		aabb: objectResources.aabb,
 		cleanup,
 	}

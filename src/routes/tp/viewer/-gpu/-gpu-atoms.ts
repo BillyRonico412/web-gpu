@@ -10,6 +10,7 @@ import { parseObj } from "@/routes/tp/viewer/-obj/-parser"
 
 export const CANVAS_ID = "viewer-canvas"
 
+const drawTriggerAtom = atom(0)
 const objects3DAtom = atom<Object3D[] | undefined>(undefined)
 const viewerAtom = atom<Viewer | undefined>()
 const backgroundHexAtom = atom<string>("#444")
@@ -82,4 +83,5 @@ export const gpuAtoms = {
 	loadFileAtom,
 	backgroundHexAtom,
 	backgroundVec3Atom,
+	drawTriggerAtom,
 }

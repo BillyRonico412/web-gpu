@@ -22,15 +22,16 @@ const initViewerEffect = atomEffect((get, set) => {
 	})()
 })
 
-const msaaEffect = atomEffect((get) => {
+const msaaEffect = atomEffect((get, set) => {
 	const viewer = get(gpuAtoms.viewerAtom)
 	if (!viewer) {
 		return
 	}
 	const msaa = get(renderingAtoms.msaaAtom)
-	viewer.updateMsaaView(msaa)
+	viewer.updateViewTexture(msaa)
 	viewer.updateDepthTexture(msaa)
 	viewer.updateRenderPipeline(msaa)
+	set(gpuAtoms.drawTriggerAtom, (prev) => prev + 1)
 })
 
 const drawEffect = atomEffect((get) => {
@@ -38,11 +39,12 @@ const drawEffect = atomEffect((get) => {
 	if (!viewer) {
 		return
 	}
+	get(gpuAtoms.drawTriggerAtom)
 	const viewMatrix = get(cameraAtoms.viewMatrixAtom)
 	const projectionMatrix = get(cameraAtoms.projectionMatrixAtom)
 	const lightDirection = get(lightAtoms.lightDirectionAtom)
 	const backgroundVec3 = get(gpuAtoms.backgroundVec3Atom)
-	const msaa = get(renderingAtoms.msaaAtom)
+	const msaa = get.peek(renderingAtoms.msaaAtom)
 	viewer.draw({
 		viewMatrix,
 		projectionMatrix,
@@ -52,7 +54,7 @@ const drawEffect = atomEffect((get) => {
 	})
 })
 
-const canvasEffect = atomEffect((get) => {
+const canvasEffect = atomEffect((get, set) => {
 	const canvas = document.querySelector(`#${CANVAS_ID}`) as HTMLCanvasElement
 	const handleResize = () => {
 		const viewer = get(gpuAtoms.viewerAtom)
@@ -62,20 +64,10 @@ const canvasEffect = atomEffect((get) => {
 		if (!viewer) {
 			return
 		}
-		const viewMatrix = get(cameraAtoms.viewMatrixAtom)
-		const projectionMatrix = get(cameraAtoms.projectionMatrixAtom)
-		const lightDirection = get(lightAtoms.lightDirectionAtom)
-		const backgroundVec3 = get(gpuAtoms.backgroundVec3Atom)
 		const msaa = get(renderingAtoms.msaaAtom)
 		viewer.updateDepthTexture(msaa)
-		viewer.updateMsaaView(msaa)
-		viewer.draw({
-			viewMatrix,
-			projectionMatrix,
-			lightDirection,
-			backgroundVec3,
-			msaa,
-		})
+		viewer.updateViewTexture(msaa)
+		set(gpuAtoms.drawTriggerAtom, (prev) => prev + 1)
 	}
 	handleResize()
 	const resizeObserver = new ResizeObserver(handleResize)

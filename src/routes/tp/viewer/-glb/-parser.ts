@@ -1,7 +1,7 @@
 import { type Mat4, mat4, quat, type Vec3, vec3, vec4 } from "wgpu-matrix"
 import { type GLTF, gltfSchema } from "@/routes/tp/viewer/-glb/-utils"
-import { computeFlatshadingNormals } from "@/routes/tp/viewer/-gpu/-compute-normal"
-import type { Object3D } from "@/routes/tp/viewer/-gpu/-types"
+import { computeFlatshadingNormals } from "@/routes/tp/viewer/-gpu/logic/-compute-normal"
+import type { Object3D } from "@/routes/tp/viewer/-gpu/logic/-types"
 
 const textDecoder = new TextDecoder()
 

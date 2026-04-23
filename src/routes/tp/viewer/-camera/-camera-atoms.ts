@@ -36,7 +36,7 @@ const farAtom = atom((get) => {
 	if (!viewer) {
 		return 1000
 	}
-	const aabb = viewer.getAABB()
+	const aabb = viewer.aabb
 	if (!aabb) {
 		return 1000
 	}
@@ -106,7 +106,7 @@ export const cameraActionAtom = atom(
 				if (!viewer) {
 					return
 				}
-				const aabb = viewer.getAABB()
+				const aabb = viewer.aabb
 				if (!aabb) {
 					return
 				}
@@ -129,7 +129,7 @@ export const cameraActionAtom = atom(
 				if (!viewer) {
 					return
 				}
-				const aabb = viewer.getAABB()
+				const aabb = viewer.aabb
 				if (!aabb) {
 					return
 				}
@@ -159,7 +159,7 @@ export const cameraActionAtom = atom(
 				if (!viewer) {
 					return
 				}
-				const aabb = viewer.getAABB()
+				const aabb = viewer.aabb
 				if (!aabb) {
 					return
 				}

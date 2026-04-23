@@ -1,0 +1,127 @@
+import { type Mat4, mat4, type Vec3 } from "wgpu-matrix"
+import { initWebGPU } from "@/lib/webgpu"
+import { CANVAS_ID } from "@/routes/tp/viewer/-gpu/-gpu-atoms"
+import { createObjectResources } from "@/routes/tp/viewer/-gpu/logic/-object-resources"
+import { createRenderResources } from "@/routes/tp/viewer/-gpu/logic/-render-resources"
+import type { Object3D } from "@/routes/tp/viewer/-gpu/logic/-types"
+
+const createUniformBuffer = (device: GPUDevice) => {
+	const uniformSize = 16 * 4 + 4 * 4
+	const uniformBuffer = device.createBuffer({
+		label: "Uniform buffer",
+		size: uniformSize,
+		usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+	})
+	const updateUniformBuffer = (
+		mvp: { viewMatrix: Mat4; projectionMatrix: Mat4 },
+		lightDirection: Vec3,
+	) => {
+		const modelMatrix = mat4.identity()
+		const mvpMatrix = mat4.multiply(
+			mat4.multiply(mvp.projectionMatrix, mvp.viewMatrix),
+			modelMatrix,
+		)
+		const uniformData = new Float32Array(uniformSize / 4)
+		uniformData.set(mvpMatrix, 0)
+		uniformData.set(lightDirection, 16)
+		device.queue.writeBuffer(uniformBuffer, 0, uniformData)
+	}
+	return { uniformBuffer, updateUniformBuffer }
+}
+
+export type Viewer = Awaited<ReturnType<typeof initViewer>>
+
+export const initViewer = async (objects3D: Object3D[]) => {
+	const { device } = await initWebGPU()
+	const canvas = document.querySelector(`#${CANVAS_ID}`) as HTMLCanvasElement
+	const context = canvas.getContext("webgpu")
+	if (!context) {
+		throw new Error("WebGPU is not supported in this browser.")
+	}
+	context.configure({
+		device,
+		format: navigator.gpu.getPreferredCanvasFormat(),
+		alphaMode: "premultiplied",
+	})
+	const objectResources = createObjectResources(device, objects3D)
+	const {
+		createRenderPipeline,
+		doRenderPass,
+		createDepthTexture,
+		createMsaaTexture,
+	} = createRenderResources(device)
+	const { uniformBuffer, updateUniformBuffer } = createUniformBuffer(device)
+	let depthTexture = createDepthTexture(canvas, true)
+	let msaaTexture = createMsaaTexture(canvas, true)
+	let renderPipeline = createRenderPipeline(true)
+
+	const draw = (params: {
+		viewMatrix: Mat4
+		projectionMatrix: Mat4
+		lightDirection: Vec3
+		backgroundVec3: Vec3
+		msaa: boolean
+	}) => {
+		const {
+			viewMatrix,
+			backgroundVec3,
+			projectionMatrix,
+			lightDirection,
+			msaa,
+		} = params
+		updateUniformBuffer({ viewMatrix, projectionMatrix }, lightDirection)
+		const commandEncoder = device.createCommandEncoder()
+		doRenderPass({
+			renderPipeline,
+			commandEncoder,
+			uniformBuffer,
+			objectResources,
+			msaaTexture,
+			depthTexture,
+			backgroundVec3,
+			context,
+			msaa,
+			objects3D,
+		})
+		device.queue.submit([commandEncoder.finish()])
+	}
+
+	const updateDepthTexture = (msaa: boolean) => {
+		depthTexture.destroy()
+		depthTexture = createDepthTexture(canvas, msaa)
+	}
+
+	const updateRenderPipeline = (msaa: boolean) => {
+		renderPipeline = createRenderPipeline(msaa)
+	}
+
+	const updateMsaaView = (msaa: boolean) => {
+		if (msaaTexture) {
+			msaaTexture.destroy()
+		}
+		msaaTexture = createMsaaTexture(canvas, msaa)
+	}
+
+	const cleanup = () => {
+		objectResources.vertexBuffer.destroy()
+		objectResources.normalBuffer.destroy()
+		objectResources.vertexIndexesBuffer.destroy()
+		objectResources.normalIndexesBuffer.destroy()
+		objectResources.materialBuffer.destroy()
+		objectResources.materialIndexesBuffer.destroy()
+		uniformBuffer.destroy()
+		depthTexture.destroy()
+		if (msaaTexture) {
+			msaaTexture.destroy()
+		}
+	}
+
+	return {
+		draw,
+		updateDepthTexture,
+		updateRenderPipeline,
+		updateMsaaView,
+		aabb: objectResources.aabb,
+		cleanup,
+	}
+}

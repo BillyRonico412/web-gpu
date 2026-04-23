@@ -1,6 +1,6 @@
 import { mat4, type Vec3, vec3 } from "wgpu-matrix"
-import { computeFlatshadingNormals } from "@/routes/tp/viewer/-gpu/-compute-normal"
-import type { Object3D } from "@/routes/tp/viewer/-gpu/-types"
+import { computeFlatshadingNormals } from "@/routes/tp/viewer/-gpu/logic/-compute-normal"
+import type { Object3D } from "@/routes/tp/viewer/-gpu/logic/-types"
 
 export const parseObj = async (objText: string): Promise<Object3D[]> => {
 	const vertexes: Vec3[] = []

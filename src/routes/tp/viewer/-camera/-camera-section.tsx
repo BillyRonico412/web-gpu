@@ -3,6 +3,7 @@ import {
 	Axis3D,
 	CornerDownLeft,
 	CornerDownRight,
+	Fullscreen,
 	Telescope,
 } from "lucide-react"
 import { vec3 } from "wgpu-matrix"
@@ -18,6 +19,7 @@ export const CameraSection = () => {
 	)
 	const turnUp = useSetAtom(cameraAtoms.turnUpAtom)
 	const setUp = useSetAtom(cameraAtoms.upAtom)
+	const cameraAction = useSetAtom(cameraAtoms.cameraActionAtom)
 	return (
 		<FieldGroup>
 			<Field>
@@ -79,6 +81,18 @@ export const CameraSection = () => {
 						</ButtonGroup>
 					</Field>
 				</div>
+			</Field>
+			<Field>
+				<Button
+					variant="outline"
+					size="sm"
+					onClick={() => {
+						cameraAction({ type: "fitToView" })
+					}}
+				>
+					<Fullscreen />
+					Fit to view
+				</Button>
 			</Field>
 		</FieldGroup>
 	)

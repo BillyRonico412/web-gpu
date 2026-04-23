@@ -3,7 +3,6 @@ import { atomEffect } from "jotai-effect"
 import { type Vec3, vec3 } from "wgpu-matrix"
 import { cameraAtoms } from "@/routes/tp/viewer/-camera/-camera-atoms"
 
-const interpolateNormalsAtom = atom(true)
 const lightModeAtom = atom<"headlight" | "directional">("headlight")
 const lightDirectionAtom = atom<Vec3>(vec3.create(1, -2, -1))
 
@@ -25,7 +24,6 @@ const lightModeEffect = atomEffect((get, set) => {
 })
 
 export const lightAtoms = {
-	interpolateNormalsAtom,
 	lightDirectionAtom,
 	lightModeAtom,
 	lightModeEffect,

@@ -12,8 +12,12 @@ struct VertexOut {
     @location(1) normal: vec3f,
 }
 
-@group(0) @binding(0) var<uniform> mvp_matrix: mat4x4f;
-@group(0) @binding(1) var<uniform> light_direction: vec3f;
+struct Uniform {
+    mvp_matrix: mat4x4f,
+    light_direction: vec3f,
+}
+
+@group(0) @binding(0) var<uniform> uni: Uniform;
 @group(1) @binding(0) var<storage, read> vertex_array: array<vec3f>;
 @group(1) @binding(1) var<storage, read> normal_array: array<vec3f>;
 @group(1) @binding(2) var<storage, read> vertex_indexes_array: array<u32>;
@@ -26,7 +30,7 @@ fn vs_main(v_in: VertexIn) -> VertexOut {
     let vertex = vertex_array[vertex_index];
     let normal = normal_array[normal_index];
     var v_out: VertexOut;
-    v_out.position = mvp_matrix * vec4f(vertex, 1);
+    v_out.position = uni.mvp_matrix * vec4f(vertex, 1);
     v_out.normal = normal;
     return v_out;
 }
@@ -34,7 +38,7 @@ fn vs_main(v_in: VertexIn) -> VertexOut {
 @fragment
 fn fs_main(f_in: VertexOut) -> @location(0) vec4f {
     let n = normalize(f_in.normal);
-    let l = normalize(-light_direction);
+    let l = normalize(-uni.light_direction);
     let diffuse = max(dot(n, l), 0.0);
     let ambient = 0.15;
     let base_color = vec3f(0.7, 0.75, 0.8);

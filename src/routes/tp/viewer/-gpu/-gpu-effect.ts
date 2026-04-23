@@ -1,7 +1,7 @@
 import { atomEffect } from "jotai-effect"
 import { cameraAtoms } from "@/routes/tp/viewer/-camera/-camera-atoms"
 import { CANVAS_ID, gpuAtoms } from "@/routes/tp/viewer/-gpu/-gpu-atoms"
-import { initViewer } from "@/routes/tp/viewer/-gpu/-wgpu"
+import { initViewer } from "@/routes/tp/viewer/-gpu/logic/-wgpu"
 import { lightAtoms } from "@/routes/tp/viewer/-light/-light-atoms"
 import { renderingAtoms } from "@/routes/tp/viewer/-rendering/-rendering-atoms"
 
@@ -41,14 +41,12 @@ const drawEffect = atomEffect((get) => {
 	const viewMatrix = get(cameraAtoms.viewMatrixAtom)
 	const projectionMatrix = get(cameraAtoms.projectionMatrixAtom)
 	const lightDirection = get(lightAtoms.lightDirectionAtom)
-	const interpolateNormals = get(lightAtoms.interpolateNormalsAtom)
 	const backgroundVec3 = get(gpuAtoms.backgroundVec3Atom)
 	const msaa = get(renderingAtoms.msaaAtom)
 	viewer.draw({
 		viewMatrix,
 		projectionMatrix,
 		lightDirection,
-		interpolateNormals,
 		backgroundVec3,
 		msaa,
 	})
@@ -67,7 +65,6 @@ const canvasEffect = atomEffect((get) => {
 		const viewMatrix = get(cameraAtoms.viewMatrixAtom)
 		const projectionMatrix = get(cameraAtoms.projectionMatrixAtom)
 		const lightDirection = get(lightAtoms.lightDirectionAtom)
-		const interpolateNormals = get(lightAtoms.interpolateNormalsAtom)
 		const backgroundVec3 = get(gpuAtoms.backgroundVec3Atom)
 		const msaa = get(renderingAtoms.msaaAtom)
 		viewer.updateDepthTexture(msaa)
@@ -76,7 +73,6 @@ const canvasEffect = atomEffect((get) => {
 			viewMatrix,
 			projectionMatrix,
 			lightDirection,
-			interpolateNormals,
 			backgroundVec3,
 			msaa,
 		})

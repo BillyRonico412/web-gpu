@@ -1,5 +1,4 @@
 import { mat4, type Vec3, vec3 } from "wgpu-matrix"
-import { computeFlatshadingNormals } from "@/routes/tp/viewer/-gpu/logic/-compute-normal"
 import type { Object3D } from "@/routes/tp/viewer/-gpu/logic/-types"
 
 export const parseObj = async (objText: string): Promise<Object3D[]> => {
@@ -28,10 +27,6 @@ export const parseObj = async (objText: string): Promise<Object3D[]> => {
 			}
 		}
 	}
-	const { normals, normalIndexes } = await computeFlatshadingNormals(
-		vertexes,
-		vertexIndexes,
-	)
 	return [
 		{
 			name: "Object",
@@ -42,9 +37,7 @@ export const parseObj = async (objText: string): Promise<Object3D[]> => {
 			},
 			matrix: mat4.identity(),
 			vertexes,
-			normals,
 			vertexIndexes,
-			normalIndexes,
 		},
 	]
 }

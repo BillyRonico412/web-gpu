@@ -1,6 +1,6 @@
 import { type Mat4, mat4, quat, type Vec3, vec3, vec4 } from "wgpu-matrix"
 import { type GLTF, gltfSchema } from "@/routes/tp/viewer/-glb/-utils"
-import { computeFlatshadingNormals } from "@/routes/tp/viewer/-gpu/logic/-compute-normal"
+import { createNormalBuffer } from "@/routes/tp/viewer/-gpu/logic/-compute-normal"
 import type { Object3D } from "@/routes/tp/viewer/-gpu/logic/-types"
 
 const textDecoder = new TextDecoder()
@@ -177,7 +177,7 @@ export const parseGLB = async (data: Uint8Array): Promise<Object3D[]> => {
 				}
 			}
 			const vertexes = float32ToVec3Array(vertexesFloat32Array)
-			const { normalIndexes, normals } = await computeFlatshadingNormals(
+			const { normalIndexes, normals } = await createNormalBuffer(
 				float32ToVec3Array(vertexesFloat32Array),
 				vertexIndexes,
 			)

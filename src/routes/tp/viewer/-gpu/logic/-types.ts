@@ -9,9 +9,7 @@ export type Object3D = {
 	}
 	matrix: Mat4
 	vertexes: Vec3[]
-	normals: Vec3[]
 	vertexIndexes: number[]
-	normalIndexes: number[]
 }
 
 export type AABB = {
@@ -23,10 +21,10 @@ export type AABB = {
 
 export type ObjectResources = {
 	vertexBuffer: GPUBuffer
-	vertexIndexesBuffer: GPUBuffer
+	vertexIndexBuffer: GPUBuffer
 	normalBuffer: GPUBuffer
-	normalIndexesBuffer: GPUBuffer
+	normalIndexBuffer: GPUBuffer
 	materialBuffer: GPUBuffer
-	materialIndexesBuffer: GPUBuffer
+	materialIndexBuffer: GPUBuffer
 	aabb: AABB
 }

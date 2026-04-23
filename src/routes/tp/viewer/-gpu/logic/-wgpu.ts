@@ -4,6 +4,7 @@ import { CANVAS_ID } from "@/routes/tp/viewer/-gpu/-gpu-atoms"
 import { createObjectResources } from "@/routes/tp/viewer/-gpu/logic/-object-resources"
 import { createRenderResources } from "@/routes/tp/viewer/-gpu/logic/-render-resources"
 import type { Object3D } from "@/routes/tp/viewer/-gpu/logic/-types"
+import type { ShadingModeType } from "@/routes/tp/viewer/-rendering/-rendering-atoms"
 
 const createUniformBuffer = (device: GPUDevice) => {
 	const uniformSize = 16 * 4 + 4 * 4
@@ -31,7 +32,10 @@ const createUniformBuffer = (device: GPUDevice) => {
 
 export type Viewer = Awaited<ReturnType<typeof initViewer>>
 
-export const initViewer = async (objects3D: Object3D[]) => {
+export const initViewer = async (
+	objects3D: Object3D[],
+	shadingMode: ShadingModeType,
+) => {
 	const { device } = await initWebGPU()
 	const canvas = document.querySelector(`#${CANVAS_ID}`) as HTMLCanvasElement
 	const context = canvas.getContext("webgpu")
@@ -43,7 +47,11 @@ export const initViewer = async (objects3D: Object3D[]) => {
 		format: navigator.gpu.getPreferredCanvasFormat(),
 		alphaMode: "premultiplied",
 	})
-	const objectResources = createObjectResources(device, objects3D)
+	const objectResources = createObjectResources({
+		device,
+		objects3D,
+		shadingMode,
+	})
 	const {
 		createRenderPipeline,
 		doRenderPass,
@@ -113,10 +121,10 @@ export const initViewer = async (objects3D: Object3D[]) => {
 	const cleanup = () => {
 		objectResources.vertexBuffer.destroy()
 		objectResources.normalBuffer.destroy()
-		objectResources.vertexIndexesBuffer.destroy()
-		objectResources.normalIndexesBuffer.destroy()
+		objectResources.vertexIndexBuffer.destroy()
+		objectResources.normalIndexBuffer.destroy()
 		objectResources.materialBuffer.destroy()
-		objectResources.materialIndexesBuffer.destroy()
+		objectResources.materialIndexBuffer.destroy()
 		uniformBuffer.destroy()
 		depthTexture.destroy()
 		if (viewTexture) {

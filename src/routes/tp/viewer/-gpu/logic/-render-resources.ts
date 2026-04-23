@@ -124,10 +124,10 @@ export const createRenderResources = (device: GPUDevice) => {
 		const {
 			vertexBuffer,
 			normalBuffer,
-			vertexIndexesBuffer,
-			normalIndexesBuffer,
+			vertexIndexBuffer: vertexIndexesBuffer,
+			normalIndexBuffer: normalIndexesBuffer,
 			materialBuffer,
-			materialIndexesBuffer,
+			materialIndexBuffer: materialIndexesBuffer,
 		} = params
 		const renderStorageBindGroup = device.createBindGroup({
 			label: "Render storage bind group",

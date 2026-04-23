@@ -1,9 +1,11 @@
 import { vec3 } from "wgpu-matrix"
+import { createNormalBuffer } from "@/routes/tp/viewer/-gpu/logic/-compute-normal"
 import type {
 	AABB,
 	Object3D,
 	ObjectResources,
 } from "@/routes/tp/viewer/-gpu/logic/-types"
+import type { ShadingModeType } from "@/routes/tp/viewer/-rendering/-rendering-atoms"
 
 const getAABB = (objects3D: Object3D[]): AABB => {
 	const min = vec3.create(
@@ -35,10 +37,12 @@ const getAABB = (objects3D: Object3D[]): AABB => {
 	}
 }
 
-export const createObjectResources = (
-	device: GPUDevice,
-	objects3D: Object3D[],
-): ObjectResources => {
+export const createObjectResources = (params: {
+	device: GPUDevice
+	objects3D: Object3D[]
+	shadingMode: ShadingModeType
+}): ObjectResources => {
+	const { device, objects3D, shadingMode } = params
 	// Vertexes buffer
 	const allVertexes = objects3D.flatMap((o) => o.vertexes)
 	const vertexBuffer = device.createBuffer({
@@ -57,27 +61,9 @@ export const createObjectResources = (
 	}
 	device.queue.writeBuffer(vertexBuffer, 0, vertexData)
 
-	// Normals buffer
-	const allNormals = objects3D.flatMap((o) => o.normals)
-	const normalBuffer = device.createBuffer({
-		label: "Normal buffer",
-		size: allNormals.length * 4 * 4,
-		usage:
-			GPUBufferUsage.STORAGE | GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
-	})
-	const normalData = new Float32Array(allNormals.length * 4)
-	let normalOffset = 0
-	for (const obj of objects3D) {
-		for (let i = 0; i < obj.normals.length; i++, normalOffset++) {
-			const normal = obj.normals[i]
-			normalData.set(normal, normalOffset * 4)
-		}
-	}
-	device.queue.writeBuffer(normalBuffer, 0, normalData)
-
 	// Vertex indexes buffer
 	const allVertexIndexes = objects3D.flatMap((o) => o.vertexIndexes)
-	const vertexIndexesBuffer = device.createBuffer({
+	const vertexIndexBuffer = device.createBuffer({
 		label: "Face buffer",
 		size: allVertexIndexes.length * 4,
 		usage:
@@ -93,27 +79,15 @@ export const createObjectResources = (
 		}
 		startVertexIndex += obj.vertexes.length
 	}
-	device.queue.writeBuffer(vertexIndexesBuffer, 0, vertexIndexesData)
+	device.queue.writeBuffer(vertexIndexBuffer, 0, vertexIndexesData)
 
-	// Normal indexes buffer
-	const allNormalIndexes = objects3D.flatMap((o) => o.normalIndexes)
-	const normalIndexesBuffer = device.createBuffer({
-		label: "Normal index buffer",
-		size: allNormalIndexes.length * 4,
-		usage:
-			GPUBufferUsage.STORAGE | GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
+	const { normalBuffer, normalIndexBuffer } = createNormalBuffer({
+		device,
+		objects3D,
+		vertexBuffer,
+		vertexIndexBuffer,
+		shadingMode,
 	})
-	const normalIndexesData = new Uint32Array(allNormalIndexes.length)
-	let normalIndexOffset = 0
-	let startNormalIndex = 0
-	for (const obj of objects3D) {
-		for (let i = 0; i < obj.normalIndexes.length; i++, normalIndexOffset++) {
-			const normalIndex = obj.normalIndexes[i]
-			normalIndexesData[normalIndexOffset] = normalIndex + startNormalIndex
-		}
-		startNormalIndex += obj.normals.length
-	}
-	device.queue.writeBuffer(normalIndexesBuffer, 0, normalIndexesData)
 
 	// Material buffer
 	const allMaterials = objects3D.map((o) => o.material)
@@ -135,7 +109,7 @@ export const createObjectResources = (
 	device.queue.writeBuffer(materialBuffer, 0, materialData)
 
 	// Material indexes buffer
-	const materialIndexesBuffer = device.createBuffer({
+	const materialIndexBuffer = device.createBuffer({
 		label: "Material index buffer",
 		size: allVertexIndexes.length * 4,
 		usage:
@@ -150,17 +124,17 @@ export const createObjectResources = (
 			materialIndexesData[materialIndexOffset] = objIndex
 		}
 	}
-	device.queue.writeBuffer(materialIndexesBuffer, 0, materialIndexesData)
+	device.queue.writeBuffer(materialIndexBuffer, 0, materialIndexesData)
 
 	const aabb = getAABB(objects3D)
 
 	return {
 		vertexBuffer,
-		vertexIndexesBuffer,
+		vertexIndexBuffer,
 		normalBuffer,
-		normalIndexesBuffer,
+		normalIndexBuffer,
 		materialBuffer,
-		materialIndexesBuffer,
+		materialIndexBuffer,
 		aabb,
 	}
 }

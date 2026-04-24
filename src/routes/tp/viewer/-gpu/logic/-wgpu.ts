@@ -1,10 +1,10 @@
 import { type Mat4, mat4, type Vec3 } from "wgpu-matrix"
 import { initWebGPU } from "@/lib/webgpu"
 import { CANVAS_ID } from "@/routes/tp/viewer/-gpu/-gpu-atoms"
+import type { ShadingModeType } from "@/routes/tp/viewer/-gpu/logic/-normal-resources"
 import { createObjectResources } from "@/routes/tp/viewer/-gpu/logic/-object-resources"
 import { createRenderResources } from "@/routes/tp/viewer/-gpu/logic/-render-resources"
 import type { Object3D } from "@/routes/tp/viewer/-gpu/logic/-types"
-import type { ShadingModeType } from "@/routes/tp/viewer/-rendering/-rendering-atoms"
 
 const createUniformBuffer = (device: GPUDevice) => {
 	const uniformSize = 16 * 4 + 4 * 4
@@ -32,10 +32,7 @@ const createUniformBuffer = (device: GPUDevice) => {
 
 export type Viewer = Awaited<ReturnType<typeof initViewer>>
 
-export const initViewer = async (
-	objects3D: Object3D[],
-	shadingMode: ShadingModeType,
-) => {
+export const initViewer = async (objects3D: Object3D[]) => {
 	const { device } = await initWebGPU()
 	const canvas = document.querySelector(`#${CANVAS_ID}`) as HTMLCanvasElement
 	const context = canvas.getContext("webgpu")
@@ -47,10 +44,9 @@ export const initViewer = async (
 		format: navigator.gpu.getPreferredCanvasFormat(),
 		alphaMode: "premultiplied",
 	})
-	const objectResources = createObjectResources({
+	const objectResources = await createObjectResources({
 		device,
 		objects3D,
-		shadingMode,
 	})
 	const {
 		createRenderPipeline,
@@ -73,6 +69,7 @@ export const initViewer = async (
 		lightDirection: Vec3
 		backgroundVec3: Vec3
 		msaa: boolean
+		shadingMode: ShadingModeType
 	}) => {
 		const {
 			viewMatrix,
@@ -80,6 +77,7 @@ export const initViewer = async (
 			projectionMatrix,
 			lightDirection,
 			msaa,
+			shadingMode,
 		} = params
 		updateUniformBuffer({ viewMatrix, projectionMatrix }, lightDirection)
 		const commandEncoder = device.createCommandEncoder()
@@ -94,6 +92,7 @@ export const initViewer = async (
 			context,
 			msaa,
 			objects3D,
+			shadingMode,
 		})
 		device.queue.submit([commandEncoder.finish()])
 	}
@@ -120,9 +119,11 @@ export const initViewer = async (
 
 	const cleanup = () => {
 		objectResources.vertexBuffer.destroy()
-		objectResources.normalBuffer.destroy()
 		objectResources.vertexIndexBuffer.destroy()
-		objectResources.normalIndexBuffer.destroy()
+		objectResources.normalBuffer.destroy()
+		objectResources.flatNormalIndexBuffer.destroy()
+		objectResources.smoothNormalIndexBuffer.destroy()
+		objectResources.autoNormalIndexBuffer.destroy()
 		objectResources.materialBuffer.destroy()
 		objectResources.materialIndexBuffer.destroy()
 		uniformBuffer.destroy()

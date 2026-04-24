@@ -26,6 +26,10 @@ const files: Option[] = [
 		url: "/obj/cube.obj",
 	},
 	{
+		name: "Cylinder",
+		url: "/obj/cylinder.obj",
+	},
+	{
 		name: "Suzanne",
 		url: "/obj/suzanne.obj",
 	},

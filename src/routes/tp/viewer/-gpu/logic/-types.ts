@@ -23,7 +23,9 @@ export type ObjectResources = {
 	vertexBuffer: GPUBuffer
 	vertexIndexBuffer: GPUBuffer
 	normalBuffer: GPUBuffer
-	normalIndexBuffer: GPUBuffer
+	flatNormalIndexBuffer: GPUBuffer
+	smoothNormalIndexBuffer: GPUBuffer
+	autoNormalIndexBuffer: GPUBuffer
 	materialBuffer: GPUBuffer
 	materialIndexBuffer: GPUBuffer
 	aabb: AABB

@@ -45,12 +45,14 @@ const drawEffect = atomEffect((get) => {
 	const lightDirection = get(lightAtoms.lightDirectionAtom)
 	const backgroundVec3 = get(gpuAtoms.backgroundVec3Atom)
 	const msaa = get.peek(renderingAtoms.msaaAtom)
+	const shadingMode = get(renderingAtoms.shadingModeAtom)
 	viewer.draw({
 		viewMatrix,
 		projectionMatrix,
 		lightDirection,
 		backgroundVec3,
 		msaa,
+		shadingMode,
 	})
 })
 
@@ -81,5 +83,5 @@ export const gpuEffects = {
 	initViewerEffect,
 	drawEffect,
 	canvasEffect,
-	msaaCountEffect: msaaEffect,
+	msaaEffect,
 }

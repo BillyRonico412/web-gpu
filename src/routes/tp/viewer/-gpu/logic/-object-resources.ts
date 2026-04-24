@@ -1,11 +1,17 @@
+import { wrap } from "comlink"
 import { vec3 } from "wgpu-matrix"
-import { createNormalBuffer } from "@/routes/tp/viewer/-gpu/logic/-compute-normal"
+import type { NormalWorkerApi } from "@/routes/tp/viewer/-gpu/logic/-normal-resources"
 import type {
 	AABB,
 	Object3D,
 	ObjectResources,
 } from "@/routes/tp/viewer/-gpu/logic/-types"
-import type { ShadingModeType } from "@/routes/tp/viewer/-rendering/-rendering-atoms"
+
+const normalWorker = new Worker(
+	new URL("../logic/-normal-resources.ts", import.meta.url),
+	{ type: "module" },
+)
+const proxy = wrap<NormalWorkerApi>(normalWorker)
 
 const getAABB = (objects3D: Object3D[]): AABB => {
 	const min = vec3.create(
@@ -37,12 +43,11 @@ const getAABB = (objects3D: Object3D[]): AABB => {
 	}
 }
 
-export const createObjectResources = (params: {
+export const createObjectResources = async (params: {
 	device: GPUDevice
 	objects3D: Object3D[]
-	shadingMode: ShadingModeType
-}): ObjectResources => {
-	const { device, objects3D, shadingMode } = params
+}): Promise<ObjectResources> => {
+	const { device, objects3D } = params
 	// Vertexes buffer
 	const allVertexes = objects3D.flatMap((o) => o.vertexes)
 	const vertexBuffer = device.createBuffer({
@@ -81,13 +86,45 @@ export const createObjectResources = (params: {
 	}
 	device.queue.writeBuffer(vertexIndexBuffer, 0, vertexIndexesData)
 
-	const { normalBuffer, normalIndexBuffer } = createNormalBuffer({
-		device,
-		objects3D,
-		vertexBuffer,
-		vertexIndexBuffer,
-		shadingMode,
+	const {
+		mixNormals,
+		autoNormalIndexes,
+		flatNormalIndexes,
+		smoothNormalIndexes,
+	} = await proxy.computeNormal(vertexData, vertexIndexesData)
+
+	// Normal buffer
+	const normalBuffer = device.createBuffer({
+		label: "Mix normal buffer",
+		size: mixNormals.length * 4,
+		usage:
+			GPUBufferUsage.STORAGE | GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
 	})
+	device.queue.writeBuffer(normalBuffer, 0, mixNormals)
+
+	const flatNormalIndexBuffer = device.createBuffer({
+		label: "Flat normal index buffer",
+		size: flatNormalIndexes.length * 4,
+		usage:
+			GPUBufferUsage.STORAGE | GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
+	})
+	device.queue.writeBuffer(flatNormalIndexBuffer, 0, flatNormalIndexes)
+
+	const smoothNormalIndexBuffer = device.createBuffer({
+		label: "Smooth normal index buffer",
+		size: smoothNormalIndexes.length * 4,
+		usage:
+			GPUBufferUsage.STORAGE | GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
+	})
+	device.queue.writeBuffer(smoothNormalIndexBuffer, 0, smoothNormalIndexes)
+
+	const autoNormalIndexBuffer = device.createBuffer({
+		label: "Auto normal index buffer",
+		size: autoNormalIndexes.length * 4,
+		usage:
+			GPUBufferUsage.STORAGE | GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
+	})
+	device.queue.writeBuffer(autoNormalIndexBuffer, 0, autoNormalIndexes)
 
 	// Material buffer
 	const allMaterials = objects3D.map((o) => o.material)
@@ -132,7 +169,9 @@ export const createObjectResources = (params: {
 		vertexBuffer,
 		vertexIndexBuffer,
 		normalBuffer,
-		normalIndexBuffer,
+		flatNormalIndexBuffer,
+		smoothNormalIndexBuffer,
+		autoNormalIndexBuffer,
 		materialBuffer,
 		materialIndexBuffer,
 		aabb,

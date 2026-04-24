@@ -1,5 +1,6 @@
 import type { Vec3 } from "wgpu-matrix"
 import renderShaderCode from "@/routes/tp/viewer/-gpu/-shaders/-render-shader.wgsl?raw"
+import type { ShadingModeType } from "@/routes/tp/viewer/-gpu/logic/-normal-resources"
 import type {
 	Object3D,
 	ObjectResources,
@@ -120,15 +121,34 @@ export const createRenderResources = (device: GPUDevice) => {
 		],
 	})
 
-	const createRenderStorageBindGroup = (params: ObjectResources) => {
+	const createRenderStorageBindGroup = (params: {
+		objectResources: ObjectResources
+		shadingMode: ShadingModeType
+	}) => {
 		const {
 			vertexBuffer,
 			normalBuffer,
-			vertexIndexBuffer: vertexIndexesBuffer,
-			normalIndexBuffer: normalIndexesBuffer,
+			vertexIndexBuffer,
+			autoNormalIndexBuffer,
+			flatNormalIndexBuffer,
+			smoothNormalIndexBuffer,
 			materialBuffer,
-			materialIndexBuffer: materialIndexesBuffer,
-		} = params
+			materialIndexBuffer,
+		} = params.objectResources
+
+		let normalIndexBuffer: GPUBuffer
+		switch (params.shadingMode) {
+			case "flat":
+				normalIndexBuffer = flatNormalIndexBuffer
+				break
+			case "smooth":
+				normalIndexBuffer = smoothNormalIndexBuffer
+				break
+			case "auto":
+				normalIndexBuffer = autoNormalIndexBuffer
+				break
+		}
+
 		const renderStorageBindGroup = device.createBindGroup({
 			label: "Render storage bind group",
 			layout: storageBindGroupLayout,
@@ -148,13 +168,13 @@ export const createRenderResources = (device: GPUDevice) => {
 				{
 					binding: 2,
 					resource: {
-						buffer: vertexIndexesBuffer,
+						buffer: vertexIndexBuffer,
 					},
 				},
 				{
 					binding: 3,
 					resource: {
-						buffer: normalIndexesBuffer,
+						buffer: normalIndexBuffer,
 					},
 				},
 				{
@@ -166,7 +186,7 @@ export const createRenderResources = (device: GPUDevice) => {
 				{
 					binding: 5,
 					resource: {
-						buffer: materialIndexesBuffer,
+						buffer: materialIndexBuffer,
 					},
 				},
 			],
@@ -231,6 +251,7 @@ export const createRenderResources = (device: GPUDevice) => {
 		context: GPUCanvasContext
 		msaa: boolean
 		objects3D: Object3D[]
+		shadingMode: ShadingModeType
 	}) => {
 		let viewTexture: GPUTexture
 		if (params.viewTexture) {
@@ -267,9 +288,10 @@ export const createRenderResources = (device: GPUDevice) => {
 		renderPass.setPipeline(params.renderPipeline)
 
 		const renderMatrixBindGroup = createUniformBindGroup(params.uniformBuffer)
-		const storageBindGroup = createRenderStorageBindGroup(
-			params.objectResources,
-		)
+		const storageBindGroup = createRenderStorageBindGroup({
+			objectResources: params.objectResources,
+			shadingMode: params.shadingMode,
+		})
 
 		renderPass.setBindGroup(0, renderMatrixBindGroup)
 		renderPass.setBindGroup(1, storageBindGroup)

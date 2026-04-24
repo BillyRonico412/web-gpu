@@ -1,9 +1,8 @@
 import { atom } from "jotai"
-
-export type ShadingModeType = "flat" | "smooth"
+import type { ShadingModeType } from "@/routes/tp/viewer/-gpu/logic/-normal-resources"
 
 const msaaAtom = atom(true)
-const shadingModeAtom = atom<"flat" | "smooth">("flat")
+const shadingModeAtom = atom<ShadingModeType>("auto")
 export const renderingAtoms = {
 	msaaAtom,
 	shadingModeAtom,

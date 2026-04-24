@@ -176,7 +176,6 @@ export const parseGLB = async (data: Uint8Array): Promise<Object3D[]> => {
 				}
 			}
 			const vertexes = float32ToVec3Array(vertexesFloat32Array)
-
 			objects.push({
 				name,
 				material,

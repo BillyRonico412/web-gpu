@@ -7,11 +7,12 @@ import { renderingAtoms } from "@/routes/tp/viewer/-rendering/-rendering-atoms"
 
 const initViewerEffect = atomEffect((get, set) => {
 	const objects3D = get(gpuAtoms.objects3DAtom)
+	const shadingMode = get.peek(renderingAtoms.shadingModeAtom)
 	if (objects3D === undefined) {
 		return
 	}
 	;(async () => {
-		const viewer = await initViewer(objects3D)
+		const viewer = await initViewer(objects3D, shadingMode)
 		set(gpuAtoms.viewerAtom, (prev) => {
 			if (prev) {
 				prev.cleanup()

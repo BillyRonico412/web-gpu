@@ -1,17 +1,22 @@
-@group(0) @binding(0) var<uniform> triangle_count: u32;
+struct Uniform {
+    triangle_count: u32,
+    vertex_count: u32,
+    vertex_index_count: u32,
+}
+
+@group(0) @binding(0) var<uniform> uni: Uniform;
 @group(0) @binding(1) var<storage,read> vertexes: array<vec3f>;
 @group(0) @binding(2) var<storage,read> vertex_indexes: array<u32>;
 @group(0) @binding(3) var<storage, read_write> flat_normals: array<vec3f>;
 @group(0) @binding(4) var<storage, read_write> flat_normal_indexes: array<u32>;
 @group(0) @binding(5) var<storage, read_write> smooth_normals_atomic: array<atomic<i32>>;
-@group(0) @binding(5) var<storage, read_write> smooth_normals: array<vec3f>;
-@group(0) @binding(6) var<storage, read_write> smooth_normal_indexes: array<u32>;
+@group(0) @binding(6) var<storage, read_write> smooth_normals: array<vec3f>;
+@group(0) @binding(7) var<storage, read_write> smooth_normal_indexes: array<u32>;
 
 fn compute_normal(vertex_0: vec3f, vertex_1: vec3f, vertex_2: vec3f) -> vec3f {
     let edge1 = vertex_1 - vertex_0;
     let edge2 = vertex_2 - vertex_0;
-    let cross_prod = cross(edge1, edge2);
-    return normalize(cross_prod);
+    return cross(edge1, edge2);
 }
 
 @compute @workgroup_size(64) fn pass_flat(
@@ -19,7 +24,7 @@ fn compute_normal(vertex_0: vec3f, vertex_1: vec3f, vertex_2: vec3f) -> vec3f {
 ) {
     // Triangle index
     let invocation_index = invocation_id.x;
-    if invocation_index >= triangle_count {
+    if invocation_index >= uni.triangle_count {
         return;
     }
     let vertex_index_0 = vertex_indexes[invocation_index * 3];
@@ -38,14 +43,15 @@ fn compute_normal(vertex_0: vec3f, vertex_1: vec3f, vertex_2: vec3f) -> vec3f {
     flat_normal_indexes[invocation_index * 3 + 2] = invocation_index;
 }
 
-const BIG_NUMBER: f32 = 100000000;
+const BIG_NUMBER: f32 = 1e5;
 
 fn add_normal_atomic(index: u32, normal: vec3f) {
     // On convertit le float en int pour l'atomique
-    atomicAdd(&smooth_normals_atomic[index * 3u + 0u], i32(normal.x * BIG_NUMBER));
-    atomicAdd(&smooth_normals_atomic[index * 3u + 1u], i32(normal.y * BIG_NUMBER));
-    atomicAdd(&smooth_normals_atomic[index * 3u + 2u], i32(normal.z * BIG_NUMBER));
-    atomicAdd(&smooth_normals_atomic[index * 3u + 3u], 1);
+    let base = index * 4u;
+    atomicAdd(&smooth_normals_atomic[base + 0u], i32(normal.x * BIG_NUMBER));
+    atomicAdd(&smooth_normals_atomic[base + 1u], i32(normal.y * BIG_NUMBER));
+    atomicAdd(&smooth_normals_atomic[base + 2u], i32(normal.z * BIG_NUMBER));
+    atomicAdd(&smooth_normals_atomic[base + 3u], 1);
 }
 
 @compute @workgroup_size(64) fn pass_sum(
@@ -53,6 +59,9 @@ fn add_normal_atomic(index: u32, normal: vec3f) {
 ) {
     // Index in vertex
     let invocation_index = invocation_id.x;
+    if invocation_index >= uni.vertex_index_count {
+        return;
+    }
     let vertex_index = vertex_indexes[invocation_index];
     let normal_index = flat_normal_indexes[invocation_index];
     let normal = flat_normals[normal_index];
@@ -65,8 +74,14 @@ fn add_normal_atomic(index: u32, normal: vec3f) {
 ) {
     // Vertex index
     let invocation_index = invocation_id.x;
-    let nb_edges = smooth_normals[invocation_index * 3 + 3];
-    smooth_normals[invocation_index * 3 + 0] /= nb_edges;
-    smooth_normals[invocation_index * 3 + 1] /= nb_edges;
-    smooth_normals[invocation_index * 3 + 2] /= nb_edges;
+    if invocation_index >= uni.vertex_count {
+        return;
+    }
+    let base = invocation_index * 4u;
+    let sum_x = f32(atomicLoad(&smooth_normals_atomic[base + 0u])) / BIG_NUMBER;
+    let sum_y = f32(atomicLoad(&smooth_normals_atomic[base + 1u])) / BIG_NUMBER;
+    let sum_z = f32(atomicLoad(&smooth_normals_atomic[base + 2u])) / BIG_NUMBER;
+    let count = f32(atomicLoad(&smooth_normals_atomic[base + 3u]));
+    let averaged = vec3f(sum_x, sum_y, sum_z) / count;
+    smooth_normals[invocation_index] = normalize(averaged);
 }

@@ -16,10 +16,19 @@ export const createNormalBuffer = (params: {
 	const allVertexIndexes = objects3D.flatMap((o) => o.vertexIndexes)
 	const triangleCount = allVertexIndexes.length / 3
 	const uniformBuffer = device.createBuffer({
-		size: 4,
+		size: 4 * 4,
 		usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
 	})
-	device.queue.writeBuffer(uniformBuffer, 0, new Uint32Array([triangleCount]))
+	device.queue.writeBuffer(
+		uniformBuffer,
+		0,
+		new Uint32Array([
+			triangleCount,
+			allVertexes.length,
+			allVertexIndexes.length,
+			0,
+		]),
+	)
 
 	const computeShaderModule = device.createShaderModule({
 		code: shaderCode,
@@ -58,15 +67,21 @@ export const createNormalBuffer = (params: {
 				visibility: GPUShaderStage.COMPUTE,
 				buffer: { type: "storage" },
 			},
-			// Smooth normal buffer
+			// Smooth normal buffer sum buffer
 			{
 				binding: 5,
 				visibility: GPUShaderStage.COMPUTE,
 				buffer: { type: "storage" },
 			},
-			// Smooth normal index buffer
+			// Smooth normal final
 			{
 				binding: 6,
+				visibility: GPUShaderStage.COMPUTE,
+				buffer: { type: "storage" },
+			},
+			// Smooth normal index buffer
+			{
+				binding: 7,
 				visibility: GPUShaderStage.COMPUTE,
 				buffer: { type: "storage" },
 			},
@@ -98,6 +113,13 @@ export const createNormalBuffer = (params: {
 	const flatNormalIndexBuffer = device.createBuffer({
 		label: "Flat normal index buffer",
 		size: allVertexIndexes.length * 4,
+		usage:
+			GPUBufferUsage.STORAGE | GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
+	})
+
+	const smoothNormalSumBuffer = device.createBuffer({
+		label: "Smooth normal sum buffer",
+		size: allVertexes.length * 4 * 4,
 		usage:
 			GPUBufferUsage.STORAGE | GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
 	})
@@ -141,10 +163,14 @@ export const createNormalBuffer = (params: {
 			},
 			{
 				binding: 5,
-				resource: { buffer: smoothNormalBuffer },
+				resource: { buffer: smoothNormalSumBuffer },
 			},
 			{
 				binding: 6,
+				resource: { buffer: smoothNormalBuffer },
+			},
+			{
+				binding: 7,
 				resource: { buffer: smoothNormalIndexBuffer },
 			},
 		],

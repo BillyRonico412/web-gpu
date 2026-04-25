@@ -28,9 +28,10 @@ const msaaEffect = atomEffect((get, set) => {
 		return
 	}
 	const msaa = get(renderingAtoms.msaaAtom)
+	const culling = get(renderingAtoms.cullingAtom)
 	viewer.updateViewTexture(msaa)
 	viewer.updateDepthTexture(msaa)
-	viewer.updateRenderPipeline(msaa)
+	viewer.updateRenderPipeline({ msaa, culling })
 	set(gpuAtoms.drawTriggerAtom, (prev) => prev + 1)
 })
 
@@ -46,6 +47,7 @@ const drawEffect = atomEffect((get) => {
 	const backgroundVec3 = get(gpuAtoms.backgroundVec3Atom)
 	const msaa = get.peek(renderingAtoms.msaaAtom)
 	const shadingMode = get(renderingAtoms.shadingModeAtom)
+	const cameraPosition = get(cameraAtoms.eyeAtom)
 	viewer.draw({
 		viewMatrix,
 		projectionMatrix,
@@ -53,6 +55,7 @@ const drawEffect = atomEffect((get) => {
 		backgroundVec3,
 		msaa,
 		shadingMode,
+		cameraPosition,
 	})
 })
 

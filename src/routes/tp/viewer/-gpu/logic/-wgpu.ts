@@ -7,16 +7,18 @@ import { createRenderResources } from "@/routes/tp/viewer/-gpu/logic/-render-res
 import type { Object3D } from "@/routes/tp/viewer/-gpu/logic/-types"
 
 const createUniformBuffer = (device: GPUDevice) => {
-	const uniformSize = 16 * 4 + 4 * 4
+	const uniformSize = 16 * 4 + 4 * 4 + 4 * 4 // mvp matrix + light direction + camera position
 	const uniformBuffer = device.createBuffer({
 		label: "Uniform buffer",
 		size: uniformSize,
 		usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
 	})
-	const updateUniformBuffer = (
-		mvp: { viewMatrix: Mat4; projectionMatrix: Mat4 },
-		lightDirection: Vec3,
-	) => {
+	const updateUniformBuffer = (params: {
+		mvp: { viewMatrix: Mat4; projectionMatrix: Mat4 }
+		cameraPosition: Vec3
+		lightDirection: Vec3
+	}) => {
+		const { mvp, lightDirection, cameraPosition } = params
 		const modelMatrix = mat4.identity()
 		const mvpMatrix = mat4.multiply(
 			mat4.multiply(mvp.projectionMatrix, mvp.viewMatrix),
@@ -25,6 +27,7 @@ const createUniformBuffer = (device: GPUDevice) => {
 		const uniformData = new Float32Array(uniformSize / 4)
 		uniformData.set(mvpMatrix, 0)
 		uniformData.set(lightDirection, 16)
+		uniformData.set(cameraPosition, 20)
 		device.queue.writeBuffer(uniformBuffer, 0, uniformData)
 	}
 	return { uniformBuffer, updateUniformBuffer }
@@ -61,7 +64,10 @@ export const initViewer = async (objects3D: Object3D[]) => {
 		msaa: true,
 		context,
 	})
-	let renderPipeline = createRenderPipeline(true)
+	let renderPipeline = createRenderPipeline({
+		culling: true,
+		msaa: true,
+	})
 
 	const draw = (params: {
 		viewMatrix: Mat4
@@ -70,6 +76,7 @@ export const initViewer = async (objects3D: Object3D[]) => {
 		backgroundVec3: Vec3
 		msaa: boolean
 		shadingMode: ShadingModeType
+		cameraPosition: Vec3
 	}) => {
 		const {
 			viewMatrix,
@@ -78,8 +85,13 @@ export const initViewer = async (objects3D: Object3D[]) => {
 			lightDirection,
 			msaa,
 			shadingMode,
+			cameraPosition,
 		} = params
-		updateUniformBuffer({ viewMatrix, projectionMatrix }, lightDirection)
+		updateUniformBuffer({
+			mvp: { viewMatrix, projectionMatrix },
+			lightDirection,
+			cameraPosition,
+		})
 		const commandEncoder = device.createCommandEncoder()
 		doRenderPass({
 			renderPipeline,
@@ -102,8 +114,15 @@ export const initViewer = async (objects3D: Object3D[]) => {
 		depthTexture = createDepthTexture(canvas, msaa)
 	}
 
-	const updateRenderPipeline = (msaa: boolean) => {
-		renderPipeline = createRenderPipeline(msaa)
+	const updateRenderPipeline = (params: {
+		culling: boolean
+		msaa: boolean
+	}) => {
+		const { culling, msaa } = params
+		renderPipeline = createRenderPipeline({
+			culling,
+			msaa,
+		})
 	}
 
 	const updateViewTexture = (msaa: boolean) => {

@@ -9,23 +9,42 @@ const azimuthAtom = atom(0)
 const elevationAtom = atom(0)
 const projectionTypeAtom = atom<"perspective" | "orthographic">("perspective")
 const upAtom = atom<Vec3>(vec3.create(0, 1, 0))
+const eyeAtom = atom((get) => {
+	const target = get(targetAtom)
+	const radius = get(radiusAtom)
+	const azimuth = utils.degToRad(get(azimuthAtom))
+	const elevation = utils.degToRad(get(elevationAtom))
+	const up = get(upAtom)
+
+	// Axe polaire = up normalisé
+	const polarAxis = vec3.normalize(up)
+
+	// Vecteur de référence stable non parallèle à polarAxis
+	const ref =
+		Math.abs(vec3.dot(polarAxis, vec3.fromValues(0, 0, 1))) < 0.99
+			? vec3.fromValues(0, 0, 1)
+			: vec3.fromValues(1, 0, 0)
+
+	// Base orthonormée perpendiculaire à up
+	const right = vec3.normalize(vec3.cross(polarAxis, ref))
+	const forward = vec3.cross(right, polarAxis)
+
+	// Position en coordonnées sphériques relatives à up
+	const equatorial = vec3.add(
+		vec3.scale(right, Math.sin(azimuth)),
+		vec3.scale(forward, Math.cos(azimuth)),
+	)
+	const dir = vec3.add(
+		vec3.scale(equatorial, Math.cos(elevation)),
+		vec3.scale(polarAxis, Math.sin(elevation)),
+	)
+
+	return vec3.add(target, vec3.scale(dir, radius))
+})
 
 const viewMatrixAtom = atom((get) => {
 	const target = get(targetAtom)
-	const radius = get(radiusAtom)
-	const azimuth = get(azimuthAtom)
-	const elevation = get(elevationAtom)
-	const eye = vec3.create(
-		target[0] +
-			radius *
-				Math.cos(utils.degToRad(elevation)) *
-				Math.sin(utils.degToRad(azimuth)),
-		target[1] + radius * Math.sin(utils.degToRad(elevation)),
-		target[2] +
-			radius *
-				Math.cos(utils.degToRad(elevation)) *
-				Math.cos(utils.degToRad(azimuth)),
-	)
+	const eye = get(eyeAtom)
 	const up = get(upAtom)
 	return mat4.lookAt(eye, target, up)
 })
@@ -176,18 +195,15 @@ const turnUpAtom = atom(
 	null,
 	(get, set, axis: "x" | "z", direction: "cw" | "ccw") => {
 		const up = get(upAtom)
+		const center = vec3.create()
 		const angle = direction === "cw" ? -Math.PI / 2 : Math.PI / 2
-		set(targetAtom, vec3.create(0, 0, 0))
-		set(azimuthAtom, 0)
-		set(elevationAtom, 0)
-		const rotationMatrix = mat4.create()
+		let rotatedUp: Vec3
 		if (axis === "x") {
-			mat4.rotateX(rotationMatrix, angle)
+			rotatedUp = vec3.rotateX(up, center, angle)
 		} else {
-			mat4.rotateZ(rotationMatrix, angle)
+			rotatedUp = vec3.rotateZ(up, center, angle)
 		}
-		const nextUp = vec3.transformMat4(up, rotationMatrix)
-		set(upAtom, nextUp)
+		set(upAtom, rotatedUp)
 	},
 )
 
@@ -204,4 +220,5 @@ export const cameraAtoms = {
 	projectionTypeAtom,
 	upAtom,
 	turnUpAtom,
+	eyeAtom,
 }

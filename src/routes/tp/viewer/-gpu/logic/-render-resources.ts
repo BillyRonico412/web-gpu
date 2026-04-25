@@ -105,7 +105,7 @@ export const createRenderResources = (device: GPUDevice) => {
 			// Material buffer
 			{
 				binding: 4,
-				visibility: GPUShaderStage.VERTEX,
+				visibility: GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT,
 				buffer: {
 					type: "read-only-storage",
 				},
@@ -203,7 +203,11 @@ export const createRenderResources = (device: GPUDevice) => {
 		code: renderShaderCode,
 	})
 
-	const createRenderPipeline = (msaa: boolean) => {
+	const createRenderPipeline = (params: {
+		msaa: boolean
+		culling: boolean
+	}) => {
+		const { msaa, culling } = params
 		let multisample: GPUMultisampleState | undefined
 		if (msaa) {
 			multisample = {
@@ -228,7 +232,7 @@ export const createRenderResources = (device: GPUDevice) => {
 			},
 			primitive: {
 				topology: "triangle-list",
-				cullMode: "back",
+				cullMode: culling ? "back" : "none",
 			},
 			multisample,
 			depthStencil: {

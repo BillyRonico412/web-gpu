@@ -8,6 +8,7 @@ import { renderingAtoms } from "@/routes/tp/viewer/-rendering/-rendering-atoms"
 export const RenderingSection = () => {
 	const [msaa, setMsaa] = useAtom(renderingAtoms.msaaAtom)
 	const [shadingMode, setShadingMode] = useAtom(renderingAtoms.shadingModeAtom)
+	const [culling, setCulling] = useAtom(renderingAtoms.cullingAtom)
 	return (
 		<FieldGroup>
 			<Field orientation="horizontal">
@@ -36,6 +37,13 @@ export const RenderingSection = () => {
 						Auto
 					</ToggleGroupItem>
 				</ToggleGroup>
+			</Field>
+			<Field orientation="horizontal">
+				<FieldLabel>Culling</FieldLabel>
+				<Switch
+					checked={culling}
+					onCheckedChange={(checked) => setCulling(checked)}
+				/>
 			</Field>
 		</FieldGroup>
 	)

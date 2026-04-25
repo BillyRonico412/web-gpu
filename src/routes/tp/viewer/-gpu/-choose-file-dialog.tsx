@@ -12,6 +12,7 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select"
+import type { GlbParserWorkerApiType } from "@/routes/tp/viewer/-glb/-parser"
 import { gpuAtoms } from "@/routes/tp/viewer/-gpu/-gpu-atoms"
 import type { ObjParserWorkerAPiType } from "@/routes/tp/viewer/-obj/-parser"
 
@@ -20,6 +21,11 @@ const parseObjWorker = new Worker(
 	{ type: "module" },
 )
 const parseObjProxy = wrap<ObjParserWorkerAPiType>(parseObjWorker)
+const parseGlbWorker = new Worker(
+	new URL("../-glb/-parser.ts", import.meta.url),
+	{ type: "module" },
+)
+const parseGlbProxy = wrap<GlbParserWorkerApiType>(parseGlbWorker)
 
 type Option = {
 	name: string
@@ -50,6 +56,10 @@ const files: Option[] = [
 	{
 		name: "F16",
 		url: "/obj/f-16.obj",
+	},
+	{
+		name: "Cube(.glb)",
+		url: "/glb/cube.glb",
 	},
 ]
 
@@ -104,7 +114,10 @@ export const ChooseFileDialog = () => {
 								if (selectedFile.url.endsWith(".obj")) {
 									const text = await data.text()
 									const objects3D = await parseObjProxy.parseObj(text)
-									console.log(objects3D)
+									setObjects3D(objects3D)
+								} else if (selectedFile.url.endsWith(".glb")) {
+									const arrayBuffer = await data.arrayBuffer()
+									const objects3D = await parseGlbProxy.parseGlb(arrayBuffer)
 									setObjects3D(objects3D)
 								}
 								setOpen(false)

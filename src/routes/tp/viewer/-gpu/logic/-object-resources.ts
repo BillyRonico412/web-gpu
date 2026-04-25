@@ -92,7 +92,7 @@ export const createObjectResources = async (params: {
 			const vertexIndex = obj.vertexIndexes[i]
 			vertexIndexesData[vertexIndexOffset] = vertexIndex + startVertexIndex
 		}
-		startVertexIndex += obj.vertexes.length
+		startVertexIndex += obj.vertexes.length / 4
 	}
 	device.queue.writeBuffer(vertexIndexBuffer, 0, vertexIndexesData)
 
@@ -134,7 +134,7 @@ export const createObjectResources = async (params: {
 			const normalIndex = obj.normalIndexes[i]
 			normalIndexesData[normalIndexOffset] = normalIndex + startNormalIndex
 		}
-		startNormalIndex += obj.normals.length
+		startNormalIndex += obj.normals.length / 4
 	}
 	device.queue.writeBuffer(normalIndexBuffer, 0, normalIndexesData)
 
@@ -172,10 +172,10 @@ export const createObjectResources = async (params: {
 	let materialOffset = 0
 	for (const obj of objects3D) {
 		const material = obj.material
-		materialData.set(material.color, materialOffset * 8)
-		materialData[materialOffset * 8 + 4] = material.metallic
-		materialData[materialOffset * 8 + 5] = material.roughness
-		materialOffset++
+		materialData.set(material.color, materialOffset)
+		materialData[materialOffset + 4] = material.metallic
+		materialData[materialOffset + 5] = material.roughness
+		materialOffset += 8
 	}
 	device.queue.writeBuffer(materialBuffer, 0, materialData)
 

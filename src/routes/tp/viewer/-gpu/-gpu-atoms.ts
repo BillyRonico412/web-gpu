@@ -5,6 +5,7 @@ import { withAtomEffect } from "jotai-effect"
 import { toast } from "sonner"
 import { vec3 } from "wgpu-matrix"
 import { asyncReadTextFile } from "@/lib/file"
+import type { GlbParserWorkerApiType } from "@/routes/tp/viewer/-glb/-parser"
 import type { Object3D } from "@/routes/tp/viewer/-gpu/logic/-types"
 import type { Viewer } from "@/routes/tp/viewer/-gpu/logic/-wgpu"
 import type { ObjParserWorkerAPiType } from "@/routes/tp/viewer/-obj/-parser"
@@ -14,6 +15,11 @@ const parseObjWorker = new Worker(
 	{ type: "module" },
 )
 const parseObjProxy = wrap<ObjParserWorkerAPiType>(parseObjWorker)
+const parseGlbWorker = new Worker(
+	new URL("../-glb/-parser.ts", import.meta.url),
+	{ type: "module" },
+)
+const parseGlbProxy = wrap<GlbParserWorkerApiType>(parseGlbWorker)
 
 export const CANVAS_ID = "viewer-canvas"
 
@@ -61,21 +67,32 @@ const loadFileAtom = atom(null, (_, set) => {
 			return
 		}
 
-		let objFile: File | undefined
+		let selectedObjFile: File | undefined
+		let selectedGlbFile: File | undefined
 
 		const file = files[0]
 		if (file.name.endsWith(".obj")) {
-			objFile = file
+			selectedObjFile = file
+		}
+		if (file.name.endsWith(".glb")) {
+			selectedGlbFile = file
 		}
 
-		if (!objFile) {
-			toast.error("Please select a .obj file")
+		if (!selectedObjFile && !selectedGlbFile) {
+			toast.error("Please select a .obj or .glb file")
 			return
 		}
 
-		if (objFile) {
-			const objContent = await asyncReadTextFile(objFile)
+		if (selectedObjFile) {
+			const objContent = await asyncReadTextFile(selectedObjFile)
 			const objects3D = await parseObjProxy.parseObj(objContent)
+			set(objects3DAtom, objects3D)
+			return
+		}
+
+		if (selectedGlbFile) {
+			const glbContent = await selectedGlbFile.arrayBuffer()
+			const objects3D = await parseGlbProxy.parseGlb(glbContent)
 			set(objects3DAtom, objects3D)
 		}
 	}

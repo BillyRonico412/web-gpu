@@ -1,6 +1,6 @@
 import { WebIO } from "@gltf-transform/core"
 import { expose } from "comlink"
-import { type Mat4, mat4, vec3, vec4 } from "wgpu-matrix"
+import { type Mat4, mat4, quat, vec3, vec4 } from "wgpu-matrix"
 import type { Object3D } from "@/routes/tp/viewer/-gpu/logic/-types"
 
 const DEFAULT_MATERIAL = {
@@ -39,6 +39,21 @@ const applyMatrixToVertexes = (
 	return vertexes
 }
 
+const applyMatrixToNormals = (
+	normals: Float32Array,
+	matrix: Mat4,
+): Float32Array => {
+	for (let i = 0; i < normals.length; i += 3) {
+		const normal = vec3.fromValues(normals[i], normals[i + 1], normals[i + 2])
+		const rotation = quat.fromMat(matrix)
+		vec3.transformQuat(normal, rotation, normal)
+		normals[i] = normal[0]
+		normals[i + 1] = normal[1]
+		normals[i + 2] = normal[2]
+	}
+	return normals
+}
+
 const parseGlb = async (glbBuffer: ArrayBuffer): Promise<Object3D[]> => {
 	const io = new WebIO({
 		credentials: "include",
@@ -51,7 +66,7 @@ const parseGlb = async (glbBuffer: ArrayBuffer): Promise<Object3D[]> => {
 	const nodes = root.listNodes()
 
 	for (const node of nodes) {
-		const matrix = mat4.clone(node.getWorldMatrix())
+		const worldMatrix = mat4.clone(node.getWorldMatrix())
 		const mesh = node.getMesh()
 		if (!mesh) {
 			continue
@@ -105,9 +120,11 @@ const parseGlb = async (glbBuffer: ArrayBuffer): Promise<Object3D[]> => {
 				continue
 			}
 			const vertexes = padTo4(
-				applyMatrixToVertexes(new Float32Array(positionArray), matrix),
+				applyMatrixToVertexes(new Float32Array(positionArray), worldMatrix),
 			)
-			const normals = padTo4(new Float32Array(normalArray))
+			const normals = padTo4(
+				applyMatrixToNormals(new Float32Array(normalArray), worldMatrix),
+			)
 			const vertexIndexes = new Uint32Array(indexArray)
 			const normalIndexes = new Uint32Array(indexArray)
 
@@ -124,7 +141,7 @@ const parseGlb = async (glbBuffer: ArrayBuffer): Promise<Object3D[]> => {
 				roughness: material?.getRoughnessFactor() ?? 1,
 			}
 
-			console.log(matrix)
+			console.log(worldMatrix)
 
 			objects.push({
 				name: `${mesh.getName() || "Mesh"}_${primitiveIndex}`,
@@ -132,7 +149,7 @@ const parseGlb = async (glbBuffer: ArrayBuffer): Promise<Object3D[]> => {
 				normals,
 				vertexIndexes,
 				normalIndexes,
-				matrix: mat4.clone(matrix),
+				matrix: mat4.clone(worldMatrix),
 				material: objectMaterial ?? DEFAULT_MATERIAL,
 			})
 		}

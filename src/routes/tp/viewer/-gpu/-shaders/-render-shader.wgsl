@@ -44,6 +44,11 @@ fn vs_main(v_in: VertexIn) -> VertexOut {
     return v_out;
 }
 
+const AMBIENT: f32 = 0.2;
+const SPECULAR_INTENSITY: f32 = 0.6;
+const MIN_SHININESS: f32 = 32.0;
+const MAX_SHININESS: f32 = 512.0;
+
 @fragment
 fn fs_main(f_in: VertexOut) -> @location(0) vec4f {
     let n = normalize(f_in.normal);
@@ -54,12 +59,11 @@ fn fs_main(f_in: VertexOut) -> @location(0) vec4f {
 
     let material = material_array[f_in.material_index];
     let diffuse = max(dot(n, l), 0.0);
-    let ambient = 0.1;
 
-    let shininess = mix(64.0, 256.0, 1.0 - material.roughness);
+    let shininess = mix(MIN_SHININESS, MAX_SHININESS, 1.0 - material.roughness);
     let specular = pow(max(dot(n, h), 0.0), shininess) * material.metalic;
 
     let base_color = material.color.rgb;
-    let final_color = base_color * (diffuse + ambient) + vec3f(0.2) * specular;
+    let final_color = base_color * (diffuse + AMBIENT) + vec3f(SPECULAR_INTENSITY) * specular;
     return vec4f(final_color, 1);
 }

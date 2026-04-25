@@ -54,7 +54,7 @@ fn fs_main(f_in: VertexOut) -> @location(0) vec4f {
 
     let material = material_array[f_in.material_index];
     let diffuse = max(dot(n, l), 0.0);
-    let ambient = 0.2;
+    let ambient = 0.1;
 
     let shininess = mix(64.0, 256.0, 1.0 - material.roughness);
     let specular = pow(max(dot(n, h), 0.0), shininess) * material.metalic;

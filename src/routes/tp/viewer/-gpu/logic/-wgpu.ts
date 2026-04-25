@@ -156,6 +156,7 @@ export const initViewer = async (objects3D: Object3D[]) => {
 		updateRenderPipeline,
 		updateViewTexture,
 		aabb: objectResources.aabb,
+		objects3D,
 		cleanup,
 	}
 }

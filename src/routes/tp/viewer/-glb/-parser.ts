@@ -1,6 +1,6 @@
 import { WebIO } from "@gltf-transform/core"
 import { expose } from "comlink"
-import { mat4, vec3, vec4 } from "wgpu-matrix"
+import { type Mat4, mat4, vec3, vec4 } from "wgpu-matrix"
 import type { Object3D } from "@/routes/tp/viewer/-gpu/logic/-types"
 
 const DEFAULT_MATERIAL = {
@@ -21,6 +21,24 @@ const padTo4 = (array: Float32Array) => {
 	return newArray
 }
 
+const applyMatrixToVertexes = (
+	vertexes: Float32Array,
+	matrix: Mat4,
+): Float32Array => {
+	for (let i = 0; i < vertexes.length; i += 3) {
+		const vertex = vec3.fromValues(
+			vertexes[i],
+			vertexes[i + 1],
+			vertexes[i + 2],
+		)
+		vec3.transformMat4(vertex, matrix, vertex)
+		vertexes[i] = vertex[0]
+		vertexes[i + 1] = vertex[1]
+		vertexes[i + 2] = vertex[2]
+	}
+	return vertexes
+}
+
 const parseGlb = async (glbBuffer: ArrayBuffer): Promise<Object3D[]> => {
 	const io = new WebIO({
 		credentials: "include",
@@ -33,7 +51,7 @@ const parseGlb = async (glbBuffer: ArrayBuffer): Promise<Object3D[]> => {
 	const nodes = root.listNodes()
 
 	for (const node of nodes) {
-		const localMatrix = node.getMatrix()
+		const matrix = mat4.clone(node.getWorldMatrix())
 		const mesh = node.getMesh()
 		if (!mesh) {
 			continue
@@ -86,7 +104,9 @@ const parseGlb = async (glbBuffer: ArrayBuffer): Promise<Object3D[]> => {
 				)
 				continue
 			}
-			const vertexes = padTo4(new Float32Array(positionArray))
+			const vertexes = padTo4(
+				applyMatrixToVertexes(new Float32Array(positionArray), matrix),
+			)
 			const normals = padTo4(new Float32Array(normalArray))
 			const vertexIndexes = new Uint32Array(indexArray)
 			const normalIndexes = new Uint32Array(indexArray)
@@ -104,13 +124,15 @@ const parseGlb = async (glbBuffer: ArrayBuffer): Promise<Object3D[]> => {
 				roughness: material?.getRoughnessFactor() ?? 1,
 			}
 
+			console.log(matrix)
+
 			objects.push({
 				name: `${mesh.getName() || "Mesh"}_${primitiveIndex}`,
 				vertexes,
 				normals,
 				vertexIndexes,
 				normalIndexes,
-				matrix: mat4.clone(localMatrix),
+				matrix: mat4.clone(matrix),
 				material: objectMaterial ?? DEFAULT_MATERIAL,
 			})
 		}

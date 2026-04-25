@@ -1,4 +1,11 @@
-import { Camera, Lightbulb, MonitorPlay, Palette, Torus } from "lucide-react"
+import {
+	Camera,
+	Info,
+	Lightbulb,
+	MonitorPlay,
+	Palette,
+	Torus,
+} from "lucide-react"
 import { ThemeToggle } from "@/components/theme-toggle"
 import {
 	Accordion,
@@ -17,6 +24,7 @@ import { CameraSection } from "@/routes/tp/viewer/-camera/-camera-section"
 import { LoadFileButton } from "@/routes/tp/viewer/-components/-load-file-button"
 import { LightSection } from "@/routes/tp/viewer/-light/-light-section"
 import { RenderingSection } from "@/routes/tp/viewer/-rendering/-rendering-section"
+import { StatsSection } from "@/routes/tp/viewer/-stats/-stats-section"
 
 export const ViewerSidebar = () => {
 	return (
@@ -63,6 +71,15 @@ export const ViewerSidebar = () => {
 						</AccordionTrigger>
 						<AccordionContent>
 							<BackgroundSection />
+						</AccordionContent>
+					</AccordionItem>
+					<AccordionItem>
+						<AccordionTrigger>
+							<Info className="size-5 text-muted-foreground" />
+							Statistics
+						</AccordionTrigger>
+						<AccordionContent>
+							<StatsSection />
 						</AccordionContent>
 					</AccordionItem>
 				</Accordion>

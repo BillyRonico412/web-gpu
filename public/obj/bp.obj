@@ -3,9 +3,7 @@
 
 mtllib FinalBaseMesh.mtl
 
-#
-# object Group1
-#
+g Group1
 
 v  -1.3143 15.0686 -1.6458
 v  -1.4575 15.1137 -1.5916

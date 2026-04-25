@@ -120,10 +120,8 @@ export const initViewer = async (objects3D: Object3D[]) => {
 	const cleanup = () => {
 		objectResources.vertexBuffer.destroy()
 		objectResources.vertexIndexBuffer.destroy()
-		objectResources.normalBuffer.destroy()
+		objectResources.flatNormalBuffer.destroy()
 		objectResources.flatNormalIndexBuffer.destroy()
-		objectResources.smoothNormalIndexBuffer.destroy()
-		objectResources.autoNormalIndexBuffer.destroy()
 		objectResources.materialBuffer.destroy()
 		objectResources.materialIndexBuffer.destroy()
 		uniformBuffer.destroy()

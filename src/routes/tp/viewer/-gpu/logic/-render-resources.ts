@@ -127,25 +127,25 @@ export const createRenderResources = (device: GPUDevice) => {
 	}) => {
 		const {
 			vertexBuffer,
-			normalBuffer,
 			vertexIndexBuffer,
-			autoNormalIndexBuffer,
+			normalBuffer,
+			normalIndexBuffer,
+			flatNormalBuffer,
 			flatNormalIndexBuffer,
-			smoothNormalIndexBuffer,
 			materialBuffer,
 			materialIndexBuffer,
 		} = params.objectResources
 
-		let normalIndexBuffer: GPUBuffer
+		let normalBufferUsed: GPUBuffer
+		let normalIndexBufferUsed: GPUBuffer
 		switch (params.shadingMode) {
 			case "flat":
-				normalIndexBuffer = flatNormalIndexBuffer
-				break
-			case "smooth":
-				normalIndexBuffer = smoothNormalIndexBuffer
+				normalBufferUsed = flatNormalBuffer
+				normalIndexBufferUsed = flatNormalIndexBuffer
 				break
 			case "auto":
-				normalIndexBuffer = autoNormalIndexBuffer
+				normalBufferUsed = normalBuffer
+				normalIndexBufferUsed = normalIndexBuffer
 				break
 		}
 
@@ -162,7 +162,7 @@ export const createRenderResources = (device: GPUDevice) => {
 				{
 					binding: 1,
 					resource: {
-						buffer: normalBuffer,
+						buffer: normalBufferUsed,
 					},
 				},
 				{
@@ -174,7 +174,7 @@ export const createRenderResources = (device: GPUDevice) => {
 				{
 					binding: 3,
 					resource: {
-						buffer: normalIndexBuffer,
+						buffer: normalIndexBufferUsed,
 					},
 				},
 				{

@@ -1,12 +1,19 @@
+import { wrap } from "comlink"
 import hexRgb from "hex-rgb"
 import { atom } from "jotai"
 import { withAtomEffect } from "jotai-effect"
 import { toast } from "sonner"
 import { vec3 } from "wgpu-matrix"
-import { parseGLB } from "@/routes/tp/viewer/-glb/-parser"
+import { asyncReadTextFile } from "@/lib/file"
 import type { Object3D } from "@/routes/tp/viewer/-gpu/logic/-types"
 import type { Viewer } from "@/routes/tp/viewer/-gpu/logic/-wgpu"
-import { parseObj } from "@/routes/tp/viewer/-obj/-parser"
+import type { ObjParserWorkerAPiType } from "@/routes/tp/viewer/-obj/-parser"
+
+const parseObjWorker = new Worker(
+	new URL("../-obj/-parser.ts", import.meta.url),
+	{ type: "module" },
+)
+const parseObjProxy = wrap<ObjParserWorkerAPiType>(parseObjWorker)
 
 export const CANVAS_ID = "viewer-canvas"
 
@@ -42,35 +49,34 @@ const loadFileAtom = atom(null, (_, set) => {
 	const input = document.createElement("input")
 	input.type = "file"
 	input.accept = ".obj, .glb"
-	input.onchange = (e) => {
-		const file = (e.target as HTMLInputElement).files?.[0]
-		if (file) {
-			const reader = new FileReader()
-			reader.onload = async (e) => {
-				if (!e.target) {
-					toast.error("Failed to read file")
-					return
-				}
-				const content = e.target.result
-				if (typeof content === "string" && file.name.endsWith(".obj")) {
-					const objects3D = await parseObj(content)
-					set(objects3DAtom, objects3D)
-				} else if (
-					content instanceof ArrayBuffer &&
-					file.name.endsWith(".glb")
-				) {
-					const uint8Array = new Uint8Array(content)
-					const objects3D = await parseGLB(uint8Array)
-					set(objects3DAtom, objects3D)
-				} else {
-					toast.error("Unsupported file type or content")
-				}
-			}
-			if (file.name.endsWith(".obj")) {
-				reader.readAsText(file)
-			} else if (file.name.endsWith(".glb")) {
-				reader.readAsArrayBuffer(file)
-			}
+	input.multiple = true
+	input.onchange = async (e) => {
+		const files = (e.target as HTMLInputElement).files
+		if (!files || files.length === 0) {
+			toast.error("No file selected")
+			return
+		}
+		if (files.length > 1) {
+			toast.error("Please select 1 files (.obj and .glb)")
+			return
+		}
+
+		let objFile: File | undefined
+
+		const file = files[0]
+		if (file.name.endsWith(".obj")) {
+			objFile = file
+		}
+
+		if (!objFile) {
+			toast.error("Please select a .obj file")
+			return
+		}
+
+		if (objFile) {
+			const objContent = await asyncReadTextFile(objFile)
+			const objects3D = await parseObjProxy.parseObj(objContent)
+			set(objects3DAtom, objects3D)
 		}
 	}
 	input.click()

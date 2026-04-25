@@ -1,3 +1,4 @@
+import { wrap } from "comlink"
 import { atom, useAtom, useSetAtom } from "jotai"
 import { FileDown, MousePointerClick } from "lucide-react"
 import { toast } from "sonner"
@@ -11,9 +12,14 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select"
-import { parseGLB } from "@/routes/tp/viewer/-glb/-parser"
 import { gpuAtoms } from "@/routes/tp/viewer/-gpu/-gpu-atoms"
-import { parseObj } from "@/routes/tp/viewer/-obj/-parser"
+import type { ObjParserWorkerAPiType } from "@/routes/tp/viewer/-obj/-parser"
+
+const parseObjWorker = new Worker(
+	new URL("../-obj/-parser.ts", import.meta.url),
+	{ type: "module" },
+)
+const parseObjProxy = wrap<ObjParserWorkerAPiType>(parseObjWorker)
 
 type Option = {
 	name: string
@@ -42,8 +48,8 @@ const files: Option[] = [
 		url: "/obj/bunny.obj",
 	},
 	{
-		name: "Cube (.glb)",
-		url: "/glb/cube.glb",
+		name: "F16",
+		url: "/obj/f-16.obj",
 	},
 ]
 
@@ -95,14 +101,10 @@ export const ChooseFileDialog = () => {
 									toast.error("Failed to load file")
 									return
 								}
-								if (selectedFile.url.endsWith(".glb")) {
-									const arrayBuffer = await data.arrayBuffer()
-									const uint8Array = new Uint8Array(arrayBuffer)
-									const objects3D = await parseGLB(uint8Array)
-									setObjects3D(objects3D)
-								} else if (selectedFile.url.endsWith(".obj")) {
+								if (selectedFile.url.endsWith(".obj")) {
 									const text = await data.text()
-									const objects3D = await parseObj(text)
+									const objects3D = await parseObjProxy.parseObj(text)
+									console.log(objects3D)
 									setObjects3D(objects3D)
 								}
 								setOpen(false)

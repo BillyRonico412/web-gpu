@@ -32,9 +32,6 @@ export const RenderingSection = () => {
 					<ToggleGroupItem value="flat" className="flex-1">
 						Flat
 					</ToggleGroupItem>
-					<ToggleGroupItem value="smooth" className="flex-1">
-						Smooth
-					</ToggleGroupItem>
 					<ToggleGroupItem value="auto" className="flex-1">
 						Auto
 					</ToggleGroupItem>

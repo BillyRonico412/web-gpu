@@ -25,12 +25,18 @@ const getAABB = (objects3D: Object3D[]): AABB => {
 		Number.NEGATIVE_INFINITY,
 	)
 
-	objects3D
-		.flatMap((o) => o.vertexes)
-		.forEach((vertex) => {
+	for (const object3D of objects3D) {
+		for (let i = 0; i < object3D.vertexes.length; i += 4) {
+			const vertex = vec3.fromValues(
+				object3D.vertexes[i],
+				object3D.vertexes[i + 1],
+				object3D.vertexes[i + 2],
+			)
 			vec3.min(min, vertex, min)
 			vec3.max(max, vertex, max)
-		})
+		}
+	}
+
 	const center = vec3.create()
 	vec3.add(min, max, center)
 	vec3.scale(center, 0.5, center)
@@ -49,32 +55,36 @@ export const createObjectResources = async (params: {
 }): Promise<ObjectResources> => {
 	const { device, objects3D } = params
 	// Vertexes buffer
-	const allVertexes = objects3D.flatMap((o) => o.vertexes)
+	const allVertexesSize = objects3D.reduce(
+		(acc, obj) => acc + obj.vertexes.length,
+		0,
+	)
 	const vertexBuffer = device.createBuffer({
 		label: "Vertex buffer",
-		size: allVertexes.length * 4 * 4,
+		size: allVertexesSize * 4,
 		usage:
 			GPUBufferUsage.STORAGE | GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
 	})
-	const vertexData = new Float32Array(allVertexes.length * 4)
+	const vertexData = new Float32Array(allVertexesSize)
 	let vertexOffset = 0
 	for (const obj of objects3D) {
-		for (let i = 0; i < obj.vertexes.length; i++, vertexOffset++) {
-			const vertex = obj.vertexes[i]
-			vertexData.set(vertex, vertexOffset * 4)
-		}
+		vertexData.set(obj.vertexes, vertexOffset)
+		vertexOffset += obj.vertexes.length
 	}
 	device.queue.writeBuffer(vertexBuffer, 0, vertexData)
 
 	// Vertex indexes buffer
-	const allVertexIndexes = objects3D.flatMap((o) => o.vertexIndexes)
+	const allVertexIndexesSize = objects3D.reduce(
+		(acc, obj) => acc + obj.vertexIndexes.length,
+		0,
+	)
 	const vertexIndexBuffer = device.createBuffer({
 		label: "Face buffer",
-		size: allVertexIndexes.length * 4,
+		size: allVertexIndexesSize * 4,
 		usage:
 			GPUBufferUsage.STORAGE | GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
 	})
-	const vertexIndexesData = new Uint32Array(allVertexIndexes.length)
+	const vertexIndexesData = new Uint32Array(allVertexIndexesSize)
 	let vertexIndexOffset = 0
 	let startVertexIndex = 0
 	for (const obj of objects3D) {
@@ -86,45 +96,69 @@ export const createObjectResources = async (params: {
 	}
 	device.queue.writeBuffer(vertexIndexBuffer, 0, vertexIndexesData)
 
-	const {
-		mixNormals,
-		autoNormalIndexes,
-		flatNormalIndexes,
-		smoothNormalIndexes,
-	} = await proxy.computeNormal(vertexData, vertexIndexesData)
-
-	// Normal buffer
+	// Normals buffer
+	const allNormalsSize = objects3D.reduce(
+		(acc, obj) => acc + obj.normals.length,
+		0,
+	)
 	const normalBuffer = device.createBuffer({
-		label: "Mix normal buffer",
-		size: mixNormals.length * 4,
+		label: "Normal buffer",
+		size: allNormalsSize * 4,
 		usage:
 			GPUBufferUsage.STORAGE | GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
 	})
-	device.queue.writeBuffer(normalBuffer, 0, mixNormals)
+	const normalData = new Float32Array(allNormalsSize)
+	let normalOffset = 0
+	for (const obj of objects3D) {
+		normalData.set(obj.normals, normalOffset)
+		normalOffset += obj.normals.length
+	}
+	device.queue.writeBuffer(normalBuffer, 0, normalData)
+
+	// Normal indexes buffer
+	const allNormalIndexesSize = objects3D.reduce(
+		(acc, obj) => acc + obj.normalIndexes.length,
+		0,
+	)
+	const normalIndexBuffer = device.createBuffer({
+		label: "Normal index buffer",
+		size: allNormalIndexesSize * 4,
+		usage:
+			GPUBufferUsage.STORAGE | GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
+	})
+	const normalIndexesData = new Uint32Array(allNormalIndexesSize)
+	let normalIndexOffset = 0
+	let startNormalIndex = 0
+	for (const obj of objects3D) {
+		for (let i = 0; i < obj.normalIndexes.length; i++, normalIndexOffset++) {
+			const normalIndex = obj.normalIndexes[i]
+			normalIndexesData[normalIndexOffset] = normalIndex + startNormalIndex
+		}
+		startNormalIndex += obj.normals.length
+	}
+	device.queue.writeBuffer(normalIndexBuffer, 0, normalIndexesData)
+
+	const { flatNormal, flatNormalIndex } = await proxy.computeNormal(
+		vertexData,
+		vertexIndexesData,
+	)
+
+	// Flat Normal buffer
+	const flatNormalBuffer = device.createBuffer({
+		label: "Mix normal buffer",
+		size: flatNormal.length * 4,
+		usage:
+			GPUBufferUsage.STORAGE | GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
+	})
+	device.queue.writeBuffer(flatNormalBuffer, 0, flatNormal)
 
 	const flatNormalIndexBuffer = device.createBuffer({
 		label: "Flat normal index buffer",
-		size: flatNormalIndexes.length * 4,
+		size: flatNormalIndex.length * 4,
 		usage:
 			GPUBufferUsage.STORAGE | GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
 	})
-	device.queue.writeBuffer(flatNormalIndexBuffer, 0, flatNormalIndexes)
-
-	const smoothNormalIndexBuffer = device.createBuffer({
-		label: "Smooth normal index buffer",
-		size: smoothNormalIndexes.length * 4,
-		usage:
-			GPUBufferUsage.STORAGE | GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
-	})
-	device.queue.writeBuffer(smoothNormalIndexBuffer, 0, smoothNormalIndexes)
-
-	const autoNormalIndexBuffer = device.createBuffer({
-		label: "Auto normal index buffer",
-		size: autoNormalIndexes.length * 4,
-		usage:
-			GPUBufferUsage.STORAGE | GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
-	})
-	device.queue.writeBuffer(autoNormalIndexBuffer, 0, autoNormalIndexes)
+	device.queue.writeBuffer(flatNormalIndexBuffer, 0, flatNormalIndex)
 
 	// Material buffer
 	const allMaterials = objects3D.map((o) => o.material)
@@ -148,12 +182,12 @@ export const createObjectResources = async (params: {
 	// Material indexes buffer
 	const materialIndexBuffer = device.createBuffer({
 		label: "Material index buffer",
-		size: allVertexIndexes.length * 4,
+		size: allVertexIndexesSize * 4,
 		usage:
 			GPUBufferUsage.STORAGE | GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
 	})
 
-	const materialIndexesData = new Uint32Array(allVertexIndexes.length)
+	const materialIndexesData = new Uint32Array(allVertexIndexesSize)
 	let materialIndexOffset = 0
 	for (let objIndex = 0; objIndex < objects3D.length; objIndex++) {
 		const obj = objects3D[objIndex]
@@ -169,9 +203,9 @@ export const createObjectResources = async (params: {
 		vertexBuffer,
 		vertexIndexBuffer,
 		normalBuffer,
+		normalIndexBuffer,
+		flatNormalBuffer,
 		flatNormalIndexBuffer,
-		smoothNormalIndexBuffer,
-		autoNormalIndexBuffer,
 		materialBuffer,
 		materialIndexBuffer,
 		aabb,

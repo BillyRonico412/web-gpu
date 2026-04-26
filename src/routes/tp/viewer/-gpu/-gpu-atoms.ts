@@ -3,10 +3,15 @@ import { atom } from "jotai"
 import { withAtomEffect } from "jotai-effect"
 import { toast } from "sonner"
 import { asyncReadTextFile } from "@/lib/file"
+import { waitFunctionAtomAtom } from "@/routes/tp/viewer/-components/-wait-message"
 import type { GlbParserWorkerApiType } from "@/routes/tp/viewer/-glb/-parser"
 import type { Object3D } from "@/routes/tp/viewer/-gpu/logic/-types"
 import type { Viewer } from "@/routes/tp/viewer/-gpu/logic/-wgpu"
 import type { ObjParserWorkerAPiType } from "@/routes/tp/viewer/-obj/-parser"
+
+const waitFunctionStringAtom = waitFunctionAtomAtom<string>()
+const waitFunctionArrayBufferAtom = waitFunctionAtomAtom<ArrayBuffer>()
+const waitFunctionObject3DAtom = waitFunctionAtomAtom<Object3D[]>()
 
 const parseObjWorker = new Worker(
 	new URL("../-obj/-parser.ts", import.meta.url),
@@ -76,16 +81,37 @@ const loadFileAtom = atom(null, (_, set) => {
 		}
 
 		if (selectedObjFile) {
-			const objContent = await asyncReadTextFile(selectedObjFile)
-			const objects3D = await parseObjProxy.parseObj(objContent)
+			const objContent = await set(waitFunctionStringAtom, {
+				async fn() {
+					return await asyncReadTextFile(selectedObjFile)
+				},
+				message: "Loading .obj file...",
+			})
+			const objects3D = await set(waitFunctionObject3DAtom, {
+				async fn() {
+					return await parseObjProxy.parseObj(objContent)
+				},
+				message: "Parsing .obj file...",
+			})
 			set(objects3DAtom, objects3D)
 			return
 		}
 
 		if (selectedGlbFile) {
-			const glbContent = await selectedGlbFile.arrayBuffer()
-			const objects3D = await parseGlbProxy.parseGlb(glbContent)
+			const glbContent = await set(waitFunctionArrayBufferAtom, {
+				async fn() {
+					return await selectedGlbFile.arrayBuffer()
+				},
+				message: "Loading .glb file...",
+			})
+			const objects3D = await set(waitFunctionObject3DAtom, {
+				async fn() {
+					return await parseGlbProxy.parseGlb(glbContent)
+				},
+				message: "Parsing .glb file...",
+			})
 			set(objects3DAtom, objects3D)
+			return
 		}
 	}
 	input.click()

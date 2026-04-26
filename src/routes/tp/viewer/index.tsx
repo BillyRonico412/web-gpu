@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router"
 import { useAtom } from "jotai"
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
 import { ViewerSidebar } from "@/routes/tp/viewer/-components/-sidebar"
+import { WaitMessage } from "@/routes/tp/viewer/-components/-wait-message"
 import { canvasEventEffect } from "@/routes/tp/viewer/-event"
 import { ChooseFileDialog } from "@/routes/tp/viewer/-gpu/-choose-file-dialog"
 import { CANVAS_ID } from "@/routes/tp/viewer/-gpu/-gpu-atoms"
@@ -41,6 +42,7 @@ function RouteComponent() {
 				<LoadFileEmpty />
 			</main>
 			<ChooseFileDialog />
+			<WaitMessage />
 		</SidebarProvider>
 	)
 }

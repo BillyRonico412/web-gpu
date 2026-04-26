@@ -15,7 +15,6 @@ struct Uniform {
     camera_position: vec3f,
     ambient: f32,
     specular_intensity: f32,
-    specular_enabled: u32,
 }
 
 struct Material {
@@ -62,7 +61,7 @@ fn fs_main(f_in: VertexOut) -> @location(0) vec4f {
     let diffuse = max(dot(normal, light_direction), 0.0);
 
     let shininess = mix(MIN_SHININESS, MAX_SHININESS, 1.0 - material.roughness);
-    let specular = select(0.0, pow(max(dot(normal, h), 0.0), shininess) * material.metalic, uni.specular_enabled != 0u);
+    let specular = pow(max(dot(normal, h), 0.0), shininess) * material.metalic;
 
     let base_color = material.color.rgb;
     let specular_color = mix(vec3f(1.0), base_color, material.metalic);

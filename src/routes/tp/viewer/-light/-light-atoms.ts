@@ -16,13 +16,11 @@ const lightModeAtom = atom<LightModeType>(LIGHT_DEFAULTS.lightMode)
 const lightDirectionAtom = atom<Vec3>(vec3.create(1, -2, -1))
 const ambientAtom = atom<number>(LIGHT_DEFAULTS.ambient)
 const specularIntensityAtom = atom<number>(LIGHT_DEFAULTS.specularIntensity)
-const specularEnabledAtom = atom<boolean>(LIGHT_DEFAULTS.specularEnabled)
 
 const resetAtom = atom(null, (_, set) => {
 	set(lightModeAtom, LIGHT_DEFAULTS.lightMode)
 	set(ambientAtom, LIGHT_DEFAULTS.ambient)
 	set(specularIntensityAtom, LIGHT_DEFAULTS.specularIntensity)
-	set(specularEnabledAtom, LIGHT_DEFAULTS.specularEnabled)
 })
 
 const lightModeEffect = atomEffect((get, set) => {
@@ -48,6 +46,5 @@ export const lightAtoms = {
 	lightModeEffect,
 	ambientAtom,
 	specularIntensityAtom,
-	specularEnabledAtom,
 	resetAtom,
 }

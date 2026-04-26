@@ -50,7 +50,6 @@ const drawEffect = atomEffect((get) => {
 	const cameraPosition = get(cameraAtoms.eyeAtom)
 	const ambient = get(lightAtoms.ambientAtom)
 	const specularIntensity = get(lightAtoms.specularIntensityAtom)
-	const specularEnabled = get(lightAtoms.specularEnabledAtom)
 	viewer.draw({
 		viewMatrix,
 		projectionMatrix,
@@ -61,7 +60,6 @@ const drawEffect = atomEffect((get) => {
 		cameraPosition,
 		ambient,
 		specularIntensity,
-		specularEnabled,
 	})
 })
 

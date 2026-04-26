@@ -1,7 +1,6 @@
 import { atom, useAtom } from "jotai"
 import type { ReactNode } from "react"
 import { AlertDialog, AlertDialogContent } from "@/components/ui/alert-dialog"
-import { Dialog, DialogContent } from "@/components/ui/dialog"
 import { Spinner } from "@/components/ui/spinner"
 import type { Object3D } from "@/routes/tp/viewer/-gpu/logic/-types"
 

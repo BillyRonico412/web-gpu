@@ -1,5 +1,6 @@
 import { atom, useAtom } from "jotai"
 import type { ReactNode } from "react"
+import { AlertDialog, AlertDialogContent } from "@/components/ui/alert-dialog"
 import { Dialog, DialogContent } from "@/components/ui/dialog"
 import { Spinner } from "@/components/ui/spinner"
 import type { Object3D } from "@/routes/tp/viewer/-gpu/logic/-types"
@@ -37,7 +38,7 @@ export const WaitMessage = () => {
 		return null
 	}
 	return (
-		<Dialog
+		<AlertDialog
 			open={!!waitMessage}
 			onOpenChange={(open) => {
 				if (!open) {
@@ -45,12 +46,12 @@ export const WaitMessage = () => {
 				}
 			}}
 		>
-			<DialogContent>
+			<AlertDialogContent>
 				<div className="flex flex-col items-center gap-4">
 					<Spinner />
 					{waitMessage}
 				</div>
-			</DialogContent>
-		</Dialog>
+			</AlertDialogContent>
+		</AlertDialog>
 	)
 }

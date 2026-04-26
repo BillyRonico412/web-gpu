@@ -141,8 +141,6 @@ const parseGlb = async (glbBuffer: ArrayBuffer): Promise<Object3D[]> => {
 				roughness: material?.getRoughnessFactor() ?? 1,
 			}
 
-			console.log(worldMatrix)
-
 			objects.push({
 				name: `${mesh.getName() || "Mesh"}_${primitiveIndex}`,
 				vertexes,

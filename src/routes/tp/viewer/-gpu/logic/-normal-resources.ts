@@ -1,17 +1,14 @@
 import { expose } from "comlink"
 import { vec3 } from "wgpu-matrix"
+import type { FlatNormalResources } from "@/routes/tp/viewer/-gpu/logic/-types"
 
 export type ShadingModeType = "flat" | "auto"
 
-export type NormalResources = {
-	flatNormal: Float32Array
-	flatNormalIndex: Uint32Array
-}
-
-export const computeNormal = (
-	vertex: Float32Array,
-	vertexIndex: Uint32Array,
-): NormalResources => {
+export const computeNormal = (params: {
+	vertex: Float32Array
+	vertexIndex: Uint32Array
+}): FlatNormalResources => {
+	const { vertex, vertexIndex } = params
 	const nbTriangles = vertexIndex.length / 3
 	const flatNormal = new Float32Array(nbTriangles * 4)
 	const flatNormalIndex = new Uint32Array(vertexIndex.length)
@@ -49,6 +46,33 @@ export const computeNormal = (
 	return {
 		flatNormal,
 		flatNormalIndex,
+	}
+}
+
+export const createFlatNormalBufferResource = (
+	device: GPUDevice,
+	flatNormalResources: FlatNormalResources,
+) => {
+	const { flatNormal, flatNormalIndex } = flatNormalResources
+	// Flat Normal buffer
+	const flatNormalBuffer = device.createBuffer({
+		label: "Mix normal buffer",
+		size: flatNormal.length * 4,
+		usage:
+			GPUBufferUsage.STORAGE | GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
+	})
+	device.queue.writeBuffer(flatNormalBuffer, 0, flatNormal)
+
+	const flatNormalIndexBuffer = device.createBuffer({
+		label: "Flat normal index buffer",
+		size: flatNormalIndex.length * 4,
+		usage:
+			GPUBufferUsage.STORAGE | GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
+	})
+	device.queue.writeBuffer(flatNormalIndexBuffer, 0, flatNormalIndex)
+	return {
+		flatNormalBuffer,
+		flatNormalIndexBuffer,
 	}
 }
 

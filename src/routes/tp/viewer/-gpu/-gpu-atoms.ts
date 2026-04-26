@@ -3,15 +3,15 @@ import { atom } from "jotai"
 import { withAtomEffect } from "jotai-effect"
 import { toast } from "sonner"
 import { asyncReadTextFile } from "@/lib/file"
-import { waitFunctionAtomAtom } from "@/routes/tp/viewer/-components/-wait-message"
+import {
+	waitFunctionArrayBufferAtom,
+	waitFunctionObject3DAtom,
+	waitFunctionStringAtom,
+} from "@/routes/tp/viewer/-components/-wait-message"
 import type { GlbParserWorkerApiType } from "@/routes/tp/viewer/-glb/-parser"
 import type { Object3D } from "@/routes/tp/viewer/-gpu/logic/-types"
 import type { Viewer } from "@/routes/tp/viewer/-gpu/logic/-wgpu"
 import type { ObjParserWorkerAPiType } from "@/routes/tp/viewer/-obj/-parser"
-
-const waitFunctionStringAtom = waitFunctionAtomAtom<string>()
-const waitFunctionArrayBufferAtom = waitFunctionAtomAtom<ArrayBuffer>()
-const waitFunctionObject3DAtom = waitFunctionAtomAtom<Object3D[]>()
 
 const parseObjWorker = new Worker(
 	new URL("../-obj/-parser.ts", import.meta.url),

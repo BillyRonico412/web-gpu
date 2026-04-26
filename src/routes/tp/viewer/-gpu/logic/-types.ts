@@ -22,13 +22,30 @@ export type AABB = {
 }
 
 export type ObjectResources = {
+	vertexData: Float32Array
+	vertexIndexesData: Uint32Array
+	normalData: Float32Array
+	normalIndexesData: Uint32Array
+	materialData: Float32Array
+	materialIndexesData: Uint32Array
+	aabb: AABB
+}
+
+export type FlatNormalResources = {
+	flatNormal: Float32Array
+	flatNormalIndex: Uint32Array
+}
+
+export type ObjectBufferResources = {
 	vertexBuffer: GPUBuffer
 	vertexIndexBuffer: GPUBuffer
 	normalBuffer: GPUBuffer
 	normalIndexBuffer: GPUBuffer
-	flatNormalBuffer: GPUBuffer
-	flatNormalIndexBuffer: GPUBuffer
 	materialBuffer: GPUBuffer
 	materialIndexBuffer: GPUBuffer
-	aabb: AABB
+}
+
+export type FlatNormalBufferResources = {
+	flatNormalBuffer: GPUBuffer
+	flatNormalIndexBuffer: GPUBuffer
 }

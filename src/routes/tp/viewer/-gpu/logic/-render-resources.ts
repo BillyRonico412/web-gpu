@@ -2,8 +2,9 @@ import type { Vec3 } from "wgpu-matrix"
 import renderShaderCode from "@/routes/tp/viewer/-gpu/-shaders/-render-shader.wgsl?raw"
 import type { ShadingModeType } from "@/routes/tp/viewer/-gpu/logic/-normal-resources"
 import type {
+	FlatNormalBufferResources,
 	Object3D,
-	ObjectResources,
+	ObjectBufferResources,
 } from "@/routes/tp/viewer/-gpu/logic/-types"
 
 export const createRenderResources = (device: GPUDevice) => {
@@ -122,7 +123,8 @@ export const createRenderResources = (device: GPUDevice) => {
 	})
 
 	const createRenderStorageBindGroup = (params: {
-		objectResources: ObjectResources
+		objectResources: ObjectBufferResources
+		flatNormalResources: FlatNormalBufferResources
 		shadingMode: ShadingModeType
 	}) => {
 		const {
@@ -130,11 +132,12 @@ export const createRenderResources = (device: GPUDevice) => {
 			vertexIndexBuffer,
 			normalBuffer,
 			normalIndexBuffer,
-			flatNormalBuffer,
-			flatNormalIndexBuffer,
 			materialBuffer,
 			materialIndexBuffer,
 		} = params.objectResources
+
+		const { flatNormalBuffer, flatNormalIndexBuffer } =
+			params.flatNormalResources
 
 		let normalBufferUsed: GPUBuffer
 		let normalIndexBufferUsed: GPUBuffer
@@ -248,7 +251,8 @@ export const createRenderResources = (device: GPUDevice) => {
 		renderPipeline: GPURenderPipeline
 		commandEncoder: GPUCommandEncoder
 		uniformBuffer: GPUBuffer
-		objectResources: ObjectResources
+		objectBufferResources: ObjectBufferResources
+		flatNormalBufferResources: FlatNormalBufferResources
 		viewTexture: GPUTexture | undefined
 		depthTexture: GPUTexture
 		backgroundVec3: Vec3
@@ -293,13 +297,14 @@ export const createRenderResources = (device: GPUDevice) => {
 
 		const renderMatrixBindGroup = createUniformBindGroup(params.uniformBuffer)
 		const storageBindGroup = createRenderStorageBindGroup({
-			objectResources: params.objectResources,
+			objectResources: params.objectBufferResources,
 			shadingMode: params.shadingMode,
+			flatNormalResources: params.flatNormalBufferResources,
 		})
 
 		renderPass.setBindGroup(0, renderMatrixBindGroup)
 		renderPass.setBindGroup(1, storageBindGroup)
-		renderPass.setVertexBuffer(0, params.objectResources.vertexBuffer)
+		renderPass.setVertexBuffer(0, params.objectBufferResources.vertexBuffer)
 		let nbDrawnVertices = 0
 		for (const obj of params.objects3D) {
 			nbDrawnVertices += obj.vertexIndexes.length

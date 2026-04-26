@@ -1,6 +1,9 @@
 import { atomEffect } from "jotai-effect"
+import { match, P } from "ts-pattern"
 import { cameraAtoms } from "@/routes/tp/viewer/-camera/-camera-atoms"
+import { waitMessageAtom } from "@/routes/tp/viewer/-components/-wait-message"
 import { CANVAS_ID, gpuAtoms } from "@/routes/tp/viewer/-gpu/-gpu-atoms"
+import { emitter } from "@/routes/tp/viewer/-gpu/logic/-event-emitter"
 import { initViewer } from "@/routes/tp/viewer/-gpu/logic/-wgpu"
 import { lightAtoms } from "@/routes/tp/viewer/-light/-light-atoms"
 import { renderingAtoms } from "@/routes/tp/viewer/-rendering/-rendering-atoms"
@@ -86,9 +89,32 @@ const canvasEffect = atomEffect((get, set) => {
 	}
 })
 
+const loadingStateEffect = atomEffect((_, set) => {
+	emitter.on("updateLoadingState", (state) => {
+		match(state)
+			.with(P.union("idle", "done"), () => {
+				set(waitMessageAtom, undefined)
+			})
+			.with("init-webgpu", () => {
+				set(waitMessageAtom, "Initializing WebGPU...")
+			})
+			.with("create-object-resources", () => {
+				set(waitMessageAtom, "Creating object resources...")
+			})
+			.with("create-normal-resources", () => {
+				set(waitMessageAtom, "Computing normals...")
+			})
+			.with("create-render-resources", () => {
+				set(waitMessageAtom, "Creating render resources...")
+			})
+			.exhaustive()
+	})
+})
+
 export const gpuEffects = {
 	initViewerEffect,
 	drawEffect,
 	canvasEffect,
 	msaaEffect,
+	loadingStateEffect,
 }

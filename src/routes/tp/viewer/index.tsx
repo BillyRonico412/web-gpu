@@ -18,6 +18,7 @@ function RouteComponent() {
 	useAtom(gpuEffects.canvasEffect)
 	useAtom(gpuEffects.initViewerEffect)
 	useAtom(gpuEffects.drawEffect)
+	useAtom(gpuEffects.loadingStateEffect)
 	useAtom(gpuEffects.drawEffect)
 	useAtom(gpuEffects.msaaEffect)
 	useAtom(lightAtoms.lightModeEffect)

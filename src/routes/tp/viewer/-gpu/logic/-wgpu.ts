@@ -7,7 +7,7 @@ import { createRenderResources } from "@/routes/tp/viewer/-gpu/logic/-render-res
 import type { Object3D } from "@/routes/tp/viewer/-gpu/logic/-types"
 
 const createUniformBuffer = (device: GPUDevice) => {
-	const uniformSize = 16 * 4 + 4 * 4 + 4 * 4 // mvp matrix + light direction + camera position
+	const uniformSize = 28 * 4 // 112 bytes: mvp matrix + light direction + camera position + light params
 	const uniformBuffer = device.createBuffer({
 		label: "Uniform buffer",
 		size: uniformSize,
@@ -17,18 +17,33 @@ const createUniformBuffer = (device: GPUDevice) => {
 		mvp: { viewMatrix: Mat4; projectionMatrix: Mat4 }
 		cameraPosition: Vec3
 		lightDirection: Vec3
+		ambient: number
+		specularIntensity: number
+		specularEnabled: boolean
 	}) => {
-		const { mvp, lightDirection, cameraPosition } = params
+		const {
+			mvp,
+			lightDirection,
+			cameraPosition,
+			ambient,
+			specularIntensity,
+			specularEnabled,
+		} = params
 		const modelMatrix = mat4.identity()
 		const mvpMatrix = mat4.multiply(
 			mat4.multiply(mvp.projectionMatrix, mvp.viewMatrix),
 			modelMatrix,
 		)
-		const uniformData = new Float32Array(uniformSize / 4)
-		uniformData.set(mvpMatrix, 0)
-		uniformData.set(lightDirection, 16)
-		uniformData.set(cameraPosition, 20)
-		device.queue.writeBuffer(uniformBuffer, 0, uniformData)
+		const buffer = new ArrayBuffer(uniformSize)
+		const float32View = new Float32Array(buffer)
+		const uint32View = new Uint32Array(buffer)
+		float32View.set(mvpMatrix, 0)
+		float32View.set(lightDirection, 16)
+		float32View.set(cameraPosition, 20)
+		float32View[23] = ambient
+		float32View[24] = specularIntensity
+		uint32View[25] = specularEnabled ? 1 : 0
+		device.queue.writeBuffer(uniformBuffer, 0, buffer)
 	}
 	return { uniformBuffer, updateUniformBuffer }
 }
@@ -77,6 +92,9 @@ export const initViewer = async (objects3D: Object3D[]) => {
 		msaa: boolean
 		shadingMode: ShadingModeType
 		cameraPosition: Vec3
+		ambient: number
+		specularIntensity: number
+		specularEnabled: boolean
 	}) => {
 		const {
 			viewMatrix,
@@ -86,11 +104,17 @@ export const initViewer = async (objects3D: Object3D[]) => {
 			msaa,
 			shadingMode,
 			cameraPosition,
+			ambient,
+			specularIntensity,
+			specularEnabled,
 		} = params
 		updateUniformBuffer({
 			mvp: { viewMatrix, projectionMatrix },
 			lightDirection,
 			cameraPosition,
+			ambient,
+			specularIntensity,
+			specularEnabled,
 		})
 		const commandEncoder = device.createCommandEncoder()
 		doRenderPass({

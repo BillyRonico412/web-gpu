@@ -1,17 +1,12 @@
 import { useAtom, useSetAtom } from "jotai"
-import {
-	Axis3D,
-	CornerDownLeft,
-	CornerDownRight,
-	Fullscreen,
-	Telescope,
-} from "lucide-react"
+import { Axis3D, Fullscreen, RedoDot, Telescope, UndoDot } from "lucide-react"
 import { vec3 } from "wgpu-matrix"
 import { Button } from "@/components/ui/button"
 import { ButtonGroup } from "@/components/ui/button-group"
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import { cameraAtoms } from "@/routes/tp/viewer/-camera/-camera-atoms"
+import { ResetButton } from "@/routes/tp/viewer/-components/-reset-button"
 
 export const CameraSection = () => {
 	const [projectionType, setProjectionType] = useAtom(
@@ -20,6 +15,7 @@ export const CameraSection = () => {
 	const turnUp = useSetAtom(cameraAtoms.turnUpAtom)
 	const setUp = useSetAtom(cameraAtoms.upAtom)
 	const cameraAction = useSetAtom(cameraAtoms.cameraActionAtom)
+	const reset = useSetAtom(cameraAtoms.cameraResetAtom)
 	return (
 		<FieldGroup>
 			<Field>
@@ -62,10 +58,10 @@ export const CameraSection = () => {
 						<FieldLabel>Rotate around X</FieldLabel>
 						<ButtonGroup>
 							<Button onClick={() => turnUp("x", "ccw")}>
-								<CornerDownLeft />
+								<UndoDot />
 							</Button>
 							<Button onClick={() => turnUp("x", "cw")}>
-								<CornerDownRight />
+								<RedoDot />
 							</Button>
 						</ButtonGroup>
 					</Field>
@@ -73,10 +69,10 @@ export const CameraSection = () => {
 						<FieldLabel>Rotate around Z</FieldLabel>
 						<ButtonGroup>
 							<Button onClick={() => turnUp("z", "ccw")}>
-								<CornerDownLeft />
+								<UndoDot />
 							</Button>
 							<Button onClick={() => turnUp("z", "cw")}>
-								<CornerDownRight />
+								<RedoDot />
 							</Button>
 						</ButtonGroup>
 					</Field>
@@ -94,6 +90,7 @@ export const CameraSection = () => {
 					Fit to view
 				</Button>
 			</Field>
+			<ResetButton onClick={reset} />
 		</FieldGroup>
 	)
 }

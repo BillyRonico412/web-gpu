@@ -1,7 +1,9 @@
-import { useAtom } from "jotai"
+import { useAtom, useSetAtom } from "jotai"
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field"
+import { Input } from "@/components/ui/input"
 import { Switch } from "@/components/ui/switch"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
+import { ResetButton } from "@/routes/tp/viewer/-components/-reset-button"
 import type { ShadingModeType } from "@/routes/tp/viewer/-gpu/logic/-normal-resources"
 import { renderingAtoms } from "@/routes/tp/viewer/-rendering/-rendering-atoms"
 
@@ -9,6 +11,11 @@ export const RenderingSection = () => {
 	const [msaa, setMsaa] = useAtom(renderingAtoms.msaaAtom)
 	const [shadingMode, setShadingMode] = useAtom(renderingAtoms.shadingModeAtom)
 	const [culling, setCulling] = useAtom(renderingAtoms.cullingAtom)
+	const [backgroundHex, setBackgroundHex] = useAtom(
+		renderingAtoms.backgroundHexAtom,
+	)
+	const reset = useSetAtom(renderingAtoms.resetAtom)
+
 	return (
 		<FieldGroup>
 			<Field orientation="horizontal">
@@ -45,6 +52,18 @@ export const RenderingSection = () => {
 					onCheckedChange={(checked) => setCulling(checked)}
 				/>
 			</Field>
+			<Field orientation="horizontal">
+				<FieldLabel>Color</FieldLabel>
+				<Input
+					type="color"
+					value={backgroundHex}
+					onChange={(e) => {
+						setBackgroundHex(e.target.value)
+					}}
+					className="size-8 p-0 border-0"
+				/>
+			</Field>
+			<ResetButton onClick={reset} />
 		</FieldGroup>
 	)
 }

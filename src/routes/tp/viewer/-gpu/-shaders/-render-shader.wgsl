@@ -13,6 +13,9 @@ struct Uniform {
     mvp_matrix: mat4x4f,
     light_direction: vec3f,
     camera_position: vec3f,
+    ambient: f32,
+    specular_intensity: f32,
+    specular_enabled: u32,
 }
 
 struct Material {
@@ -44,26 +47,26 @@ fn vs_main(v_in: VertexIn) -> VertexOut {
     return v_out;
 }
 
-const AMBIENT: f32 = 0.2;
-const SPECULAR_INTENSITY: f32 = 0.6;
 const MIN_SHININESS: f32 = 32.0;
 const MAX_SHININESS: f32 = 512.0;
 
 @fragment
 fn fs_main(f_in: VertexOut) -> @location(0) vec4f {
-    let n = normalize(f_in.normal);
-    let l = normalize(-uni.light_direction);
+    let normal = normalize(f_in.normal);
+    let light_direction = normalize(-uni.light_direction);
 
     let v = normalize(uni.camera_position - f_in.world_position);
-    let h = normalize(l + v);
+    let h = normalize(light_direction + v);
 
     let material = material_array[f_in.material_index];
-    let diffuse = max(dot(n, l), 0.0);
+    let diffuse = max(dot(normal, light_direction), 0.0);
 
     let shininess = mix(MIN_SHININESS, MAX_SHININESS, 1.0 - material.roughness);
-    let specular = pow(max(dot(n, h), 0.0), shininess) * material.metalic;
+    let specular = select(0.0, pow(max(dot(normal, h), 0.0), shininess) * material.metalic, uni.specular_enabled != 0u);
 
     let base_color = material.color.rgb;
-    let final_color = base_color * (diffuse + AMBIENT) + vec3f(SPECULAR_INTENSITY) * specular;
+    let specular_color = mix(vec3f(1.0), base_color, material.metalic);
+    let final_specular = specular_color * specular * uni.specular_intensity;
+    let final_color = base_color * (diffuse + uni.ambient) + final_specular;
     return vec4f(final_color, 1);
 }

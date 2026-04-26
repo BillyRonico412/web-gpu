@@ -1,9 +1,7 @@
 import { wrap } from "comlink"
-import hexRgb from "hex-rgb"
 import { atom } from "jotai"
 import { withAtomEffect } from "jotai-effect"
 import { toast } from "sonner"
-import { vec3 } from "wgpu-matrix"
 import { asyncReadTextFile } from "@/lib/file"
 import type { GlbParserWorkerApiType } from "@/routes/tp/viewer/-glb/-parser"
 import type { Object3D } from "@/routes/tp/viewer/-gpu/logic/-types"
@@ -26,12 +24,6 @@ export const CANVAS_ID = "viewer-canvas"
 const drawTriggerAtom = atom(0)
 const objects3DAtom = atom<Object3D[] | undefined>(undefined)
 const viewerAtom = atom<Viewer | undefined>()
-const backgroundHexAtom = atom<string>("#444")
-const backgroundVec3Atom = atom((get) => {
-	const hex = get(backgroundHexAtom)
-	const rgb = hexRgb(hex)
-	return vec3.create(rgb.red / 255, rgb.green / 255, rgb.blue / 255)
-})
 
 const canvasSizeAtom = withAtomEffect(
 	atom({ width: 0, height: 0 }),
@@ -104,7 +96,5 @@ export const gpuAtoms = {
 	viewerAtom,
 	canvasSizeAtom,
 	loadFileAtom,
-	backgroundHexAtom,
-	backgroundVec3Atom,
 	drawTriggerAtom,
 }

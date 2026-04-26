@@ -44,10 +44,13 @@ const drawEffect = atomEffect((get) => {
 	const viewMatrix = get(cameraAtoms.viewMatrixAtom)
 	const projectionMatrix = get(cameraAtoms.projectionMatrixAtom)
 	const lightDirection = get(lightAtoms.lightDirectionAtom)
-	const backgroundVec3 = get(gpuAtoms.backgroundVec3Atom)
+	const backgroundVec3 = get(renderingAtoms.backgroundVec3Atom)
 	const msaa = get.peek(renderingAtoms.msaaAtom)
 	const shadingMode = get(renderingAtoms.shadingModeAtom)
 	const cameraPosition = get(cameraAtoms.eyeAtom)
+	const ambient = get(lightAtoms.ambientAtom)
+	const specularIntensity = get(lightAtoms.specularIntensityAtom)
+	const specularEnabled = get(lightAtoms.specularEnabledAtom)
 	viewer.draw({
 		viewMatrix,
 		projectionMatrix,
@@ -56,6 +59,9 @@ const drawEffect = atomEffect((get) => {
 		msaa,
 		shadingMode,
 		cameraPosition,
+		ambient,
+		specularIntensity,
+		specularEnabled,
 	})
 })
 

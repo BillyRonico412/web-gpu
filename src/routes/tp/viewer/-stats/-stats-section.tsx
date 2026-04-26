@@ -23,14 +23,14 @@ const statsByObjects3D = (objects3D: Object3D[], aabb: AABB) => {
 	const sizeX = aabb.max[0] - aabb.min[0]
 	const sizeY = aabb.max[1] - aabb.min[1]
 	const sizeZ = aabb.max[2] - aabb.min[2]
-	const nbMeshes = objects3D.length
+	const primitiveCount = objects3D.length
 	return {
 		vertexCount,
 		triangleCount,
 		sizeX,
 		sizeY,
 		sizeZ,
-		nbMeshes,
+		primitiveCount,
 	}
 }
 
@@ -49,18 +49,27 @@ export const StatsSection = () => {
 			<tbody>
 				<Row
 					label="Vertex count"
-					value={stats ? stats.vertexCount.toString() : "N/A"}
+					value={stats ? stats.vertexCount.toLocaleString("en-US") : "N/A"}
 				/>
 				<Row
 					label="Triangle count"
-					value={stats ? stats.triangleCount.toString() : "N/A"}
+					value={stats ? stats.triangleCount.toLocaleString("en-US") : "N/A"}
 				/>
-				<Row label="Size X" value={stats ? stats.sizeX.toFixed(2) : "N/A"} />
-				<Row label="Size Y" value={stats ? stats.sizeY.toFixed(2) : "N/A"} />
-				<Row label="Size Z" value={stats ? stats.sizeZ.toFixed(2) : "N/A"} />
 				<Row
-					label="Number of meshes"
-					value={stats ? stats.nbMeshes.toString() : "N/A"}
+					label="Size X"
+					value={stats ? stats.sizeX.toFixed(2).toLocaleString() : "N/A"}
+				/>
+				<Row
+					label="Size Y"
+					value={stats ? stats.sizeY.toFixed(2).toLocaleString() : "N/A"}
+				/>
+				<Row
+					label="Size Z"
+					value={stats ? stats.sizeZ.toFixed(2).toLocaleString() : "N/A"}
+				/>
+				<Row
+					label="Primitives count"
+					value={stats ? stats.primitiveCount.toLocaleString("en-US") : "N/A"}
 				/>
 			</tbody>
 		</table>

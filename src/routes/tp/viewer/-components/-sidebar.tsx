@@ -1,11 +1,4 @@
-import {
-	Camera,
-	Info,
-	Lightbulb,
-	MonitorPlay,
-	Palette,
-	Torus,
-} from "lucide-react"
+import { Camera, Info, Lightbulb, MonitorPlay, Torus } from "lucide-react"
 import { ThemeToggle } from "@/components/theme-toggle"
 import {
 	Accordion,
@@ -19,7 +12,6 @@ import {
 	SidebarFooter,
 	SidebarHeader,
 } from "@/components/ui/sidebar"
-import { BackgroundSection } from "@/routes/tp/viewer/-background/-background-section"
 import { CameraSection } from "@/routes/tp/viewer/-camera/-camera-section"
 import { LoadFileButton } from "@/routes/tp/viewer/-components/-load-file-button"
 import { LightSection } from "@/routes/tp/viewer/-light/-light-section"
@@ -62,15 +54,6 @@ export const ViewerSidebar = () => {
 						</AccordionTrigger>
 						<AccordionContent>
 							<LightSection />
-						</AccordionContent>
-					</AccordionItem>
-					<AccordionItem>
-						<AccordionTrigger>
-							<Palette className="size-5 text-muted-foreground" />
-							Background
-						</AccordionTrigger>
-						<AccordionContent>
-							<BackgroundSection />
 						</AccordionContent>
 					</AccordionItem>
 					<AccordionItem>

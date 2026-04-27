@@ -121,13 +121,41 @@ const createObjectResources = async (params: {
 	}
 
 	// Material indexes buffer
-
 	const materialIndexesData = new Uint32Array(allVertexIndexesSize)
 	let materialIndexOffset = 0
 	for (let objIndex = 0; objIndex < objects3D.length; objIndex++) {
 		const obj = objects3D[objIndex]
 		for (let i = 0; i < obj.vertexIndexes.length; i++, materialIndexOffset++) {
 			materialIndexesData[materialIndexOffset] = objIndex
+		}
+	}
+
+	// Matrix buffer
+	const allMatricesSize = objects3D.length * 16
+	const matrixData = new Float32Array(allMatricesSize)
+	let matrixOffset = 0
+	for (const obj of objects3D) {
+		matrixData.set(obj.matrix, matrixOffset)
+		matrixOffset += 16
+	}
+
+	// Matrix indexes buffer
+	const matrixIndexesData = new Uint32Array(allVertexIndexesSize)
+	let matrixIndexOffset = 0
+	for (let objIndex = 0; objIndex < objects3D.length; objIndex++) {
+		const obj = objects3D[objIndex]
+		for (let i = 0; i < obj.vertexIndexes.length; i++, matrixIndexOffset++) {
+			matrixIndexesData[matrixIndexOffset] = objIndex
+		}
+	}
+
+	// Geometric ID buffer
+	const geometricIdData = new Uint32Array(allVertexIndexesSize)
+	let geometricIdOffset = 0
+	for (let objIndex = 0; objIndex < objects3D.length; objIndex++) {
+		const obj = objects3D[objIndex]
+		for (let i = 0; i < obj.vertexIndexes.length; i++, geometricIdOffset++) {
+			geometricIdData[geometricIdOffset] = objIndex
 		}
 	}
 
@@ -140,6 +168,9 @@ const createObjectResources = async (params: {
 		normalIndexesData,
 		materialData,
 		materialIndexesData,
+		matrixData,
+		matrixIndexesData,
+		geometricIdData,
 		aabb,
 	}
 }
@@ -155,6 +186,9 @@ export const createObjectBufferResources = (
 		normalIndexesData,
 		materialData,
 		materialIndexesData,
+		matrixData,
+		matrixIndexesData,
+		geometricIdData,
 	} = objectResources
 
 	const vertexBuffer = device.createBuffer({
@@ -205,6 +239,31 @@ export const createObjectBufferResources = (
 	})
 	device.queue.writeBuffer(materialIndexBuffer, 0, materialIndexesData)
 
+	const matrixBuffer = device.createBuffer({
+		label: "Matrix buffer",
+		size: matrixData.length * 4,
+		usage:
+			GPUBufferUsage.STORAGE | GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
+	})
+	device.queue.writeBuffer(matrixBuffer, 0, matrixData)
+
+	const matrixIndexBuffer = device.createBuffer({
+		label: "Matrix index buffer",
+		size: matrixIndexesData.length * 4,
+		usage:
+			GPUBufferUsage.STORAGE | GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
+	})
+	device.queue.writeBuffer(matrixIndexBuffer, 0, matrixIndexesData)
+
+	// Geometric ID buffer
+	const geometricIdBuffer = device.createBuffer({
+		label: "Geometric ID buffer",
+		size: geometricIdData.length * 4,
+		usage:
+			GPUBufferUsage.STORAGE | GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
+	})
+	device.queue.writeBuffer(geometricIdBuffer, 0, geometricIdData)
+
 	return {
 		vertexBuffer,
 		vertexIndexBuffer,
@@ -212,6 +271,9 @@ export const createObjectBufferResources = (
 		normalIndexBuffer,
 		materialBuffer,
 		materialIndexBuffer,
+		matrixBuffer,
+		matrixIndexBuffer,
+		geometricIdBuffer,
 	}
 }
 

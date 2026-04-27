@@ -28,6 +28,9 @@ export type ObjectResources = {
 	normalIndexesData: Uint32Array
 	materialData: Float32Array
 	materialIndexesData: Uint32Array
+	matrixData: Float32Array
+	matrixIndexesData: Uint32Array
+	geometricIdData: Uint32Array
 	aabb: AABB
 }
 
@@ -43,6 +46,9 @@ export type ObjectBufferResources = {
 	normalIndexBuffer: GPUBuffer
 	materialBuffer: GPUBuffer
 	materialIndexBuffer: GPUBuffer
+	matrixBuffer: GPUBuffer
+	matrixIndexBuffer: GPUBuffer
+	geometricIdBuffer: GPUBuffer
 }
 
 export type FlatNormalBufferResources = {

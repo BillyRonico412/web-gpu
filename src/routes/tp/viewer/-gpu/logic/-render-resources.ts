@@ -106,7 +106,7 @@ export const createRenderResources = (device: GPUDevice) => {
 			// Material buffer
 			{
 				binding: 4,
-				visibility: GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT,
+				visibility: GPUShaderStage.FRAGMENT,
 				buffer: {
 					type: "read-only-storage",
 				},
@@ -114,7 +114,32 @@ export const createRenderResources = (device: GPUDevice) => {
 			// Material index buffer
 			{
 				binding: 5,
+				visibility: GPUShaderStage.FRAGMENT,
+				buffer: {
+					type: "read-only-storage",
+				},
+			},
+			// Matrix buffer
+			{
+				binding: 6,
 				visibility: GPUShaderStage.VERTEX,
+				buffer: {
+					type: "read-only-storage",
+				},
+			},
+
+			// Matrix index buffer
+			{
+				binding: 7,
+				visibility: GPUShaderStage.VERTEX,
+				buffer: {
+					type: "read-only-storage",
+				},
+			},
+			// Geometric id buffer
+			{
+				binding: 8,
+				visibility: GPUShaderStage.FRAGMENT,
 				buffer: {
 					type: "read-only-storage",
 				},
@@ -134,6 +159,9 @@ export const createRenderResources = (device: GPUDevice) => {
 			normalIndexBuffer,
 			materialBuffer,
 			materialIndexBuffer,
+			matrixBuffer,
+			matrixIndexBuffer,
+			geometricIdBuffer,
 		} = params.objectResources
 
 		const { flatNormalBuffer, flatNormalIndexBuffer } =
@@ -190,6 +218,24 @@ export const createRenderResources = (device: GPUDevice) => {
 					binding: 5,
 					resource: {
 						buffer: materialIndexBuffer,
+					},
+				},
+				{
+					binding: 6,
+					resource: {
+						buffer: matrixBuffer,
+					},
+				},
+				{
+					binding: 7,
+					resource: {
+						buffer: matrixIndexBuffer,
+					},
+				},
+				{
+					binding: 8,
+					resource: {
+						buffer: geometricIdBuffer,
 					},
 				},
 			],

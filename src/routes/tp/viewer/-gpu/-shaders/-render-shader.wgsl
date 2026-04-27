@@ -4,9 +4,9 @@ struct VertexIn {
 
 struct VertexOut {
     @builtin(position) position: vec4f,
-    @location(0) world_position: vec3f,
-    @location(1) normal: vec3f,
-    @interpolate(flat) @location(2) material_index: u32,
+    @location(1) world_position: vec3f,
+    @location(2) normal: vec3f,
+    @interpolate(flat) @location(3) material_index: u32,
 }
 
 struct Uniform {

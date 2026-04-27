@@ -25,6 +25,7 @@ const resetAtom = atom(null, (_, set) => {
 	set(msaaAtom, RENDERING_DEFAULTS.msaa)
 	set(shadingModeAtom, RENDERING_DEFAULTS.shadingMode)
 	set(cullingAtom, RENDERING_DEFAULTS.culling)
+	set(backgroundHexAtom, RENDERING_DEFAULTS.backgroundHex)
 })
 
 export const renderingAtoms = {

@@ -24,14 +24,7 @@ function RouteComponent() {
 	useAtom(lightAtoms.lightModeEffect)
 	useAtom(canvasEventEffect)
 	return (
-		<SidebarProvider
-			style={
-				{
-					"--sidebar-width": "20rem",
-					"--sidebar-width-mobile": "20rem",
-				} as React.CSSProperties
-			}
-		>
+		<SidebarProvider>
 			<ViewerSidebar />
 			<main className="relative w-full h-dvh">
 				<SidebarTrigger className="absolute" />

@@ -8,7 +8,7 @@ import type { ShadingModeType } from "@/routes/tp/viewer/-gpu/logic/-normal-reso
 import { renderingAtoms } from "@/routes/tp/viewer/-rendering/-rendering-atoms"
 
 export const RenderingSection = () => {
-	const [msaa, setMsaa] = useAtom(renderingAtoms.msaaAtom)
+	const [fxaa, setFxaa] = useAtom(renderingAtoms.fxaaAtom)
 	const [shadingMode, setShadingMode] = useAtom(renderingAtoms.shadingModeAtom)
 	const [culling, setCulling] = useAtom(renderingAtoms.cullingAtom)
 	const [backgroundHex, setBackgroundHex] = useAtom(
@@ -19,10 +19,10 @@ export const RenderingSection = () => {
 	return (
 		<FieldGroup>
 			<Field orientation="horizontal">
-				<FieldLabel>MSAA</FieldLabel>
+				<FieldLabel>FXAA</FieldLabel>
 				<Switch
-					checked={msaa}
-					onCheckedChange={(checked) => setMsaa(checked)}
+					checked={fxaa}
+					onCheckedChange={(checked) => setFxaa(checked)}
 				/>
 			</Field>
 			<Field>

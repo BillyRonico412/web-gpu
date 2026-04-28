@@ -7,35 +7,88 @@ import type {
 	ObjectBufferResources,
 } from "@/routes/tp/viewer/-gpu/logic/-types"
 
+export type TexView = {
+	texture: GPUTexture
+	view: GPUTextureView
+}
+
 export const createRenderResources = (device: GPUDevice) => {
-	const createDepthTexture = (canvas: HTMLCanvasElement, msaa: boolean) => {
+	const createDepthTexture = (canvas: HTMLCanvasElement): TexView => {
 		const depthTexture = device.createTexture({
 			label: "Depth texture",
 			size: [canvas.width, canvas.height],
 			format: "depth24plus",
 			usage: GPUTextureUsage.RENDER_ATTACHMENT,
-			sampleCount: msaa ? 4 : undefined,
 		})
-		return depthTexture
+		return {
+			texture: depthTexture,
+			view: depthTexture.createView(),
+		}
 	}
 
-	const createViewTexture = (params: {
+	const createFxaaTexture = (params: {
 		canvas: HTMLCanvasElement
-		msaa: boolean
-		context: GPUCanvasContext
-	}) => {
-		const { canvas, msaa } = params
-		if (!msaa) {
-			return undefined
-		}
-		const msaaTexture = device.createTexture({
-			label: "MSAA texture",
+	}): TexView => {
+		const { canvas } = params
+		const fxaaTexture = device.createTexture({
+			label: "FXAA texture",
 			size: [canvas.width, canvas.height],
 			format: navigator.gpu.getPreferredCanvasFormat(),
 			usage: GPUTextureUsage.RENDER_ATTACHMENT,
 			sampleCount: 4,
 		})
-		return msaaTexture
+		return {
+			texture: fxaaTexture,
+			view: fxaaTexture.createView(),
+		}
+	}
+
+	const createColorTexture = (params: {
+		canvas: HTMLCanvasElement
+	}): TexView => {
+		const colorTexture = device.createTexture({
+			label: "Color texture",
+			size: [params.canvas.width, params.canvas.height],
+			format: navigator.gpu.getPreferredCanvasFormat(),
+			usage:
+				GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING,
+		})
+		return {
+			texture: colorTexture,
+			view: colorTexture.createView(),
+		}
+	}
+
+	const createGeometryIdTexture = (params: {
+		canvas: HTMLCanvasElement
+	}): TexView => {
+		const geometryIdTexture = device.createTexture({
+			label: "Geometry ID texture",
+			size: [params.canvas.width, params.canvas.height],
+			format: "r32uint",
+			usage:
+				GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING,
+		})
+		return {
+			texture: geometryIdTexture,
+			view: geometryIdTexture.createView(),
+		}
+	}
+
+	const createNormalTexture = (params: {
+		canvas: HTMLCanvasElement
+	}): TexView => {
+		const normalTexture = device.createTexture({
+			label: "Normal texture",
+			size: [params.canvas.width, params.canvas.height],
+			format: "rgba16float",
+			usage:
+				GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING,
+		})
+		return {
+			texture: normalTexture,
+			view: normalTexture.createView(),
+		}
 	}
 
 	const uniformBindGroupLayout = device.createBindGroupLayout({
@@ -68,7 +121,7 @@ export const createRenderResources = (device: GPUDevice) => {
 		return uniformBindGroup
 	}
 
-	const storageBindGroupLayout = device.createBindGroupLayout({
+	const renderStorageBindGroupLayout = device.createBindGroupLayout({
 		label: "Storage bind group layout",
 		entries: [
 			// Vertex buffer
@@ -182,7 +235,7 @@ export const createRenderResources = (device: GPUDevice) => {
 
 		const renderStorageBindGroup = device.createBindGroup({
 			label: "Render storage bind group",
-			layout: storageBindGroupLayout,
+			layout: renderStorageBindGroupLayout,
 			entries: [
 				{
 					binding: 0,
@@ -245,24 +298,15 @@ export const createRenderResources = (device: GPUDevice) => {
 
 	const renderPipelineLayout = device.createPipelineLayout({
 		label: "Render pipeline layout",
-		bindGroupLayouts: [uniformBindGroupLayout, storageBindGroupLayout],
+		bindGroupLayouts: [uniformBindGroupLayout, renderStorageBindGroupLayout],
 	})
 	const shaderModule = device.createShaderModule({
 		label: "Shader module",
 		code: renderShaderCode,
 	})
 
-	const createRenderPipeline = (params: {
-		msaa: boolean
-		culling: boolean
-	}) => {
-		const { msaa, culling } = params
-		let multisample: GPUMultisampleState | undefined
-		if (msaa) {
-			multisample = {
-				count: 4,
-			}
-		}
+	const createRenderPipeline = (params: { culling: boolean }) => {
+		const { culling } = params
 		const renderPipeline = device.createRenderPipeline({
 			label: "Render pipeline",
 			layout: renderPipelineLayout,
@@ -274,8 +318,17 @@ export const createRenderResources = (device: GPUDevice) => {
 				module: shaderModule,
 				entryPoint: "fs_main",
 				targets: [
+					// Color
 					{
 						format: navigator.gpu.getPreferredCanvasFormat(),
+					},
+					// Geometry
+					{
+						format: "r32uint",
+					},
+					// Normal
+					{
+						format: "rgba16float",
 					},
 				],
 			},
@@ -283,7 +336,6 @@ export const createRenderResources = (device: GPUDevice) => {
 				topology: "triangle-list",
 				cullMode: culling ? "back" : "none",
 			},
-			multisample,
 			depthStencil: {
 				format: "depth24plus",
 				depthWriteEnabled: true,
@@ -299,24 +351,19 @@ export const createRenderResources = (device: GPUDevice) => {
 		uniformBuffer: GPUBuffer
 		objectBufferResources: ObjectBufferResources
 		flatNormalBufferResources: FlatNormalBufferResources
-		viewTexture: GPUTexture | undefined
-		depthTexture: GPUTexture
+		colorTexView: TexView
+		geometryIdTexView: TexView
+		depthTexView: TexView
+		normalTexView: TexView
 		backgroundVec3: Vec3
 		context: GPUCanvasContext
-		msaa: boolean
 		objects3D: Object3D[]
 		shadingMode: ShadingModeType
 	}) => {
-		let viewTexture: GPUTexture
-		if (params.viewTexture) {
-			viewTexture = params.viewTexture
-		} else {
-			viewTexture = params.context.getCurrentTexture()
-		}
 		const renderPassDescriptor: GPURenderPassDescriptor = {
 			colorAttachments: [
 				{
-					view: viewTexture.createView(),
+					view: params.colorTexView.view,
 					loadOp: "clear",
 					storeOp: "store",
 					clearValue: {
@@ -325,13 +372,20 @@ export const createRenderResources = (device: GPUDevice) => {
 						b: params.backgroundVec3[2],
 						a: 1,
 					},
-					resolveTarget: params.msaa
-						? params.context.getCurrentTexture().createView()
-						: undefined,
+				},
+				{
+					view: params.geometryIdTexView.view,
+					loadOp: "clear",
+					storeOp: "store",
+				},
+				{
+					view: params.normalTexView.view,
+					loadOp: "clear",
+					storeOp: "store",
 				},
 			],
 			depthStencilAttachment: {
-				view: params.depthTexture.createView(),
+				view: params.depthTexView.view,
 				depthLoadOp: "clear",
 				depthStoreOp: "store",
 				depthClearValue: 1,
@@ -359,10 +413,145 @@ export const createRenderResources = (device: GPUDevice) => {
 		renderPass.end()
 	}
 
+	const postProcessUniformBindGroupLayout = device.createBindGroupLayout({
+		label: "Post process uniform bind group layout",
+		entries: [
+			// Enable FXAA
+			{
+				binding: 0,
+				visibility: GPUShaderStage.FRAGMENT,
+				buffer: {
+					type: "uniform",
+				},
+			},
+		],
+	})
+
+	const createPostProcessUniformBindGroup = (params: { fxaa: boolean }) => {
+		const { fxaa } = params
+		const fxaaData = new Uint32Array([fxaa ? 1 : 0])
+		const fxaaBuffer = device.createBuffer({
+			label: "FXAA uniform buffer",
+			size: fxaaData.byteLength,
+			usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+		})
+		device.queue.writeBuffer(fxaaBuffer, 0, fxaaData.buffer)
+
+		const postProcessUniformBindGroup = device.createBindGroup({
+			label: "Post process uniform bind group",
+			layout: postProcessUniformBindGroupLayout,
+			entries: [
+				{
+					binding: 0,
+					resource: {
+						buffer: fxaaBuffer,
+					},
+				},
+			],
+		})
+		return postProcessUniformBindGroup
+	}
+
+	const postProcessTextureBindGroupLayout = device.createBindGroupLayout({
+		label: "Post process bind group layout",
+		entries: [
+			// Basic sampler
+			{
+				binding: 0,
+				visibility: GPUShaderStage.FRAGMENT,
+				sampler: {
+					type: "filtering",
+				},
+			},
+			// Color texture
+			{
+				binding: 1,
+				visibility: GPUShaderStage.FRAGMENT,
+				texture: {
+					sampleType: "float",
+				},
+			},
+			// Geometry ID texture
+			{
+				binding: 2,
+				visibility: GPUShaderStage.FRAGMENT,
+				texture: {
+					sampleType: "uint",
+				},
+			},
+			// Normal texture
+			{
+				binding: 3,
+				visibility: GPUShaderStage.FRAGMENT,
+				texture: {
+					sampleType: "float",
+				},
+			},
+			// Depth texture
+			{
+				binding: 4,
+				visibility: GPUShaderStage.FRAGMENT,
+				texture: {
+					sampleType: "depth",
+				},
+			},
+		],
+	})
+
+	const createPostProcessTextureBindGroup = (params: {
+		colorTexView: TexView
+		geometryIdTexView: TexView
+		normalTexView: TexView
+		depthTexView: TexView
+	}) => {
+		const { colorTexView, geometryIdTexView, normalTexView, depthTexView } =
+			params
+		const sampler = device.createSampler({
+			label: "Post process sampler",
+			magFilter: "linear",
+			minFilter: "linear",
+		})
+		const postProcessBindGroup = device.createBindGroup({
+			label: "Post process bind group",
+			layout: postProcessTextureBindGroupLayout,
+			entries: [
+				{
+					binding: 0,
+					resource: sampler,
+				},
+				{
+					binding: 1,
+					resource: colorTexView.view,
+				},
+				{
+					binding: 2,
+					resource: geometryIdTexView.view,
+				},
+				{
+					binding: 3,
+					resource: normalTexView.view,
+				},
+				{
+					binding: 4,
+					resource: depthTexView.view,
+				},
+			],
+		})
+		return postProcessBindGroup
+	}
+
+	const postProcessPipelineLayout = device.createPipelineLayout({
+		label: "Post process pipeline layout",
+		bindGroupLayouts: [postProcessTextureBindGroupLayout],
+	})
+
 	return {
 		createRenderPipeline,
 		doRenderPass,
 		createDepthTexture,
-		createViewTexture,
+		createFxaaTexture,
+		createColorTexture,
+		createGeometryIdTexture,
+		createNormalTexture,
 	}
 }

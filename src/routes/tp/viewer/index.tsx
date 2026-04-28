@@ -20,7 +20,7 @@ function RouteComponent() {
 	useAtom(gpuEffects.drawEffect)
 	useAtom(gpuEffects.loadingStateEffect)
 	useAtom(gpuEffects.drawEffect)
-	useAtom(gpuEffects.msaaEffect)
+	useAtom(gpuEffects.fxaaEffect)
 	useAtom(lightAtoms.lightModeEffect)
 	useAtom(canvasEventEffect)
 	return (

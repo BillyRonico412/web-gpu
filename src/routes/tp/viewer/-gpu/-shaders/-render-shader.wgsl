@@ -1,13 +1,4 @@
-struct VertexIn {
-    @builtin(vertex_index) draw_index: u32,
-}
 
-struct VertexOut {
-    @builtin(position) position: vec4f,
-    @interpolate(flat) @location(0) draw_index: u32,
-    @location(1) world_position: vec3f,
-    @location(2) normal: vec3f,
-}
 
 struct Uniform {
     mvp_matrix: mat4x4f,
@@ -33,6 +24,17 @@ struct Material {
 @group(1) @binding(6) var<storage, read> matrix_array: array<mat4x4f>;
 @group(1) @binding(7) var<storage, read> matrix_indexes_array: array<u32>;
 @group(1) @binding(8) var<storage, read> geometric_id_array: array<u32>;
+
+struct VertexIn {
+    @builtin(vertex_index) draw_index: u32,
+}
+
+struct VertexOut {
+    @builtin(position) position: vec4f,
+    @interpolate(flat) @location(0) draw_index: u32,
+    @location(1) world_position: vec3f,
+    @location(2) normal: vec3f,
+}
 
 @vertex
 fn vs_main(v_in: VertexIn) -> VertexOut {
@@ -61,8 +63,13 @@ fn vs_main(v_in: VertexIn) -> VertexOut {
 const MIN_SHININESS: f32 = 32.0;
 const MAX_SHININESS: f32 = 512.0;
 
+struct FragmentOut {
+    @location(0) color: vec4f,
+    @location(1) geometric_id: u32,
+}
+
 @fragment
-fn fs_main(f_in: VertexOut) -> @location(0) vec4f {
+fn fs_main(f_in: VertexOut) -> FragmentOut {
     var normal = normalize(f_in.normal);
     let pos_to_camara = normalize(uni.camera_position - f_in.world_position);
     if dot(normal, pos_to_camara) < 0.0 {
@@ -85,5 +92,10 @@ fn fs_main(f_in: VertexOut) -> @location(0) vec4f {
     let specular_color = mix(vec3f(1.0), base_color, material.metalic);
     let final_specular = specular_color * specular * uni.specular_intensity;
     let final_color = base_color * (diffuse + uni.ambient) + final_specular;
-    return vec4f(final_color, 1);
+
+    var out: FragmentOut;
+    out.color = vec4f(final_color, material.color.a);
+    out.geometric_id = geometric_id_array[f_in.draw_index];
+
+    return out;
 }

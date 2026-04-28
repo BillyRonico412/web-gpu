@@ -100,20 +100,29 @@ export const initViewer = async (objects3D: Object3D[]) => {
 			createRenderPipeline,
 			doRenderPass,
 			createDepthTexture,
-			createViewTexture,
+			createFxaaTexture,
+			createColorTexture,
+			createGeometryIdTexture,
+			createNormalTexture,
 		} = createRenderResources(device)
 
 		const { uniformBuffer, updateUniformBuffer } = createUniformBuffer(device)
-		let depthTexture = createDepthTexture(canvas, true)
-		let viewTexture = createViewTexture({
+		let depthTexView = createDepthTexture(canvas)
+		let fxaaTexView = createFxaaTexture({
 			canvas,
-			msaa: true,
-			context,
+		})
+		let colorTexView = createColorTexture({
+			canvas,
+		})
+		let geometryIdTexView = createGeometryIdTexture({
+			canvas,
+		})
+		let normalTexView = createNormalTexture({
+			canvas,
 		})
 
 		let renderPipeline = createRenderPipeline({
 			culling: true,
-			msaa: true,
 		})
 
 		const draw = (params: {
@@ -121,7 +130,7 @@ export const initViewer = async (objects3D: Object3D[]) => {
 			projectionMatrix: Mat4
 			lightDirection: Vec3
 			backgroundVec3: Vec3
-			msaa: boolean
+			fxaa: boolean
 			shadingMode: ShadingModeType
 			cameraPosition: Vec3
 			ambient: number
@@ -132,7 +141,7 @@ export const initViewer = async (objects3D: Object3D[]) => {
 				backgroundVec3,
 				projectionMatrix,
 				lightDirection,
-				msaa,
+				fxaa,
 				shadingMode,
 				cameraPosition,
 				ambient,
@@ -152,41 +161,53 @@ export const initViewer = async (objects3D: Object3D[]) => {
 				uniformBuffer,
 				objectBufferResources,
 				flatNormalBufferResources,
-				viewTexture,
-				depthTexture,
+				depthTexView,
 				backgroundVec3,
 				context,
-				msaa,
 				objects3D,
 				shadingMode,
+				colorTexView,
+				geometryIdTexView,
+				normalTexView,
 			})
 			device.queue.submit([commandEncoder.finish()])
 		}
 
-		const updateDepthTexture = (msaa: boolean) => {
-			depthTexture.destroy()
-			depthTexture = createDepthTexture(canvas, msaa)
+		const updateTextureByCanvasResize = () => {
+			depthTexView.texture.destroy()
+			depthTexView = createDepthTexture(canvas)
+
+			normalTexView.texture.destroy()
+			normalTexView = createNormalTexture({
+				canvas,
+			})
+
+			colorTexView.texture.destroy()
+			colorTexView = createColorTexture({
+				canvas,
+			})
+
+			geometryIdTexView.texture.destroy()
+			geometryIdTexView = createGeometryIdTexture({
+				canvas,
+			})
+
+			depthTexView.texture.destroy()
+			depthTexView = createDepthTexture(canvas)
+
+			fxaaTexView.texture.destroy()
+			fxaaTexView = createFxaaTexture({
+				canvas,
+			})
 		}
 
 		const updateRenderPipeline = (params: {
 			culling: boolean
-			msaa: boolean
+			fxaa: boolean
 		}) => {
-			const { culling, msaa } = params
+			const { culling } = params
 			renderPipeline = createRenderPipeline({
 				culling,
-				msaa,
-			})
-		}
-
-		const updateViewTexture = (msaa: boolean) => {
-			if (viewTexture) {
-				viewTexture.destroy()
-			}
-			viewTexture = createViewTexture({
-				canvas,
-				msaa,
-				context,
 			})
 		}
 
@@ -198,17 +219,21 @@ export const initViewer = async (objects3D: Object3D[]) => {
 			objectBufferResources.materialBuffer.destroy()
 			objectBufferResources.materialIndexBuffer.destroy()
 			uniformBuffer.destroy()
-			depthTexture.destroy()
-			if (viewTexture) {
-				viewTexture.destroy()
+			depthTexView.texture.destroy()
+			if (fxaaTexView) {
+				fxaaTexView.texture.destroy()
 			}
+			colorTexView.texture.destroy()
+			geometryIdTexView.texture.destroy()
+			normalTexView.texture.destroy()
+			normalWorker.terminate()
+			objectWorker.terminate()
 		}
 
 		return {
 			draw,
-			updateDepthTexture,
+			updateTextureByCanvasResize,
 			updateRenderPipeline,
-			updateViewTexture,
 			aabb: objectResources.aabb,
 			objects3D,
 			cleanup,

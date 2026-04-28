@@ -25,16 +25,14 @@ const initViewerEffect = atomEffect((get, set) => {
 	})()
 })
 
-const msaaEffect = atomEffect((get, set) => {
+const fxaaEffect = atomEffect((get, set) => {
 	const viewer = get(gpuAtoms.viewerAtom)
 	if (!viewer) {
 		return
 	}
-	const msaa = get(renderingAtoms.msaaAtom)
+	const fxaa = get(renderingAtoms.fxaaAtom)
 	const culling = get(renderingAtoms.cullingAtom)
-	viewer.updateViewTexture(msaa)
-	viewer.updateDepthTexture(msaa)
-	viewer.updateRenderPipeline({ msaa, culling })
+	viewer.updateRenderPipeline({ fxaa, culling })
 	set(gpuAtoms.drawTriggerAtom, (prev) => prev + 1)
 })
 
@@ -48,7 +46,7 @@ const drawEffect = atomEffect((get) => {
 	const projectionMatrix = get(cameraAtoms.projectionMatrixAtom)
 	const lightDirection = get(lightAtoms.lightDirectionAtom)
 	const backgroundVec3 = get(renderingAtoms.backgroundVec3Atom)
-	const msaa = get.peek(renderingAtoms.msaaAtom)
+	const fxaa = get.peek(renderingAtoms.fxaaAtom)
 	const shadingMode = get(renderingAtoms.shadingModeAtom)
 	const cameraPosition = get(cameraAtoms.eyeAtom)
 	const ambient = get(lightAtoms.ambientAtom)
@@ -58,7 +56,7 @@ const drawEffect = atomEffect((get) => {
 		projectionMatrix,
 		lightDirection,
 		backgroundVec3,
-		msaa,
+		fxaa,
 		shadingMode,
 		cameraPosition,
 		ambient,
@@ -76,9 +74,7 @@ const canvasEffect = atomEffect((get, set) => {
 		if (!viewer) {
 			return
 		}
-		const msaa = get(renderingAtoms.msaaAtom)
-		viewer.updateDepthTexture(msaa)
-		viewer.updateViewTexture(msaa)
+		viewer.updateTextureByCanvasResize()
 		set(gpuAtoms.drawTriggerAtom, (prev) => prev + 1)
 	}
 	handleResize()
@@ -115,6 +111,6 @@ export const gpuEffects = {
 	initViewerEffect,
 	drawEffect,
 	canvasEffect,
-	msaaEffect,
+	fxaaEffect,
 	loadingStateEffect,
 }

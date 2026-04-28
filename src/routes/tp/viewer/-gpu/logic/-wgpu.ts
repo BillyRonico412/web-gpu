@@ -100,17 +100,14 @@ export const initViewer = async (objects3D: Object3D[]) => {
 			createRenderPipeline,
 			doRenderPass,
 			createDepthTexture,
-			createFxaaTexture,
 			createColorTexture,
 			createGeometryIdTexture,
 			createNormalTexture,
+			doPostProcessPass,
 		} = createRenderResources(device)
 
 		const { uniformBuffer, updateUniformBuffer } = createUniformBuffer(device)
 		let depthTexView = createDepthTexture(canvas)
-		let fxaaTexView = createFxaaTexture({
-			canvas,
-		})
 		let colorTexView = createColorTexture({
 			canvas,
 		})
@@ -154,7 +151,9 @@ export const initViewer = async (objects3D: Object3D[]) => {
 				ambient,
 				specularIntensity,
 			})
+
 			const commandEncoder = device.createCommandEncoder()
+
 			doRenderPass({
 				renderPipeline,
 				commandEncoder,
@@ -170,6 +169,17 @@ export const initViewer = async (objects3D: Object3D[]) => {
 				geometryIdTexView,
 				normalTexView,
 			})
+
+			doPostProcessPass({
+				commandEncoder,
+				fxaa,
+				colorTexView,
+				depthTexView,
+				geometryIdTexView,
+				normalTexView,
+				context,
+			})
+
 			device.queue.submit([commandEncoder.finish()])
 		}
 
@@ -194,11 +204,6 @@ export const initViewer = async (objects3D: Object3D[]) => {
 
 			depthTexView.texture.destroy()
 			depthTexView = createDepthTexture(canvas)
-
-			fxaaTexView.texture.destroy()
-			fxaaTexView = createFxaaTexture({
-				canvas,
-			})
 		}
 
 		const updateRenderPipeline = (params: {
@@ -220,9 +225,6 @@ export const initViewer = async (objects3D: Object3D[]) => {
 			objectBufferResources.materialIndexBuffer.destroy()
 			uniformBuffer.destroy()
 			depthTexView.texture.destroy()
-			if (fxaaTexView) {
-				fxaaTexView.texture.destroy()
-			}
 			colorTexView.texture.destroy()
 			geometryIdTexView.texture.destroy()
 			normalTexView.texture.destroy()

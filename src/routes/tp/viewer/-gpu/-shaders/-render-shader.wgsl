@@ -66,6 +66,7 @@ const MAX_SHININESS: f32 = 512.0;
 struct FragmentOut {
     @location(0) color: vec4f,
     @location(1) geometric_id: u32,
+    @location(2) normal: vec4f,
 }
 
 @fragment
@@ -96,6 +97,7 @@ fn fs_main(f_in: VertexOut) -> FragmentOut {
     var out: FragmentOut;
     out.color = vec4f(final_color, material.color.a);
     out.geometric_id = geometric_id_array[f_in.draw_index];
+    out.normal = vec4f(normal, 0);
 
     return out;
 }

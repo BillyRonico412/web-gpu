@@ -1,4 +1,5 @@
 import type { Vec3 } from "wgpu-matrix"
+import postProcessShaderCode from "@/routes/tp/viewer/-gpu/-shaders/-post-process-shader.wgsl?raw"
 import renderShaderCode from "@/routes/tp/viewer/-gpu/-shaders/-render-shader.wgsl?raw"
 import type { ShadingModeType } from "@/routes/tp/viewer/-gpu/logic/-normal-resources"
 import type {
@@ -18,28 +19,12 @@ export const createRenderResources = (device: GPUDevice) => {
 			label: "Depth texture",
 			size: [canvas.width, canvas.height],
 			format: "depth24plus",
-			usage: GPUTextureUsage.RENDER_ATTACHMENT,
+			usage:
+				GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING,
 		})
 		return {
 			texture: depthTexture,
 			view: depthTexture.createView(),
-		}
-	}
-
-	const createFxaaTexture = (params: {
-		canvas: HTMLCanvasElement
-	}): TexView => {
-		const { canvas } = params
-		const fxaaTexture = device.createTexture({
-			label: "FXAA texture",
-			size: [canvas.width, canvas.height],
-			format: navigator.gpu.getPreferredCanvasFormat(),
-			usage: GPUTextureUsage.RENDER_ATTACHMENT,
-			sampleCount: 4,
-		})
-		return {
-			texture: fxaaTexture,
-			view: fxaaTexture.createView(),
 		}
 	}
 
@@ -498,6 +483,12 @@ export const createRenderResources = (device: GPUDevice) => {
 		],
 	})
 
+	const sampler = device.createSampler({
+		label: "Post process sampler",
+		magFilter: "linear",
+		minFilter: "linear",
+	})
+
 	const createPostProcessTextureBindGroup = (params: {
 		colorTexView: TexView
 		geometryIdTexView: TexView
@@ -506,11 +497,7 @@ export const createRenderResources = (device: GPUDevice) => {
 	}) => {
 		const { colorTexView, geometryIdTexView, normalTexView, depthTexView } =
 			params
-		const sampler = device.createSampler({
-			label: "Post process sampler",
-			magFilter: "linear",
-			minFilter: "linear",
-		})
+
 		const postProcessBindGroup = device.createBindGroup({
 			label: "Post process bind group",
 			layout: postProcessTextureBindGroupLayout,
@@ -521,19 +508,19 @@ export const createRenderResources = (device: GPUDevice) => {
 				},
 				{
 					binding: 1,
-					resource: colorTexView.view,
+					resource: colorTexView.texture,
 				},
 				{
 					binding: 2,
-					resource: geometryIdTexView.view,
+					resource: geometryIdTexView.texture,
 				},
 				{
 					binding: 3,
-					resource: normalTexView.view,
+					resource: normalTexView.texture,
 				},
 				{
 					binding: 4,
-					resource: depthTexView.view,
+					resource: depthTexView.texture,
 				},
 			],
 		})
@@ -542,16 +529,84 @@ export const createRenderResources = (device: GPUDevice) => {
 
 	const postProcessPipelineLayout = device.createPipelineLayout({
 		label: "Post process pipeline layout",
-		bindGroupLayouts: [postProcessTextureBindGroupLayout],
+		bindGroupLayouts: [
+			postProcessUniformBindGroupLayout,
+			postProcessTextureBindGroupLayout,
+		],
 	})
+
+	const postProcessShaderModule = device.createShaderModule({
+		label: "Post process shader module",
+		code: postProcessShaderCode,
+	})
+
+	const postProcessPipeline = device.createRenderPipeline({
+		label: "Post process pipeline",
+		layout: postProcessPipelineLayout,
+		vertex: {
+			module: postProcessShaderModule,
+			entryPoint: "vs_main",
+		},
+		fragment: {
+			module: postProcessShaderModule,
+			entryPoint: "fs_main",
+			targets: [
+				{
+					format: navigator.gpu.getPreferredCanvasFormat(),
+				},
+			],
+		},
+		primitive: {
+			topology: "triangle-list",
+		},
+	})
+
+	const doPostProcessPass = (params: {
+		commandEncoder: GPUCommandEncoder
+		context: GPUCanvasContext
+		colorTexView: TexView
+		geometryIdTexView: TexView
+		normalTexView: TexView
+		depthTexView: TexView
+		fxaa: boolean
+	}) => {
+		const renderPassDescriptor: GPURenderPassDescriptor = {
+			colorAttachments: [
+				{
+					view: params.context.getCurrentTexture().createView(),
+					loadOp: "clear",
+					storeOp: "store",
+				},
+			],
+		}
+
+		const postProcessUniformBindGroup = createPostProcessUniformBindGroup({
+			fxaa: params.fxaa,
+		})
+
+		const postProcessTextureBindGroup = createPostProcessTextureBindGroup({
+			colorTexView: params.colorTexView,
+			geometryIdTexView: params.geometryIdTexView,
+			normalTexView: params.normalTexView,
+			depthTexView: params.depthTexView,
+		})
+
+		const renderPass =
+			params.commandEncoder.beginRenderPass(renderPassDescriptor)
+		renderPass.setPipeline(postProcessPipeline)
+		renderPass.setBindGroup(0, postProcessUniformBindGroup)
+		renderPass.setBindGroup(1, postProcessTextureBindGroup)
+		renderPass.draw(6)
+		renderPass.end()
+	}
 
 	return {
 		createRenderPipeline,
 		doRenderPass,
 		createDepthTexture,
-		createFxaaTexture,
 		createColorTexture,
 		createGeometryIdTexture,
 		createNormalTexture,
+		doPostProcessPass,
 	}
 }

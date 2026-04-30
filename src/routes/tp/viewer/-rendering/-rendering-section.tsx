@@ -13,6 +13,9 @@ export const RenderingSection = () => {
 	const [backgroundHex, setBackgroundHex] = useAtom(
 		renderingAtoms.backgroundHexAtom,
 	)
+	const [geometryEdgeDetection, setGeometryEdgeDetection] = useAtom(
+		renderingAtoms.geometryEdgeDetectionAtom,
+	)
 	const reset = useSetAtom(renderingAtoms.resetAtom)
 
 	return (
@@ -36,6 +39,13 @@ export const RenderingSection = () => {
 						Auto
 					</ToggleGroupItem>
 				</ToggleGroup>
+			</Field>
+			<Field orientation="horizontal">
+				<FieldLabel>Geometry edge detection</FieldLabel>
+				<Switch
+					checked={geometryEdgeDetection}
+					onCheckedChange={(checked) => setGeometryEdgeDetection(checked)}
+				/>
 			</Field>
 			<Field orientation="horizontal">
 				<FieldLabel>Culling</FieldLabel>

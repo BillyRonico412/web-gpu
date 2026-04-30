@@ -7,10 +7,12 @@ export const RENDERING_DEFAULTS = {
 	shadingMode: "auto" as ShadingModeType,
 	culling: true,
 	backgroundHex: "#444",
+	geometryEdgeDetection: true,
 }
 
 const shadingModeAtom = atom<ShadingModeType>(RENDERING_DEFAULTS.shadingMode)
 const cullingAtom = atom(RENDERING_DEFAULTS.culling)
+const geometryEdgeDetectionAtom = atom(RENDERING_DEFAULTS.geometryEdgeDetection)
 
 const backgroundHexAtom = atom<string>(RENDERING_DEFAULTS.backgroundHex)
 const backgroundVec3Atom = atom((get) => {
@@ -23,6 +25,7 @@ const resetAtom = atom(null, (_, set) => {
 	set(shadingModeAtom, RENDERING_DEFAULTS.shadingMode)
 	set(cullingAtom, RENDERING_DEFAULTS.culling)
 	set(backgroundHexAtom, RENDERING_DEFAULTS.backgroundHex)
+	set(geometryEdgeDetectionAtom, RENDERING_DEFAULTS.geometryEdgeDetection)
 })
 
 export const renderingAtoms = {
@@ -31,4 +34,5 @@ export const renderingAtoms = {
 	resetAtom,
 	backgroundHexAtom,
 	backgroundVec3Atom,
+	geometryEdgeDetectionAtom,
 }

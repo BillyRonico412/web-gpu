@@ -12,6 +12,7 @@ export type Object3D = {
 		metallic: number
 		roughness: number
 	}
+	geometricId: number
 }
 
 export type AABB = {

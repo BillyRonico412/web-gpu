@@ -14,7 +14,6 @@ import {
 } from "@/routes/tp/viewer/-gpu/logic/-object-resources"
 import { createRenderResources } from "@/routes/tp/viewer/-gpu/logic/-render-resources"
 import type { Object3D } from "@/routes/tp/viewer/-gpu/logic/-types"
-import { createPickingPassRessources } from "@/routes/tp/viewer/-gpu/logic/pass/-picking-pass"
 import { createPostProcessPassRessources } from "@/routes/tp/viewer/-gpu/logic/pass/-post-process-pass"
 import { createRenderPassRessource } from "@/routes/tp/viewer/-gpu/logic/pass/-render-pass"
 
@@ -72,11 +71,9 @@ export const initViewer = async (objects3D: Object3D[]) => {
 			createColorTexture,
 			createGeometryIdTexture,
 			createNormalTexture,
-			createPickingDepthTexture,
 		} = createRenderResources(device)
 
 		let renderDepthTexView = createRenderDepthTexture(canvas)
-		let pickingDepthTexView = createPickingDepthTexture(canvas)
 		let colorMsTexView = createColorTexture({
 			canvas,
 		})
@@ -90,9 +87,6 @@ export const initViewer = async (objects3D: Object3D[]) => {
 		const { doRenderPass, renderPassCleanUp } =
 			createRenderPassRessource(device)
 
-		const { doPickingPass, pickingPassCleanUp } =
-			createPickingPassRessources(device)
-
 		const { doPostProcessPass } = createPostProcessPassRessources(device)
 
 		const draw = (params: {
@@ -105,6 +99,7 @@ export const initViewer = async (objects3D: Object3D[]) => {
 			ambient: number
 			specularIntensity: number
 			culling: boolean
+			geometryEdgeDetection: boolean
 		}) => {
 			const {
 				viewMatrix,
@@ -116,6 +111,7 @@ export const initViewer = async (objects3D: Object3D[]) => {
 				ambient,
 				specularIntensity,
 				culling,
+				geometryEdgeDetection,
 			} = params
 
 			const commandEncoder = device.createCommandEncoder()
@@ -142,23 +138,14 @@ export const initViewer = async (objects3D: Object3D[]) => {
 				},
 			})
 
-			doPickingPass({
-				commandEncoder,
-				objectBufferResources,
-				depthTexView: pickingDepthTexView,
-				geometryIdTexView,
-				context,
-				objects3D,
-				mvp: { viewMatrix, projectionMatrix },
-			})
-
 			doPostProcessPass({
 				commandEncoder,
 				colorTexView: colorMsTexView.base,
 				geometryIdTexView,
 				context,
-				depthTexView: pickingDepthTexView,
 				normalTexView: normalMsTexView.base,
+				depthTexView: renderDepthTexView,
+				geometryEdgeDetection,
 			})
 
 			device.queue.submit([commandEncoder.finish()])
@@ -184,9 +171,6 @@ export const initViewer = async (objects3D: Object3D[]) => {
 			geometryIdTexView = createGeometryIdTexture({
 				canvas,
 			})
-
-			pickingDepthTexView.texture.destroy()
-			pickingDepthTexView = createPickingDepthTexture(canvas)
 		}
 
 		const cleanup = () => {
@@ -202,11 +186,7 @@ export const initViewer = async (objects3D: Object3D[]) => {
 			geometryIdTexView.texture.destroy()
 			normalMsTexView.base.texture.destroy()
 			normalMsTexView.ms.texture.destroy()
-			pickingDepthTexView.texture.destroy()
-			normalWorker.terminate()
-			objectWorker.terminate()
 			renderPassCleanUp()
-			pickingPassCleanUp()
 		}
 
 		return {

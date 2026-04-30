@@ -37,19 +37,6 @@ export const createRenderResources = (device: GPUDevice) => {
 			size: [canvas.width, canvas.height],
 			format: "depth24plus",
 			sampleCount: 4,
-			usage: GPUTextureUsage.RENDER_ATTACHMENT,
-		})
-		return {
-			texture: depthTexture,
-			view: depthTexture.createView(),
-		}
-	}
-
-	const createPickingDepthTexture = (canvas: HTMLCanvasElement): TexView => {
-		const depthTexture = device.createTexture({
-			label: "Picking depth texture",
-			size: [canvas.width, canvas.height],
-			format: "depth24plus",
 			usage:
 				GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING,
 		})
@@ -81,7 +68,8 @@ export const createRenderResources = (device: GPUDevice) => {
 		const geometryIdTexture = device.createTexture({
 			label: "Geometry ID texture",
 			size: [params.canvas.width, params.canvas.height],
-			format: "r32uint",
+			format: "r32float",
+			sampleCount: 4,
 			usage:
 				GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING,
 		})
@@ -93,7 +81,6 @@ export const createRenderResources = (device: GPUDevice) => {
 
 	return {
 		createRenderDepthTexture,
-		createPickingDepthTexture,
 		createColorTexture,
 		createGeometryIdTexture,
 		createNormalTexture,

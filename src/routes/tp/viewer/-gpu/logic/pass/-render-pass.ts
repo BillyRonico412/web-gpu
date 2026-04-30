@@ -139,6 +139,14 @@ export const createRenderPassRessource = (device: GPUDevice) => {
 					type: "read-only-storage",
 				},
 			},
+			// Geometric ID buffer
+			{
+				binding: 8,
+				visibility: GPUShaderStage.FRAGMENT,
+				buffer: {
+					type: "read-only-storage",
+				},
+			},
 		],
 	})
 
@@ -156,6 +164,7 @@ export const createRenderPassRessource = (device: GPUDevice) => {
 			materialIndexBuffer,
 			matrixBuffer,
 			matrixIndexBuffer,
+			geometricIdBuffer,
 		} = params.objectResources
 
 		const { flatNormalBuffer, flatNormalIndexBuffer } =
@@ -226,6 +235,12 @@ export const createRenderPassRessource = (device: GPUDevice) => {
 						buffer: matrixIndexBuffer,
 					},
 				},
+				{
+					binding: 8,
+					resource: {
+						buffer: geometricIdBuffer,
+					},
+				},
 			],
 		})
 		return renderStorageBindGroup
@@ -260,6 +275,10 @@ export const createRenderPassRessource = (device: GPUDevice) => {
 					// Normal
 					{
 						format: "rgba16float",
+					},
+					// Geometry ID
+					{
+						format: "r32float",
 					},
 				],
 			},
@@ -311,6 +330,11 @@ export const createRenderPassRessource = (device: GPUDevice) => {
 				{
 					view: params.normalTexView.ms.view,
 					resolveTarget: params.normalTexView.base.view,
+					loadOp: "clear",
+					storeOp: "store",
+				},
+				{
+					view: params.geometryIdTexView.view,
 					loadOp: "clear",
 					storeOp: "store",
 				},

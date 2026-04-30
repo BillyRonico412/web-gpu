@@ -50,6 +50,7 @@ const parseObj = async (objText: string): Promise<Object3D[]> => {
 		material: DEFAULT_MATERIAL,
 		matrix: mat4.identity(),
 		name: "Object",
+		geometricId: 1,
 	}
 	let vertexOffset = 0
 	let normalOffset = 0

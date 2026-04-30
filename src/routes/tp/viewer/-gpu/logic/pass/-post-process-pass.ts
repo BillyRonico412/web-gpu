@@ -2,6 +2,49 @@ import postProcessShaderCode from "@/routes/tp/viewer/-gpu/-shaders/-post-proces
 import type { TexView } from "@/routes/tp/viewer/-gpu/logic/-types"
 
 export const createPostProcessPassRessources = (device: GPUDevice) => {
+	const postProcessUniformSize = 4
+	const postProcessUniformData = new Float32Array(postProcessUniformSize / 4)
+	const postProcessUniformBuffer = device.createBuffer({
+		label: "Post process uniform buffer",
+		size: postProcessUniformSize,
+		usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+	})
+
+	const postProcessUniformBindGroupLayout = device.createBindGroupLayout({
+		label: "Post process uniform bind group layout",
+		entries: [
+			{
+				binding: 0,
+				visibility: GPUShaderStage.FRAGMENT,
+				buffer: {
+					type: "uniform",
+				},
+			},
+		],
+	})
+
+	const createPostProcessUniformBindGroup = (edgeDetectionEnabled: boolean) => {
+		postProcessUniformData[0] = edgeDetectionEnabled ? 1 : 0
+		device.queue.writeBuffer(
+			postProcessUniformBuffer,
+			0,
+			postProcessUniformData,
+		)
+		const postProcessUniformBindGroup = device.createBindGroup({
+			label: "Post process uniform bind group",
+			layout: postProcessUniformBindGroupLayout,
+			entries: [
+				{
+					binding: 0,
+					resource: {
+						buffer: postProcessUniformBuffer,
+					},
+				},
+			],
+		})
+		return postProcessUniformBindGroup
+	}
+
 	const postProcessTextureBindGroupLayout = device.createBindGroupLayout({
 		label: "Post process bind group layout",
 		entries: [
@@ -26,7 +69,8 @@ export const createPostProcessPassRessources = (device: GPUDevice) => {
 				binding: 2,
 				visibility: GPUShaderStage.FRAGMENT,
 				texture: {
-					sampleType: "uint",
+					sampleType: "unfilterable-float",
+					multisampled: true,
 				},
 			},
 			// Normal texture
@@ -35,14 +79,6 @@ export const createPostProcessPassRessources = (device: GPUDevice) => {
 				visibility: GPUShaderStage.FRAGMENT,
 				texture: {
 					sampleType: "float",
-				},
-			},
-			// Depth texture
-			{
-				binding: 4,
-				visibility: GPUShaderStage.FRAGMENT,
-				texture: {
-					sampleType: "depth",
 				},
 			},
 		],
@@ -60,8 +96,7 @@ export const createPostProcessPassRessources = (device: GPUDevice) => {
 		normalTexView: TexView
 		depthTexView: TexView
 	}) => {
-		const { colorTexView, geometryIdTexView, normalTexView, depthTexView } =
-			params
+		const { colorTexView, geometryIdTexView, normalTexView } = params
 
 		const postProcessBindGroup = device.createBindGroup({
 			label: "Post process bind group",
@@ -83,10 +118,6 @@ export const createPostProcessPassRessources = (device: GPUDevice) => {
 					binding: 3,
 					resource: normalTexView.texture,
 				},
-				{
-					binding: 4,
-					resource: depthTexView.texture,
-				},
 			],
 		})
 		return postProcessBindGroup
@@ -94,7 +125,10 @@ export const createPostProcessPassRessources = (device: GPUDevice) => {
 
 	const postProcessPipelineLayout = device.createPipelineLayout({
 		label: "Post process pipeline layout",
-		bindGroupLayouts: [postProcessTextureBindGroupLayout],
+		bindGroupLayouts: [
+			postProcessUniformBindGroupLayout,
+			postProcessTextureBindGroupLayout,
+		],
 	})
 
 	const postProcessShaderModule = device.createShaderModule({
@@ -130,6 +164,7 @@ export const createPostProcessPassRessources = (device: GPUDevice) => {
 		geometryIdTexView: TexView
 		normalTexView: TexView
 		depthTexView: TexView
+		geometryEdgeDetection: boolean
 	}) => {
 		const renderPassDescriptor: GPURenderPassDescriptor = {
 			colorAttachments: [
@@ -141,6 +176,10 @@ export const createPostProcessPassRessources = (device: GPUDevice) => {
 			],
 		}
 
+		const postProcessUniformBindGroup = createPostProcessUniformBindGroup(
+			params.geometryEdgeDetection,
+		)
+
 		const postProcessTextureBindGroup = createPostProcessTextureBindGroup({
 			colorTexView: params.colorTexView,
 			geometryIdTexView: params.geometryIdTexView,
@@ -151,7 +190,8 @@ export const createPostProcessPassRessources = (device: GPUDevice) => {
 		const renderPass =
 			params.commandEncoder.beginRenderPass(renderPassDescriptor)
 		renderPass.setPipeline(postProcessPipeline)
-		renderPass.setBindGroup(0, postProcessTextureBindGroup)
+		renderPass.setBindGroup(0, postProcessUniformBindGroup)
+		renderPass.setBindGroup(1, postProcessTextureBindGroup)
 		renderPass.draw(6)
 		renderPass.end()
 	}

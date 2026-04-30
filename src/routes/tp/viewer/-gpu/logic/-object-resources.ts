@@ -155,7 +155,7 @@ const createObjectResources = async (params: {
 	for (let objIndex = 0; objIndex < objects3D.length; objIndex++) {
 		const obj = objects3D[objIndex]
 		for (let i = 0; i < obj.vertexIndexes.length; i++, geometricIdOffset++) {
-			geometricIdData[geometricIdOffset] = objIndex
+			geometricIdData[geometricIdOffset] = obj.geometricId
 		}
 	}
 

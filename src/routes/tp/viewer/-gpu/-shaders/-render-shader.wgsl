@@ -23,6 +23,7 @@ struct Material {
 @group(1) @binding(5) var<storage, read> material_indexes_array: array<u32>;
 @group(1) @binding(6) var<storage, read> matrix_array: array<mat4x4f>;
 @group(1) @binding(7) var<storage, read> matrix_indexes_array: array<u32>;
+@group(1) @binding(8) var<storage, read> geometric_id_array: array<u32>;
 
 struct VertexIn {
     @builtin(vertex_index) draw_index: u32,
@@ -65,6 +66,7 @@ const MAX_SHININESS: f32 = 512.0;
 struct FragmentOut {
     @location(0) color: vec4f,
     @location(1) normal: vec4f,
+    @location(2) geometric_id: f32,
 }
 
 @fragment
@@ -95,6 +97,7 @@ fn fs_main(f_in: VertexOut) -> FragmentOut {
     var out: FragmentOut;
     out.color = vec4f(final_color, material.color.a);
     out.normal = vec4f(normal, 0);
+    out.geometric_id = f32(geometric_id_array[f_in.draw_index]);
 
     return out;
 }

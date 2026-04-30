@@ -65,6 +65,8 @@ const parseGlb = async (glbBuffer: ArrayBuffer): Promise<Object3D[]> => {
 	const objects: Object3D[] = []
 	const nodes = root.listNodes()
 
+	let geometricId = 1
+
 	for (const node of nodes) {
 		const worldMatrix = mat4.clone(node.getWorldMatrix())
 		const mesh = node.getMesh()
@@ -145,8 +147,10 @@ const parseGlb = async (glbBuffer: ArrayBuffer): Promise<Object3D[]> => {
 				normalIndexes,
 				matrix: mat4.clone(worldMatrix),
 				material: objectMaterial ?? DEFAULT_MATERIAL,
+				geometricId,
 			})
 		}
+		geometricId++
 	}
 
 	return objects

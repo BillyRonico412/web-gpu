@@ -1,5 +1,5 @@
 import { wrap } from "comlink"
-import { type Mat4, mat4, type Vec3 } from "wgpu-matrix"
+import type { Mat4, Vec3 } from "wgpu-matrix"
 import { initWebGPU } from "@/lib/webgpu"
 import { CANVAS_ID } from "@/routes/tp/viewer/-gpu/-gpu-atoms"
 import { emitter } from "@/routes/tp/viewer/-gpu/logic/-event-emitter"
@@ -14,6 +14,9 @@ import {
 } from "@/routes/tp/viewer/-gpu/logic/-object-resources"
 import { createRenderResources } from "@/routes/tp/viewer/-gpu/logic/-render-resources"
 import type { Object3D } from "@/routes/tp/viewer/-gpu/logic/-types"
+import { createPickingPassRessources } from "@/routes/tp/viewer/-gpu/logic/pass/-picking-pass"
+import { createPostProcessPassRessources } from "@/routes/tp/viewer/-gpu/logic/pass/-post-process-pass"
+import { createRenderPassRessource } from "@/routes/tp/viewer/-gpu/logic/pass/-render-pass"
 
 const normalWorker = new Worker(
 	new URL("../logic/-normal-resources.ts", import.meta.url),
@@ -26,38 +29,6 @@ const objectWorker = new Worker(
 	{ type: "module" },
 )
 const objectProxy = wrap<ObjectResourceWorkerApi>(objectWorker)
-
-const createUniformBuffer = (device: GPUDevice) => {
-	const uniformSize = 28 * 4 // 112 bytes: mvp matrix + light direction + camera position + light params
-	const uniformBuffer = device.createBuffer({
-		label: "Uniform buffer",
-		size: uniformSize,
-		usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
-	})
-	const updateUniformBuffer = (params: {
-		mvp: { viewMatrix: Mat4; projectionMatrix: Mat4 }
-		cameraPosition: Vec3
-		lightDirection: Vec3
-		ambient: number
-		specularIntensity: number
-	}) => {
-		const { mvp, lightDirection, cameraPosition, ambient, specularIntensity } =
-			params
-		const modelMatrix = mat4.identity()
-		const mvpMatrix = mat4.multiply(
-			mat4.multiply(mvp.projectionMatrix, mvp.viewMatrix),
-			modelMatrix,
-		)
-		const buffer = new ArrayBuffer(uniformSize)
-		const float32View = new Float32Array(buffer)
-		float32View.set(mvpMatrix, 0)
-		float32View.set(lightDirection, 16)
-		float32View.set(cameraPosition, 20)
-		float32View.set([ambient, specularIntensity], 23)
-		device.queue.writeBuffer(uniformBuffer, 0, buffer)
-	}
-	return { uniformBuffer, updateUniformBuffer }
-}
 
 export type Viewer = Awaited<ReturnType<typeof initViewer>>
 
@@ -97,103 +68,115 @@ export const initViewer = async (objects3D: Object3D[]) => {
 
 		emitter.emit("updateLoadingState", "create-render-resources")
 		const {
-			createRenderPipeline,
-			doRenderPass,
-			createDepthTexture,
+			createRenderDepthTexture,
 			createColorTexture,
 			createGeometryIdTexture,
 			createNormalTexture,
-			doPostProcessPass,
+			createPickingDepthTexture,
 		} = createRenderResources(device)
 
-		const { uniformBuffer, updateUniformBuffer } = createUniformBuffer(device)
-		let depthTexView = createDepthTexture(canvas)
-		let colorTexView = createColorTexture({
+		let renderDepthTexView = createRenderDepthTexture(canvas)
+		let pickingDepthTexView = createPickingDepthTexture(canvas)
+		let colorMsTexView = createColorTexture({
+			canvas,
+		})
+		let normalMsTexView = createNormalTexture({
 			canvas,
 		})
 		let geometryIdTexView = createGeometryIdTexture({
 			canvas,
 		})
-		let normalTexView = createNormalTexture({
-			canvas,
-		})
 
-		let renderPipeline = createRenderPipeline({
-			culling: true,
-		})
+		const { doRenderPass, renderPassCleanUp } =
+			createRenderPassRessource(device)
+
+		const { doPickingPass, pickingPassCleanUp } =
+			createPickingPassRessources(device)
+
+		const { doPostProcessPass } = createPostProcessPassRessources(device)
 
 		const draw = (params: {
 			viewMatrix: Mat4
 			projectionMatrix: Mat4
 			lightDirection: Vec3
 			backgroundVec3: Vec3
-			fxaa: boolean
 			shadingMode: ShadingModeType
 			cameraPosition: Vec3
 			ambient: number
 			specularIntensity: number
+			culling: boolean
 		}) => {
 			const {
 				viewMatrix,
 				backgroundVec3,
 				projectionMatrix,
 				lightDirection,
-				fxaa,
 				shadingMode,
 				cameraPosition,
 				ambient,
 				specularIntensity,
+				culling,
 			} = params
-			updateUniformBuffer({
-				mvp: { viewMatrix, projectionMatrix },
-				lightDirection,
-				cameraPosition,
-				ambient,
-				specularIntensity,
-			})
 
 			const commandEncoder = device.createCommandEncoder()
 
 			doRenderPass({
-				renderPipeline,
 				commandEncoder,
-				uniformBuffer,
 				objectBufferResources,
 				flatNormalBufferResources,
-				depthTexView,
+				renderDepthTexView,
 				backgroundVec3,
 				context,
 				objects3D,
 				shadingMode,
-				colorTexView,
+				colorMsTexView,
 				geometryIdTexView,
-				normalTexView,
+				normalTexView: normalMsTexView,
+				culling,
+				uniform: {
+					mvp: { viewMatrix, projectionMatrix },
+					lightDirection,
+					cameraPosition,
+					ambient,
+					specularIntensity,
+				},
+			})
+
+			doPickingPass({
+				commandEncoder,
+				objectBufferResources,
+				depthTexView: pickingDepthTexView,
+				geometryIdTexView,
+				context,
+				objects3D,
+				mvp: { viewMatrix, projectionMatrix },
 			})
 
 			doPostProcessPass({
 				commandEncoder,
-				fxaa,
-				colorTexView,
-				depthTexView,
+				colorTexView: colorMsTexView.base,
 				geometryIdTexView,
-				normalTexView,
 				context,
+				depthTexView: pickingDepthTexView,
+				normalTexView: normalMsTexView.base,
 			})
 
 			device.queue.submit([commandEncoder.finish()])
 		}
 
 		const updateTextureByCanvasResize = () => {
-			depthTexView.texture.destroy()
-			depthTexView = createDepthTexture(canvas)
+			renderDepthTexView.texture.destroy()
+			renderDepthTexView = createRenderDepthTexture(canvas)
 
-			normalTexView.texture.destroy()
-			normalTexView = createNormalTexture({
+			normalMsTexView.base.texture.destroy()
+			normalMsTexView.ms.texture.destroy()
+			normalMsTexView = createNormalTexture({
 				canvas,
 			})
 
-			colorTexView.texture.destroy()
-			colorTexView = createColorTexture({
+			colorMsTexView.base.texture.destroy()
+			colorMsTexView.ms.texture.destroy()
+			colorMsTexView = createColorTexture({
 				canvas,
 			})
 
@@ -202,18 +185,8 @@ export const initViewer = async (objects3D: Object3D[]) => {
 				canvas,
 			})
 
-			depthTexView.texture.destroy()
-			depthTexView = createDepthTexture(canvas)
-		}
-
-		const updateRenderPipeline = (params: {
-			culling: boolean
-			fxaa: boolean
-		}) => {
-			const { culling } = params
-			renderPipeline = createRenderPipeline({
-				culling,
-			})
+			pickingDepthTexView.texture.destroy()
+			pickingDepthTexView = createPickingDepthTexture(canvas)
 		}
 
 		const cleanup = () => {
@@ -223,19 +196,22 @@ export const initViewer = async (objects3D: Object3D[]) => {
 			flatNormalBufferResources.flatNormalIndexBuffer.destroy()
 			objectBufferResources.materialBuffer.destroy()
 			objectBufferResources.materialIndexBuffer.destroy()
-			uniformBuffer.destroy()
-			depthTexView.texture.destroy()
-			colorTexView.texture.destroy()
+			renderDepthTexView.texture.destroy()
+			colorMsTexView.base.texture.destroy()
+			colorMsTexView.ms.texture.destroy()
 			geometryIdTexView.texture.destroy()
-			normalTexView.texture.destroy()
+			normalMsTexView.base.texture.destroy()
+			normalMsTexView.ms.texture.destroy()
+			pickingDepthTexView.texture.destroy()
 			normalWorker.terminate()
 			objectWorker.terminate()
+			renderPassCleanUp()
+			pickingPassCleanUp()
 		}
 
 		return {
 			draw,
 			updateTextureByCanvasResize,
-			updateRenderPipeline,
 			aabb: objectResources.aabb,
 			objects3D,
 			cleanup,

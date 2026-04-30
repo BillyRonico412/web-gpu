@@ -25,17 +25,6 @@ const initViewerEffect = atomEffect((get, set) => {
 	})()
 })
 
-const fxaaEffect = atomEffect((get, set) => {
-	const viewer = get(gpuAtoms.viewerAtom)
-	if (!viewer) {
-		return
-	}
-	const fxaa = get(renderingAtoms.fxaaAtom)
-	const culling = get(renderingAtoms.cullingAtom)
-	viewer.updateRenderPipeline({ fxaa, culling })
-	set(gpuAtoms.drawTriggerAtom, (prev) => prev + 1)
-})
-
 const drawEffect = atomEffect((get) => {
 	const viewer = get(gpuAtoms.viewerAtom)
 	if (!viewer) {
@@ -46,17 +35,17 @@ const drawEffect = atomEffect((get) => {
 	const projectionMatrix = get(cameraAtoms.projectionMatrixAtom)
 	const lightDirection = get(lightAtoms.lightDirectionAtom)
 	const backgroundVec3 = get(renderingAtoms.backgroundVec3Atom)
-	const fxaa = get.peek(renderingAtoms.fxaaAtom)
 	const shadingMode = get(renderingAtoms.shadingModeAtom)
 	const cameraPosition = get(cameraAtoms.eyeAtom)
 	const ambient = get(lightAtoms.ambientAtom)
 	const specularIntensity = get(lightAtoms.specularIntensityAtom)
+	const culling = get(renderingAtoms.cullingAtom)
 	viewer.draw({
+		culling,
 		viewMatrix,
 		projectionMatrix,
 		lightDirection,
 		backgroundVec3,
-		fxaa,
 		shadingMode,
 		cameraPosition,
 		ambient,
@@ -111,6 +100,5 @@ export const gpuEffects = {
 	initViewerEffect,
 	drawEffect,
 	canvasEffect,
-	fxaaEffect,
 	loadingStateEffect,
 }

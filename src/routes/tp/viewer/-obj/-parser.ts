@@ -1,5 +1,5 @@
 import { expose } from "comlink"
-import { mat4, vec3 } from "wgpu-matrix"
+import { mat4, vec4 } from "wgpu-matrix"
 import type { Object3D } from "@/routes/tp/viewer/-gpu/logic/-types"
 
 const getNbResources = (
@@ -31,7 +31,7 @@ const getNbResources = (
 }
 
 const DEFAULT_MATERIAL = {
-	color: vec3.create(0.8, 0.8, 0.8),
+	color: vec4.create(0.8, 0.8, 0.8, 1.0),
 	metallic: 0,
 	roughness: 1,
 }
@@ -48,7 +48,7 @@ const parseObj = async (objText: string): Promise<Object3D[]> => {
 		vertexIndexes: new Uint32Array(nbIndex),
 		normalIndexes: new Uint32Array(nbIndex),
 		material: DEFAULT_MATERIAL,
-		matrix: mat4.create(),
+		matrix: mat4.identity(),
 		name: "Object",
 	}
 	let vertexOffset = 0

@@ -55,3 +55,13 @@ export type FlatNormalBufferResources = {
 	flatNormalBuffer: GPUBuffer
 	flatNormalIndexBuffer: GPUBuffer
 }
+
+export type TexView = {
+	texture: GPUTexture
+	view: GPUTextureView
+}
+
+export type MsTexView = {
+	base: TexView
+	ms: TexView
+}

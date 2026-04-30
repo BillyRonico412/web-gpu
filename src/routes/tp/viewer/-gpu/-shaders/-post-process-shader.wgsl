@@ -2,12 +2,11 @@ struct Uniform {
     fsaa_enabled: u32,
 }
 
-@group(0) @binding(0) var<uniform> uni: Uniform;
-@group(1) @binding(0) var basic_sampler: sampler;
-@group(1) @binding(1) var color_texture: texture_2d<f32>;
-@group(1) @binding(2) var geometric_id_texture: texture_2d<u32>;
-@group(1) @binding(3) var normal_texture: texture_2d<f32>;
-@group(1) @binding(4) var depth_texture: texture_depth_2d;
+@group(0) @binding(0) var basic_sampler: sampler;
+@group(0) @binding(1) var color_texture: texture_2d<f32>;
+@group(0) @binding(2) var geometric_id_texture: texture_2d<u32>;
+@group(0) @binding(3) var normal_texture: texture_2d<f32>;
+@group(0) @binding(4) var depth_texture: texture_depth_2d;
 
 struct VertexOut {
     @builtin(position) position: vec4f,
@@ -34,30 +33,35 @@ fn vs_main(@builtin(vertex_index) vertex_index: u32) -> VertexOut {
     return v_out;
 }
 
+fn get_geometry_neighbourhood(uv: vec2i) -> array<u32, 9> {
+    var neighborhood: array<u32, 9>;
+    neighborhood[0] = textureLoad(geometric_id_texture, uv + vec2i(-1, -1), 0).x;
+    neighborhood[1] = textureLoad(geometric_id_texture, uv + vec2i(0, -1), 0).x;
+    neighborhood[2] = textureLoad(geometric_id_texture, uv + vec2i(1, -1), 0).x;
+    neighborhood[3] = textureLoad(geometric_id_texture, uv + vec2i(-1, 0), 0).x;
+    neighborhood[4] = textureLoad(geometric_id_texture, uv + vec2i(1, 0), 0).x;
+    neighborhood[5] = textureLoad(geometric_id_texture, uv + vec2i(-1, 1), 0).x;
+    neighborhood[6] = textureLoad(geometric_id_texture, uv + vec2i(0, 1), 0).x;
+    neighborhood[7] = textureLoad(geometric_id_texture, uv + vec2i(1, 1), 0).x;
+    return neighborhood;
+}
+
+fn nb_different_neighbour(neighborhood: array<u32, 9>, geometric_id: u32) -> u32 {
+    var count: u32 = 0;
+    for (var i = 0u; i < 8u; i++) {
+        if neighborhood[i] != geometric_id {
+            count = count + 1u;
+        }
+    }
+    return count;
+}
+
 @fragment
 fn fs_main(v_in: VertexOut) -> @location(0) vec4f {
     let dims = textureDimensions(color_texture);
     let uv = v_in.position.xy / vec2f(dims);
 
-    let geometric_id = textureLoad(geometric_id_texture, vec2i(v_in.position.xy), 0).x;
-    let g1 = textureLoad(geometric_id_texture, vec2i(v_in.position.xy) + vec2i(-1, -1), 0).x;
-    let g2 = textureLoad(geometric_id_texture, vec2i(v_in.position.xy) + vec2i(1, 1), 0).x;
-
-    let is_edge = (geometric_id != g1) || (geometric_id != g2);
-
     let base_color = textureSample(color_texture, basic_sampler, uv);
 
-    let offset = 0.5;
-    let c1 = textureSample(color_texture, basic_sampler, uv + vec2f(-offset, -offset) / vec2f(dims));
-    let c2 = textureSample(color_texture, basic_sampler, uv + vec2f(-offset, offset) / vec2f(dims));
-    let c3 = textureSample(color_texture, basic_sampler, uv + vec2f(offset, -offset) / vec2f(dims));
-    let c4 = textureSample(color_texture, basic_sampler, uv + vec2f(offset, offset) / vec2f(dims));
-
-    let final_color = (c1 + c2 + c3 + c4) * 0.25;
-
-    if !is_edge {
-        return base_color;
-    }
-
-    return vec4f(0, 0, 0, 1);
+    return base_color;
 }

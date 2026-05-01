@@ -1,5 +1,12 @@
 import type { Mat4, Vec3, Vec4 } from "wgpu-matrix"
 
+export type DisplayModeType =
+	| "basic"
+	| "basic-with-edges"
+	| "technical"
+	| "normal"
+	| "geometry"
+
 export type Object3D = {
 	name: string
 	vertexes: Float32Array

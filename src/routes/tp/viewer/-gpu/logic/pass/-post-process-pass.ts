@@ -1,9 +1,13 @@
+import { match } from "ts-pattern"
 import postProcessShaderCode from "@/routes/tp/viewer/-gpu/-shaders/-post-process-shader.wgsl?raw"
-import type { TexView } from "@/routes/tp/viewer/-gpu/logic/-types"
+import type {
+	DisplayModeType,
+	TexView,
+} from "@/routes/tp/viewer/-gpu/logic/-types"
 
 export const createPostProcessPassRessources = (device: GPUDevice) => {
 	const postProcessUniformSize = 4
-	const postProcessUniformData = new Float32Array(postProcessUniformSize / 4)
+	const postProcessUniformData = new Uint32Array(postProcessUniformSize / 4)
 	const postProcessUniformBuffer = device.createBuffer({
 		label: "Post process uniform buffer",
 		size: postProcessUniformSize,
@@ -23,8 +27,17 @@ export const createPostProcessPassRessources = (device: GPUDevice) => {
 		],
 	})
 
-	const createPostProcessUniformBindGroup = (edgeDetectionEnabled: boolean) => {
-		postProcessUniformData[0] = edgeDetectionEnabled ? 1 : 0
+	const createPostProcessUniformBindGroup = (displayMode: DisplayModeType) => {
+		postProcessUniformData[0] = match(displayMode)
+			.with("basic", () => 0)
+			.with("basic-with-edges", () => 1)
+			.with("technical", () => 2)
+			.with("normal", () => 3)
+			.with("geometry", () => 4)
+			.exhaustive()
+
+		console.log("Post process uniform data:", postProcessUniformData[0])
+
 		device.queue.writeBuffer(
 			postProcessUniformBuffer,
 			0,
@@ -81,6 +94,15 @@ export const createPostProcessPassRessources = (device: GPUDevice) => {
 					sampleType: "float",
 				},
 			},
+			// Depth texture
+			{
+				binding: 4,
+				visibility: GPUShaderStage.FRAGMENT,
+				texture: {
+					sampleType: "unfilterable-float",
+					multisampled: true,
+				},
+			},
 		],
 	})
 
@@ -117,6 +139,10 @@ export const createPostProcessPassRessources = (device: GPUDevice) => {
 				{
 					binding: 3,
 					resource: normalTexView.texture,
+				},
+				{
+					binding: 4,
+					resource: params.depthTexView.texture,
 				},
 			],
 		})
@@ -164,7 +190,7 @@ export const createPostProcessPassRessources = (device: GPUDevice) => {
 		geometryIdTexView: TexView
 		normalTexView: TexView
 		depthTexView: TexView
-		geometryEdgeDetection: boolean
+		displayMode: DisplayModeType
 	}) => {
 		const renderPassDescriptor: GPURenderPassDescriptor = {
 			colorAttachments: [
@@ -177,7 +203,7 @@ export const createPostProcessPassRessources = (device: GPUDevice) => {
 		}
 
 		const postProcessUniformBindGroup = createPostProcessUniformBindGroup(
-			params.geometryEdgeDetection,
+			params.displayMode,
 		)
 
 		const postProcessTextureBindGroup = createPostProcessTextureBindGroup({

@@ -1,11 +1,21 @@
 import { useAtom, useSetAtom } from "jotai"
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
+import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select"
 import { Switch } from "@/components/ui/switch"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import { ResetButton } from "@/routes/tp/viewer/-components/-reset-button"
 import type { ShadingModeType } from "@/routes/tp/viewer/-gpu/logic/-normal-resources"
+import type { DisplayModeType } from "@/routes/tp/viewer/-gpu/logic/-types"
 import { renderingAtoms } from "@/routes/tp/viewer/-rendering/-rendering-atoms"
+
+const displayModeOptions: { label: string; value: string }[] = [
+	{ label: "Basic", value: "basic" },
+	{ label: "Basic with edges", value: "basic-with-edges" },
+	{ label: "Technical", value: "technical" },
+	{ label: "Normal", value: "normal" },
+	{ label: "Geometry", value: "geometry" },
+]
 
 export const RenderingSection = () => {
 	const [shadingMode, setShadingMode] = useAtom(renderingAtoms.shadingModeAtom)
@@ -13,9 +23,7 @@ export const RenderingSection = () => {
 	const [backgroundHex, setBackgroundHex] = useAtom(
 		renderingAtoms.backgroundHexAtom,
 	)
-	const [geometryEdgeDetection, setGeometryEdgeDetection] = useAtom(
-		renderingAtoms.geometryEdgeDetectionAtom,
-	)
+	const [displayMode, setDisplayMode] = useAtom(renderingAtoms.displayModeAtom)
 	const reset = useSetAtom(renderingAtoms.resetAtom)
 
 	return (
@@ -41,11 +49,19 @@ export const RenderingSection = () => {
 				</ToggleGroup>
 			</Field>
 			<Field orientation="horizontal">
-				<FieldLabel>Geometry edge detection</FieldLabel>
-				<Switch
-					checked={geometryEdgeDetection}
-					onCheckedChange={(checked) => setGeometryEdgeDetection(checked)}
-				/>
+				<FieldLabel>Display mode</FieldLabel>
+				<NativeSelect
+					value={displayMode}
+					onChange={(e) => {
+						setDisplayMode(e.target.value as DisplayModeType)
+					}}
+				>
+					{displayModeOptions.map((option) => (
+						<NativeSelectOption key={option.value} value={option.value}>
+							{option.label}
+						</NativeSelectOption>
+					))}
+				</NativeSelect>
 			</Field>
 			<Field orientation="horizontal">
 				<FieldLabel>Culling</FieldLabel>

@@ -1,12 +1,19 @@
 struct Uniform {
-    geometry_edge_detection: u32,
+    display_mode: u32,
 }
+
+const DISPLAY_MODE_BASIC: u32 = 0u;
+const DISPLAY_MODE_BASIC_EDGES: u32 = 1u;
+const DISPLAY_MODE_TECHNICAL: u32 = 2u;
+const DISPLAY_MODE_NORMAL: u32 = 3u;
+const DISPLAY_MODE_GEOMETRY: u32 = 4u;
 
 @group(0) @binding(0) var<uniform> uni: Uniform;
 @group(1) @binding(0) var basic_sampler: sampler;
 @group(1) @binding(1) var color_texture: texture_2d<f32>;
 @group(1) @binding(2) var geometric_id_texture: texture_multisampled_2d<f32>;
 @group(1) @binding(3) var normal_texture: texture_2d<f32>;
+@group(1) @binding(4) var depth_texture: texture_multisampled_2d<f32>;
 
 struct VertexOut {
     @builtin(position) position: vec4f,
@@ -33,23 +40,67 @@ fn vs_main(@builtin(vertex_index) vertex_index: u32) -> VertexOut {
     return v_out;
 }
 
-fn get_geometry_neighbourhood(uv: vec2i) -> array<f32, 9> {
-    var neighborhood: array<f32, 9>;
-    neighborhood[0] = textureLoad(geometric_id_texture, uv + vec2i(-1, -1), 0).x;
-    neighborhood[1] = textureLoad(geometric_id_texture, uv + vec2i(0, -1), 0).x;
-    neighborhood[2] = textureLoad(geometric_id_texture, uv + vec2i(1, -1), 0).x;
-    neighborhood[3] = textureLoad(geometric_id_texture, uv + vec2i(-1, 0), 0).x;
-    neighborhood[4] = textureLoad(geometric_id_texture, uv + vec2i(1, 0), 0).x;
-    neighborhood[5] = textureLoad(geometric_id_texture, uv + vec2i(-1, 1), 0).x;
-    neighborhood[6] = textureLoad(geometric_id_texture, uv + vec2i(0, 1), 0).x;
-    neighborhood[7] = textureLoad(geometric_id_texture, uv + vec2i(1, 1), 0).x;
-    return neighborhood;
+const neighborOffsets: array<vec2i, 8> = array<vec2i, 8>(
+    vec2i(-1, -1),
+    vec2i(0, -1),
+    vec2i(1, -1),
+    vec2i(-1, 0),
+    vec2i(1, 0),
+    vec2i(-1, 1),
+    vec2i(0, 1),
+    vec2i(1, 1)
+);
+
+fn get_geometry_neighbors(uv: vec2i) -> array<f32, 8> {
+    var geometry_neighbors: array<f32, 8>;
+    for (var i = 0u; i < 8u; i++) {
+        geometry_neighbors[i] = textureLoad(geometric_id_texture, uv + neighborOffsets[i], 0).x;
+    }
+    return geometry_neighbors;
 }
 
-fn nb_different_neighbour(neighborhood: array<f32, 9>, geometric_id: f32) -> u32 {
+fn get_nb_different_geometry(geometry_neighbors: array<f32, 8>, geometric_id: f32) -> u32 {
     var count: u32 = 0;
     for (var i = 0u; i < 8u; i++) {
-        if neighborhood[i] != geometric_id {
+        if geometry_neighbors[i] != geometric_id {
+            count = count + 1u;
+        }
+    }
+    return count;
+}
+
+fn get_normal_neighbors(uv: vec2i) -> array<vec3f, 8> {
+    var normal_neighbors: array<vec3f, 8>;
+    for (var i = 0u; i < 8u; i++) {
+        normal_neighbors[i] = textureLoad(normal_texture, uv + neighborOffsets[i], 0).xyz;
+    }
+    return normal_neighbors;
+}
+
+const NORMAL_SIMILARITY_THRESHOLD: f32 = 0.98;
+fn get_nb_different_normal(normal_neighbors: array<vec3f, 8>, normal: vec3f) -> u32 {
+    var count: u32 = 0;
+    for (var i = 0u; i < 8u; i++) {
+        if dot(normalize(normal_neighbors[i]), normalize(normal)) < NORMAL_SIMILARITY_THRESHOLD {
+            count = count + 1u;
+        }
+    }
+    return count;
+}
+
+fn get_depth_neighbors(uv: vec2i) -> array<f32, 8> {
+    var depth_neighbors: array<f32, 8>;
+    for (var i = 0u; i < 8u; i++) {
+        depth_neighbors[i] = textureLoad(depth_texture, uv + neighborOffsets[i], 0).x;
+    }
+    return depth_neighbors;
+}
+
+const DEPTH_SIMILARITY_THRESHOLD: f32 = 0.001;
+fn get_nb_different_depth(depth_neighbors: array<f32, 8>, depth: f32) -> u32 {
+    var count: u32 = 0;
+    for (var i = 0u; i < 8u; i++) {
+        if abs(depth_neighbors[i] - depth) > DEPTH_SIMILARITY_THRESHOLD {
             count = count + 1u;
         }
     }
@@ -62,20 +113,58 @@ fn fs_main(v_in: VertexOut) -> @location(0) vec4f {
     let uv = v_in.position.xy / vec2f(dims);
 
     let base_color = textureSample(color_texture, basic_sampler, uv);
-
-    if uni.geometry_edge_detection == 0u {
-        return base_color;
-    }
-
     let geometric_id = textureLoad(geometric_id_texture, vec2i(v_in.position.xy), 0).x;
+    let normal = textureLoad(normal_texture, vec2i(v_in.position.xy), 0).xyz;
+    let depth = textureLoad(depth_texture, vec2i(v_in.position.xy), 0).x;
 
-    let neighborhood = get_geometry_neighbourhood(vec2i(v_in.position.xy));
-    let different_nb_count = nb_different_neighbour(neighborhood, geometric_id);
-    if different_nb_count == 0u {
-        return base_color;
+    switch uni.display_mode {
+        case DISPLAY_MODE_BASIC: {
+            return base_color;
+        }
+        case DISPLAY_MODE_BASIC_EDGES: {
+            let neighbors = get_geometry_neighbors(vec2i(v_in.position.xy));
+            let nb_different_geometry = get_nb_different_geometry(neighbors, geometric_id);
+            if nb_different_geometry == 0 {
+                return base_color;
+            }
+            let edge_color = vec3f(0, 0, 0);
+            let edge_darkening_factor = f32(nb_different_geometry) / 8.0;
+            let factor = smoothstep(0.0, 1.0, edge_darkening_factor);
+            return vec4f(mix(base_color.xyz, edge_color, factor), base_color.a);
+        }
+        case DISPLAY_MODE_TECHNICAL: {
+            let base_color = vec4f(1, 1, 1, 1);
+            let geometry_neighbors = get_geometry_neighbors(vec2i(v_in.position.xy));
+            let nb_different_geometry = get_nb_different_geometry(geometry_neighbors, geometric_id);
+
+            let normal_neighbors = get_normal_neighbors(vec2i(v_in.position.xy));
+            let nb_different_normal = get_nb_different_normal(normal_neighbors, normal);
+
+            let depth_neighbors = get_depth_neighbors(vec2i(v_in.position.xy));
+            let nb_different_depth = get_nb_different_depth(depth_neighbors, depth);
+
+            if nb_different_geometry == 0 && nb_different_normal == 0 && get_nb_different_depth(depth_neighbors, depth) == 0 {
+                return base_color;
+            }
+            let edge_color = vec3f(0, 0, 0);
+            var edge_darkening_factor = 0.0;
+
+            edge_darkening_factor = max(edge_darkening_factor, f32(nb_different_geometry) / 8.0);
+            edge_darkening_factor = max(edge_darkening_factor, f32(nb_different_normal) / 8.0);
+            edge_darkening_factor = max(edge_darkening_factor, f32(nb_different_depth) / 8.0);
+
+            let factor = smoothstep(0.0, 1.0, edge_darkening_factor);
+            return vec4f(mix(base_color.xyz, edge_color, factor), base_color.a);
+        }
+        case DISPLAY_MODE_NORMAL: {
+            return vec4f(normal * 0.5 + 0.5, 1.0);
+        }
+        case DISPLAY_MODE_GEOMETRY: {
+            let geometry_color = vec3f(fract(geometric_id * 0.123), fract(geometric_id * 0.456), fract(geometric_id * 0.789));
+            return vec4f(geometry_color, 1.0);
+        }
+        default {
+            return base_color;
+        }
     }
-    let edge_darkening_factor = f32(different_nb_count) / 8.0;
-    let factor = smoothstep(0.0, 1.0, edge_darkening_factor);
-    let edge_color = vec3f(0, 0, 0);
-    return vec4f(mix(base_color.xyz, edge_color, factor), base_color.a);
 }

@@ -1,20 +1,15 @@
 import hexRgb from "hex-rgb"
 import { atom } from "jotai"
+import { atomWithReset, RESET } from "jotai/utils"
 import { vec3 } from "wgpu-matrix"
 import type { ShadingModeType } from "@/routes/tp/viewer/-gpu/logic/-normal-resources"
+import type { DisplayModeType } from "@/routes/tp/viewer/-gpu/logic/-types"
 
-export const RENDERING_DEFAULTS = {
-	shadingMode: "auto" as ShadingModeType,
-	culling: true,
-	backgroundHex: "#444",
-	geometryEdgeDetection: true,
-}
+const shadingModeAtom = atomWithReset<ShadingModeType>("auto")
+const cullingAtom = atomWithReset(true)
+const displayModeAtom = atomWithReset<DisplayModeType>("basic")
 
-const shadingModeAtom = atom<ShadingModeType>(RENDERING_DEFAULTS.shadingMode)
-const cullingAtom = atom(RENDERING_DEFAULTS.culling)
-const geometryEdgeDetectionAtom = atom(RENDERING_DEFAULTS.geometryEdgeDetection)
-
-const backgroundHexAtom = atom<string>(RENDERING_DEFAULTS.backgroundHex)
+const backgroundHexAtom = atomWithReset<string>("#666666")
 const backgroundVec3Atom = atom((get) => {
 	const hex = get(backgroundHexAtom)
 	const rgb = hexRgb(hex)
@@ -22,10 +17,10 @@ const backgroundVec3Atom = atom((get) => {
 })
 
 const resetAtom = atom(null, (_, set) => {
-	set(shadingModeAtom, RENDERING_DEFAULTS.shadingMode)
-	set(cullingAtom, RENDERING_DEFAULTS.culling)
-	set(backgroundHexAtom, RENDERING_DEFAULTS.backgroundHex)
-	set(geometryEdgeDetectionAtom, RENDERING_DEFAULTS.geometryEdgeDetection)
+	set(shadingModeAtom, RESET)
+	set(cullingAtom, RESET)
+	set(displayModeAtom, RESET)
+	set(backgroundHexAtom, RESET)
 })
 
 export const renderingAtoms = {
@@ -34,5 +29,5 @@ export const renderingAtoms = {
 	resetAtom,
 	backgroundHexAtom,
 	backgroundVec3Atom,
-	geometryEdgeDetectionAtom,
+	displayModeAtom,
 }

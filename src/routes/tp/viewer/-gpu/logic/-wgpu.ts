@@ -13,7 +13,10 @@ import {
 	type ObjectResourceWorkerApi,
 } from "@/routes/tp/viewer/-gpu/logic/-object-resources"
 import { createRenderResources } from "@/routes/tp/viewer/-gpu/logic/-render-resources"
-import type { Object3D } from "@/routes/tp/viewer/-gpu/logic/-types"
+import type {
+	DisplayModeType,
+	Object3D,
+} from "@/routes/tp/viewer/-gpu/logic/-types"
 import { createPostProcessPassRessources } from "@/routes/tp/viewer/-gpu/logic/pass/-post-process-pass"
 import { createRenderPassRessource } from "@/routes/tp/viewer/-gpu/logic/pass/-render-pass"
 
@@ -99,7 +102,7 @@ export const initViewer = async (objects3D: Object3D[]) => {
 			ambient: number
 			specularIntensity: number
 			culling: boolean
-			geometryEdgeDetection: boolean
+			displayMode: DisplayModeType
 		}) => {
 			const {
 				viewMatrix,
@@ -111,7 +114,7 @@ export const initViewer = async (objects3D: Object3D[]) => {
 				ambient,
 				specularIntensity,
 				culling,
-				geometryEdgeDetection,
+				displayMode,
 			} = params
 
 			const commandEncoder = device.createCommandEncoder()
@@ -145,7 +148,7 @@ export const initViewer = async (objects3D: Object3D[]) => {
 				context,
 				normalTexView: normalMsTexView.base,
 				depthTexView: renderDepthTexView,
-				geometryEdgeDetection,
+				displayMode,
 			})
 
 			device.queue.submit([commandEncoder.finish()])

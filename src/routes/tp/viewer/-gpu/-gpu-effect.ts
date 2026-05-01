@@ -40,7 +40,7 @@ const drawEffect = atomEffect((get) => {
 	const ambient = get(lightAtoms.ambientAtom)
 	const specularIntensity = get(lightAtoms.specularIntensityAtom)
 	const culling = get(renderingAtoms.cullingAtom)
-	const geometryEdgeDetection = get(renderingAtoms.geometryEdgeDetectionAtom)
+	const displayMode = get(renderingAtoms.displayModeAtom)
 	viewer.draw({
 		culling,
 		viewMatrix,
@@ -51,7 +51,7 @@ const drawEffect = atomEffect((get) => {
 		cameraPosition,
 		ambient,
 		specularIntensity,
-		geometryEdgeDetection,
+		displayMode,
 	})
 })
 

@@ -1,4 +1,4 @@
-import { type Mat4, mat4, type Vec3 } from "wgpu-matrix"
+import { type Mat4, mat4, type Vec3, type Vec4 } from "wgpu-matrix"
 import renderShaderCode from "@/routes/tp/viewer/-gpu/-shaders/-render-shader.wgsl?raw"
 import type { ShadingModeType } from "@/routes/tp/viewer/-gpu/logic/-normal-resources"
 import type {
@@ -292,7 +292,7 @@ export const createRenderPassRessource = (device: GPUDevice) => {
 			depthStencil: {
 				format: "depth24plus",
 				depthWriteEnabled: true,
-				depthCompare: "less",
+				depthCompare: "greater",
 			},
 		})
 		return renderPipeline
@@ -306,7 +306,7 @@ export const createRenderPassRessource = (device: GPUDevice) => {
 		geometryIdTexView: TexView
 		renderDepthTexView: TexView
 		normalTexView: MsTexView
-		backgroundVec3: Vec3
+		background: Vec4
 		context: GPUCanvasContext
 		objects3D: Object3D[]
 		shadingMode: ShadingModeType
@@ -321,10 +321,10 @@ export const createRenderPassRessource = (device: GPUDevice) => {
 					loadOp: "clear",
 					storeOp: "store",
 					clearValue: {
-						r: params.backgroundVec3[0],
-						g: params.backgroundVec3[1],
-						b: params.backgroundVec3[2],
-						a: 1,
+						r: params.background[0],
+						g: params.background[1],
+						b: params.background[2],
+						a: params.background[3],
 					},
 				},
 				{
@@ -343,7 +343,7 @@ export const createRenderPassRessource = (device: GPUDevice) => {
 				view: params.renderDepthTexView.view,
 				depthLoadOp: "clear",
 				depthStoreOp: "store",
-				depthClearValue: 1,
+				depthClearValue: 0,
 			},
 		}
 		const renderPipeline = createRenderPipeline({ culling: params.culling })

@@ -1,5 +1,5 @@
 import { wrap } from "comlink"
-import type { Mat4, Vec3 } from "wgpu-matrix"
+import type { Mat4, Vec3, Vec4 } from "wgpu-matrix"
 import { initWebGPU } from "@/lib/webgpu"
 import { CANVAS_ID } from "@/routes/tp/viewer/-gpu/-gpu-atoms"
 import { emitter } from "@/routes/tp/viewer/-gpu/logic/-event-emitter"
@@ -16,7 +16,10 @@ import { createRenderResources } from "@/routes/tp/viewer/-gpu/logic/-render-res
 import type {
 	DisplayModeType,
 	Object3D,
+	PickParams,
+	TechnicalConfig,
 } from "@/routes/tp/viewer/-gpu/logic/-types"
+import { createPickingPassRessources } from "@/routes/tp/viewer/-gpu/logic/pass/-picking-pass"
 import { createPostProcessPassRessources } from "@/routes/tp/viewer/-gpu/logic/pass/-post-process-pass"
 import { createRenderPassRessource } from "@/routes/tp/viewer/-gpu/logic/pass/-render-pass"
 
@@ -92,21 +95,29 @@ export const initViewer = async (objects3D: Object3D[]) => {
 
 		const { doPostProcessPass } = createPostProcessPassRessources(device)
 
+		const { doPickingPass, pickingBitSetBuffer } = createPickingPassRessources({
+			device,
+			objects3D,
+		})
+
 		const draw = (params: {
 			viewMatrix: Mat4
 			projectionMatrix: Mat4
 			lightDirection: Vec3
-			backgroundVec3: Vec3
+			background: Vec4
 			shadingMode: ShadingModeType
 			cameraPosition: Vec3
 			ambient: number
 			specularIntensity: number
 			culling: boolean
 			displayMode: DisplayModeType
+			near: number
+			far: number
+			technicalConfig: TechnicalConfig
 		}) => {
 			const {
 				viewMatrix,
-				backgroundVec3,
+				background,
 				projectionMatrix,
 				lightDirection,
 				shadingMode,
@@ -115,6 +126,9 @@ export const initViewer = async (objects3D: Object3D[]) => {
 				specularIntensity,
 				culling,
 				displayMode,
+				near,
+				far,
+				technicalConfig,
 			} = params
 
 			const commandEncoder = device.createCommandEncoder()
@@ -124,7 +138,7 @@ export const initViewer = async (objects3D: Object3D[]) => {
 				objectBufferResources,
 				flatNormalBufferResources,
 				renderDepthTexView,
-				backgroundVec3,
+				background,
 				context,
 				objects3D,
 				shadingMode,
@@ -149,6 +163,9 @@ export const initViewer = async (objects3D: Object3D[]) => {
 				normalTexView: normalMsTexView.base,
 				depthTexView: renderDepthTexView,
 				displayMode,
+				near,
+				far,
+				technicalConfig,
 			})
 
 			device.queue.submit([commandEncoder.finish()])
@@ -176,6 +193,32 @@ export const initViewer = async (objects3D: Object3D[]) => {
 			})
 		}
 
+		const pickRect = async (pickParams: PickParams): Promise<number[]> => {
+			try {
+				const commandEncoder = device.createCommandEncoder()
+				doPickingPass({
+					commandEncoder,
+					geometryIdTexView,
+					pickParams,
+				})
+				device.queue.submit([commandEncoder.finish()])
+				await pickingBitSetBuffer.mapAsync(GPUMapMode.READ)
+				const arrayBuffer = pickingBitSetBuffer.getMappedRange()
+				const pickingBitSet = new Uint32Array(arrayBuffer)
+				const geometricIds: number[] = []
+				for (let i = 0; i < pickingBitSet.length; i++) {
+					if (pickingBitSet[i] === 0) {
+						continue
+					}
+					geometricIds.push(i)
+				}
+				console.log("Picked geometric IDs:", geometricIds)
+				return geometricIds
+			} finally {
+				pickingBitSetBuffer.unmap()
+			}
+		}
+
 		const cleanup = () => {
 			objectBufferResources.vertexBuffer.destroy()
 			objectBufferResources.vertexIndexBuffer.destroy()
@@ -198,6 +241,7 @@ export const initViewer = async (objects3D: Object3D[]) => {
 			aabb: objectResources.aabb,
 			objects3D,
 			cleanup,
+			pickRect,
 		}
 	} finally {
 		emitter.emit("updateLoadingState", "done")

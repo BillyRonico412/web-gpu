@@ -1,14 +1,22 @@
-struct Uniform {
+struct Uniform1 {
     display_mode: u32,
+}
+
+struct Uniform2 {
+    geometric_edge_active: f32,
+    normal_edge_active: f32,
+    depth_edge_active: f32,
+    near: f32,
+    far: f32,
 }
 
 const DISPLAY_MODE_BASIC: u32 = 0u;
 const DISPLAY_MODE_BASIC_EDGES: u32 = 1u;
 const DISPLAY_MODE_TECHNICAL: u32 = 2u;
 const DISPLAY_MODE_NORMAL: u32 = 3u;
-const DISPLAY_MODE_GEOMETRY: u32 = 4u;
 
-@group(0) @binding(0) var<uniform> uni: Uniform;
+@group(0) @binding(0) var<uniform> uni1: Uniform1;
+@group(0) @binding(1) var<uniform> uni2: Uniform2;
 @group(1) @binding(0) var basic_sampler: sampler;
 @group(1) @binding(1) var color_texture: texture_2d<f32>;
 @group(1) @binding(2) var geometric_id_texture: texture_multisampled_2d<f32>;
@@ -60,6 +68,9 @@ fn get_geometry_neighbors(uv: vec2i) -> array<f32, 8> {
 }
 
 fn get_nb_different_geometry(geometry_neighbors: array<f32, 8>, geometric_id: f32) -> u32 {
+    if uni2.geometric_edge_active == 0.0 {
+        return 0u;
+    }
     var count: u32 = 0;
     for (var i = 0u; i < 8u; i++) {
         if geometry_neighbors[i] != geometric_id {
@@ -79,6 +90,9 @@ fn get_normal_neighbors(uv: vec2i) -> array<vec3f, 8> {
 
 const NORMAL_SIMILARITY_THRESHOLD: f32 = 0.98;
 fn get_nb_different_normal(normal_neighbors: array<vec3f, 8>, normal: vec3f) -> u32 {
+    if uni2.normal_edge_active == 0.0 {
+        return 0u;
+    }
     var count: u32 = 0;
     for (var i = 0u; i < 8u; i++) {
         if dot(normalize(normal_neighbors[i]), normalize(normal)) < NORMAL_SIMILARITY_THRESHOLD {
@@ -88,16 +102,23 @@ fn get_nb_different_normal(normal_neighbors: array<vec3f, 8>, normal: vec3f) -> 
     return count;
 }
 
+fn linearize_reverse_z(depth: f32) -> f32 {
+    return (uni2.near * uni2.far) / (depth * (uni2.far - uni2.near) + uni2.near);
+}
+
 fn get_depth_neighbors(uv: vec2i) -> array<f32, 8> {
     var depth_neighbors: array<f32, 8>;
     for (var i = 0u; i < 8u; i++) {
-        depth_neighbors[i] = textureLoad(depth_texture, uv + neighborOffsets[i], 0).x;
+        depth_neighbors[i] = linearize_reverse_z(textureLoad(depth_texture, uv + neighborOffsets[i], 0).x);
     }
     return depth_neighbors;
 }
 
-const DEPTH_SIMILARITY_THRESHOLD: f32 = 0.001;
+const DEPTH_SIMILARITY_THRESHOLD: f32 = 5.0;
 fn get_nb_different_depth(depth_neighbors: array<f32, 8>, depth: f32) -> u32 {
+    if uni2.depth_edge_active == 0.0 {
+        return 0u;
+    }
     var count: u32 = 0;
     for (var i = 0u; i < 8u; i++) {
         if abs(depth_neighbors[i] - depth) > DEPTH_SIMILARITY_THRESHOLD {
@@ -115,9 +136,10 @@ fn fs_main(v_in: VertexOut) -> @location(0) vec4f {
     let base_color = textureSample(color_texture, basic_sampler, uv);
     let geometric_id = textureLoad(geometric_id_texture, vec2i(v_in.position.xy), 0).x;
     let normal = textureLoad(normal_texture, vec2i(v_in.position.xy), 0).xyz;
-    let depth = textureLoad(depth_texture, vec2i(v_in.position.xy), 0).x;
+    let depth = linearize_reverse_z(textureLoad(depth_texture, vec2i(v_in.position.xy), 0).x);
 
-    switch uni.display_mode {
+    switch uni1.display_mode {
+
         case DISPLAY_MODE_BASIC: {
             return base_color;
         }
@@ -158,10 +180,6 @@ fn fs_main(v_in: VertexOut) -> @location(0) vec4f {
         }
         case DISPLAY_MODE_NORMAL: {
             return vec4f(normal * 0.5 + 0.5, 1.0);
-        }
-        case DISPLAY_MODE_GEOMETRY: {
-            let geometry_color = vec3f(fract(geometric_id * 0.123), fract(geometric_id * 0.456), fract(geometric_id * 0.789));
-            return vec4f(geometry_color, 1.0);
         }
         default {
             return base_color;

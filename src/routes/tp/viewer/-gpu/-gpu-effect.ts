@@ -1,6 +1,6 @@
 import { atomEffect } from "jotai-effect"
 import { match, P } from "ts-pattern"
-import { cameraAtoms } from "@/routes/tp/viewer/-camera/-camera-atoms"
+import { cameraAtoms, NEAR } from "@/routes/tp/viewer/-camera/-camera-atoms"
 import { waitMessageAtom } from "@/routes/tp/viewer/-components/-wait-message"
 import { CANVAS_ID, gpuAtoms } from "@/routes/tp/viewer/-gpu/-gpu-atoms"
 import { emitter } from "@/routes/tp/viewer/-gpu/logic/-event-emitter"
@@ -34,24 +34,29 @@ const drawEffect = atomEffect((get) => {
 	const viewMatrix = get(cameraAtoms.viewMatrixAtom)
 	const projectionMatrix = get(cameraAtoms.projectionMatrixAtom)
 	const lightDirection = get(lightAtoms.lightDirectionAtom)
-	const backgroundVec3 = get(renderingAtoms.backgroundVec3Atom)
+	const background = get(renderingAtoms.backgroundAtom)
 	const shadingMode = get(renderingAtoms.shadingModeAtom)
 	const cameraPosition = get(cameraAtoms.eyeAtom)
 	const ambient = get(lightAtoms.ambientAtom)
 	const specularIntensity = get(lightAtoms.specularIntensityAtom)
 	const culling = get(renderingAtoms.cullingAtom)
 	const displayMode = get(renderingAtoms.displayModeAtom)
+	const far = get(cameraAtoms.farAtom)
+	const technicalConfig = get(renderingAtoms.technicalConfigAtom)
 	viewer.draw({
 		culling,
 		viewMatrix,
 		projectionMatrix,
 		lightDirection,
-		backgroundVec3,
+		background,
 		shadingMode,
 		cameraPosition,
 		ambient,
 		specularIntensity,
 		displayMode,
+		far,
+		near: NEAR,
+		technicalConfig,
 	})
 })
 

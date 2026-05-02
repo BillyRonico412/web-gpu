@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router"
-import { useAtom } from "jotai"
+import { useAtom, useSetAtom } from "jotai"
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
 import { ViewerSidebar } from "@/routes/tp/viewer/-components/-sidebar"
 import { WaitMessage } from "@/routes/tp/viewer/-components/-wait-message"
@@ -8,6 +8,7 @@ import { ChooseFileDialog } from "@/routes/tp/viewer/-gpu/-choose-file-dialog"
 import { CANVAS_ID } from "@/routes/tp/viewer/-gpu/-gpu-atoms"
 import { gpuEffects } from "@/routes/tp/viewer/-gpu/-gpu-effect"
 import { LoadFileEmpty } from "@/routes/tp/viewer/-gpu/-load-file-empty"
+import { pickingAtoms } from "@/routes/tp/viewer/-gpu/-picking-atom"
 import { lightAtoms } from "@/routes/tp/viewer/-light/-light-atoms"
 
 export const Route = createFileRoute("/tp/viewer/")({
@@ -15,6 +16,9 @@ export const Route = createFileRoute("/tp/viewer/")({
 })
 
 function RouteComponent() {
+	const pickMouseDownHandler = useSetAtom(pickingAtoms.mouseDownHandlerAtom)
+	const pickMouseMoveHandler = useSetAtom(pickingAtoms.mouseMoveHandlerAtom)
+	const pickMouseUpHandler = useSetAtom(pickingAtoms.mouseUpHandlerAtom)
 	useAtom(gpuEffects.canvasEffect)
 	useAtom(gpuEffects.initViewerEffect)
 	useAtom(gpuEffects.drawEffect)
@@ -31,6 +35,9 @@ function RouteComponent() {
 					id={CANVAS_ID}
 					className="w-full h-full"
 					onContextMenu={(e) => e.preventDefault()}
+					onMouseDown={(e) => pickMouseDownHandler(e.nativeEvent)}
+					onMouseMoveCapture={(e) => pickMouseMoveHandler(e.nativeEvent)}
+					onMouseUp={(e) => pickMouseUpHandler(e.nativeEvent)}
 				/>
 				<LoadFileEmpty />
 			</main>

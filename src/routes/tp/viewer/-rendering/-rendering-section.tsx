@@ -1,12 +1,16 @@
+import { produce } from "immer"
 import { useAtom, useSetAtom } from "jotai"
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field"
-import { Input } from "@/components/ui/input"
 import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select"
 import { Switch } from "@/components/ui/switch"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
+import { ColorPicker } from "@/routes/tp/viewer/-components/-color-picker"
 import { ResetButton } from "@/routes/tp/viewer/-components/-reset-button"
 import type { ShadingModeType } from "@/routes/tp/viewer/-gpu/logic/-normal-resources"
-import type { DisplayModeType } from "@/routes/tp/viewer/-gpu/logic/-types"
+import {
+	type DisplayModeType,
+	technicalKeys,
+} from "@/routes/tp/viewer/-gpu/logic/-types"
 import { renderingAtoms } from "@/routes/tp/viewer/-rendering/-rendering-atoms"
 
 const displayModeOptions: { label: string; value: string }[] = [
@@ -14,16 +18,16 @@ const displayModeOptions: { label: string; value: string }[] = [
 	{ label: "Basic with edges", value: "basic-with-edges" },
 	{ label: "Technical", value: "technical" },
 	{ label: "Normal", value: "normal" },
-	{ label: "Geometry", value: "geometry" },
 ]
 
 export const RenderingSection = () => {
 	const [shadingMode, setShadingMode] = useAtom(renderingAtoms.shadingModeAtom)
 	const [culling, setCulling] = useAtom(renderingAtoms.cullingAtom)
-	const [backgroundHex, setBackgroundHex] = useAtom(
-		renderingAtoms.backgroundHexAtom,
-	)
+	const [background, setBackground] = useAtom(renderingAtoms.backgroundAtom)
 	const [displayMode, setDisplayMode] = useAtom(renderingAtoms.displayModeAtom)
+	const [technicalConfig, setTechnicalConfig] = useAtom(
+		renderingAtoms.technicalConfigAtom,
+	)
 	const reset = useSetAtom(renderingAtoms.resetAtom)
 
 	return (
@@ -63,6 +67,27 @@ export const RenderingSection = () => {
 					))}
 				</NativeSelect>
 			</Field>
+			<div className="flex flex-col gap-2">
+				{displayMode === "technical" &&
+					technicalKeys.map((key) => (
+						<Field orientation="horizontal" key={key}>
+							<FieldLabel>
+								{key.charAt(0).toUpperCase() + key.slice(1)}
+							</FieldLabel>
+							<Switch
+								size="sm"
+								checked={technicalConfig[key]}
+								onCheckedChange={(checked) =>
+									setTechnicalConfig(
+										produce((draft) => {
+											draft[key] = checked
+										}),
+									)
+								}
+							/>
+						</Field>
+					))}
+			</div>
 			<Field orientation="horizontal">
 				<FieldLabel>Culling</FieldLabel>
 				<Switch
@@ -71,15 +96,8 @@ export const RenderingSection = () => {
 				/>
 			</Field>
 			<Field orientation="horizontal">
-				<FieldLabel>Color</FieldLabel>
-				<Input
-					type="color"
-					value={backgroundHex}
-					onChange={(e) => {
-						setBackgroundHex(e.target.value)
-					}}
-					className="size-8 p-0 border-0"
-				/>
+				<FieldLabel>Background color</FieldLabel>
+				<ColorPicker color={background} onChange={setBackground} />
 			</Field>
 			<ResetButton onClick={reset} />
 		</FieldGroup>

@@ -1,21 +1,19 @@
 import { atom } from "jotai"
+import { atomWithReset, RESET } from "jotai/utils"
 import { match } from "ts-pattern"
 import { mat4, utils, type Vec3, vec3 } from "wgpu-matrix"
 import { gpuAtoms } from "@/routes/tp/viewer/-gpu/-gpu-atoms"
 
-export const CAMERA_DEFAULTS = {
-	projectionType: "perspective" as "perspective" | "orthographic",
-	up: vec3.fromValues(0, 1, 0),
-}
+export const NEAR = 0.1
 
 const targetAtom = atom<Vec3>(vec3.create(0, 0, 0))
 const radiusAtom = atom(50)
 const azimuthAtom = atom(0)
 const elevationAtom = atom(0)
-const projectionTypeAtom = atom<"perspective" | "orthographic">(
-	CAMERA_DEFAULTS.projectionType,
+const projectionTypeAtom = atomWithReset<"perspective" | "orthographic">(
+	"perspective",
 )
-const upAtom = atom<Vec3>(vec3.fromValues(0, 1, 0))
+const upAtom = atomWithReset<Vec3>(vec3.fromValues(0, 1, 0))
 const eyeAtom = atom((get) => {
 	const target = get(targetAtom)
 	const radius = get(radiusAtom)
@@ -77,7 +75,7 @@ const projectionMatrixAtom = atom((get) => {
 	switch (projectionType) {
 		case "perspective": {
 			const fov = get(fovAtom)
-			return mat4.perspective(utils.degToRad(fov), aspect, 0.1, far)
+			return mat4.perspective(utils.degToRad(fov), aspect, far, 0.1)
 		}
 		case "orthographic": {
 			const radius = get(radiusAtom)
@@ -86,8 +84,8 @@ const projectionMatrixAtom = atom((get) => {
 				radius * aspect,
 				-radius,
 				radius,
-				0.1,
 				far,
+				0.1,
 			)
 		}
 	}
@@ -215,8 +213,8 @@ const turnUpAtom = atom(
 )
 
 const cameraResetAtom = atom(null, (_, set) => {
-	set(projectionTypeAtom, CAMERA_DEFAULTS.projectionType)
-	set(upAtom, vec3.fromValues(0, 1, 0))
+	set(projectionTypeAtom, RESET)
+	set(upAtom, RESET)
 })
 
 export const cameraAtoms = {

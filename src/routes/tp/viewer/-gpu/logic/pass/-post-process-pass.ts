@@ -1,24 +1,47 @@
 import { match } from "ts-pattern"
 import postProcessShaderCode from "@/routes/tp/viewer/-gpu/-shaders/-post-process-shader.wgsl?raw"
-import type {
-	DisplayModeType,
-	TexView,
+import {
+	type DisplayModeType,
+	type TechnicalConfig,
+	type TexView,
+	technicalKeys,
 } from "@/routes/tp/viewer/-gpu/logic/-types"
 
 export const createPostProcessPassRessources = (device: GPUDevice) => {
-	const postProcessUniformSize = 4
-	const postProcessUniformData = new Uint32Array(postProcessUniformSize / 4)
-	const postProcessUniformBuffer = device.createBuffer({
+	const postProcessUniformUintSize = 4
+	const postProcessUniformUintData = new Uint32Array(
+		postProcessUniformUintSize / 4,
+	)
+	const postProcessUniformUintBuffer = device.createBuffer({
 		label: "Post process uniform buffer",
-		size: postProcessUniformSize,
+		size: postProcessUniformUintSize,
+		usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+	})
+
+	// geometry edge active + normal edge active + depth edge active + near and far plane for depth linearization
+	const postProcessUniformFloatSize = technicalKeys.length * 4 + 4 + 4
+	const postProcessUniformFloatData = new Float32Array(
+		postProcessUniformFloatSize / 4,
+	)
+	const postProcessUniformFloatBuffer = device.createBuffer({
+		label: "Post process uniform float buffer",
+		size: postProcessUniformFloatSize,
 		usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
 	})
 
 	const postProcessUniformBindGroupLayout = device.createBindGroupLayout({
 		label: "Post process uniform bind group layout",
 		entries: [
+			// display mode + near and far plane for depth linearization
 			{
 				binding: 0,
+				visibility: GPUShaderStage.FRAGMENT,
+				buffer: {
+					type: "uniform",
+				},
+			},
+			{
+				binding: 1,
 				visibility: GPUShaderStage.FRAGMENT,
 				buffer: {
 					type: "uniform",
@@ -27,22 +50,37 @@ export const createPostProcessPassRessources = (device: GPUDevice) => {
 		],
 	})
 
-	const createPostProcessUniformBindGroup = (displayMode: DisplayModeType) => {
-		postProcessUniformData[0] = match(displayMode)
+	const createPostProcessUniformBindGroup = (params: {
+		displayMode: DisplayModeType
+		near: number
+		far: number
+		technicalConfig: TechnicalConfig
+	}) => {
+		postProcessUniformUintData[0] = match(params.displayMode)
 			.with("basic", () => 0)
 			.with("basic-with-edges", () => 1)
 			.with("technical", () => 2)
 			.with("normal", () => 3)
-			.with("geometry", () => 4)
 			.exhaustive()
+		device.queue.writeBuffer(
+			postProcessUniformUintBuffer,
+			0,
+			postProcessUniformUintData,
+		)
 
-		console.log("Post process uniform data:", postProcessUniformData[0])
+		technicalKeys.forEach((key, index) => {
+			const config = params.technicalConfig[key]
+			postProcessUniformFloatData[index] = config ? 1 : 0
+		})
+		postProcessUniformFloatData[technicalKeys.length] = params.near
+		postProcessUniformFloatData[technicalKeys.length + 1] = params.far
 
 		device.queue.writeBuffer(
-			postProcessUniformBuffer,
+			postProcessUniformFloatBuffer,
 			0,
-			postProcessUniformData,
+			postProcessUniformFloatData,
 		)
+
 		const postProcessUniformBindGroup = device.createBindGroup({
 			label: "Post process uniform bind group",
 			layout: postProcessUniformBindGroupLayout,
@@ -50,7 +88,13 @@ export const createPostProcessPassRessources = (device: GPUDevice) => {
 				{
 					binding: 0,
 					resource: {
-						buffer: postProcessUniformBuffer,
+						buffer: postProcessUniformUintBuffer,
+					},
+				},
+				{
+					binding: 1,
+					resource: {
+						buffer: postProcessUniformFloatBuffer,
 					},
 				},
 			],
@@ -191,6 +235,9 @@ export const createPostProcessPassRessources = (device: GPUDevice) => {
 		normalTexView: TexView
 		depthTexView: TexView
 		displayMode: DisplayModeType
+		near: number
+		far: number
+		technicalConfig: TechnicalConfig
 	}) => {
 		const renderPassDescriptor: GPURenderPassDescriptor = {
 			colorAttachments: [
@@ -202,9 +249,12 @@ export const createPostProcessPassRessources = (device: GPUDevice) => {
 			],
 		}
 
-		const postProcessUniformBindGroup = createPostProcessUniformBindGroup(
-			params.displayMode,
-		)
+		const postProcessUniformBindGroup = createPostProcessUniformBindGroup({
+			displayMode: params.displayMode,
+			near: params.near,
+			far: params.far,
+			technicalConfig: params.technicalConfig,
+		})
 
 		const postProcessTextureBindGroup = createPostProcessTextureBindGroup({
 			colorTexView: params.colorTexView,

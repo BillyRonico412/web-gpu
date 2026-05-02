@@ -5,7 +5,6 @@ export type DisplayModeType =
 	| "basic-with-edges"
 	| "technical"
 	| "normal"
-	| "geometry"
 
 export type Object3D = {
 	name: string
@@ -72,4 +71,16 @@ export type TexView = {
 export type MsTexView = {
 	base: TexView
 	ms: TexView
+}
+
+export const technicalKeys = ["geometry", "normal", "depth"] as const
+export type TechnicalConfigKey = (typeof technicalKeys)[number]
+
+export type TechnicalConfig = Record<TechnicalConfigKey, boolean>
+
+export type PickParams = {
+	x: number
+	y: number
+	width: number
+	height: number
 }

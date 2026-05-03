@@ -14,6 +14,18 @@ struct Material {
     roughness: f32,
 }
 
+const VS_VISIBLE = 1u << 0;
+const VS_HIGHLIGHTED = 1u << 1;
+const VS_HIDDEN = 1u << 2;
+const VS_GHOST = 1u << 3;
+const VS_CUSTOM_MATERIAL = 1u << 4;
+
+struct CustomMaterial {
+    color: vec4f,
+    metalic: f32,
+    roughness: f32,
+}
+
 @group(0) @binding(0) var<uniform> uni: Uniform;
 @group(1) @binding(0) var<storage, read> vertex_array: array<vec3f>;
 @group(1) @binding(1) var<storage, read> normal_array: array<vec3f>;
@@ -22,6 +34,8 @@ struct Material {
 @group(1) @binding(4) var<storage, read> part_id_array: array<u32>;
 @group(1) @binding(5) var<storage, read> matrix_array: array<mat4x4f>;
 @group(1) @binding(6) var<storage, read> material_array: array<Material>;
+@group(1) @binding(7) var<storage, read> visibility_state_array: array<u32>;
+@group(1) @binding(8) var<storage, read> custom_material_array: array<CustomMaterial>;
 
 struct VertexIn {
     @builtin(vertex_index) draw_index: u32,
@@ -50,6 +64,15 @@ fn vs_main(v_in: VertexIn) -> VertexOut {
         matrix[2].xyz
     );
 
+    if (visibility_state_array[part_id - 1] & VS_HIDDEN) != 0u {
+        var v_out: VertexOut;
+        v_out.world_position = vec3f(0, 0, 0);
+        v_out.position = vec4f(0, 0, 0, 0);
+        v_out.normal = vec3f(0, 0, 0);
+        v_out.draw_index = v_in.draw_index;
+        return v_out;
+    }
+
     var v_out: VertexOut;
     v_out.world_position = vertex;
     v_out.position = uni.mvp_matrix * matrix * vec4f(vertex, 1);
@@ -70,6 +93,18 @@ struct FragmentOut {
 @fragment
 fn fs_main(f_in: VertexOut) -> FragmentOut {
     let part_id = part_id_array[f_in.draw_index];
+    let visibility_state = visibility_state_array[part_id - 1];
+
+    if (visibility_state & VS_HIDDEN) != 0u {
+        var out: FragmentOut;
+        out.color = vec4f(0, 0, 0, 0);
+        out.normal = vec4f(0, 0, 0, 0);
+        out.part_id = 0.0;
+        return out;
+    }
+
+    let is_custom_material = (visibility_state_array[part_id - 1] & VS_CUSTOM_MATERIAL) != 0u;
+    let is_highlighted = (visibility_state_array[part_id - 1] & VS_HIGHLIGHTED) != 0u;
 
     var normal = normalize(f_in.normal);
     let pos_to_camera_vec = normalize(uni.camera_position - f_in.world_position);
@@ -83,19 +118,40 @@ fn fs_main(f_in: VertexOut) -> FragmentOut {
     let h = normalize(light_direction + v);
 
     let material = material_array[part_id - 1];
+    let custom_material = custom_material_array[part_id - 1];
+
+    var base_color: vec3f;
+    if is_highlighted {
+        base_color = vec3f(1.0, 1.0, 0.0);
+    } else if is_custom_material {
+        base_color = custom_material.color.xyz;
+    } else {
+        base_color = material.color.xyz;
+    }
+
+    let metalic = select(
+        material.metalic,
+        custom_material.metalic,
+        is_custom_material
+    );
+
+    let roughness = select(
+        material.roughness,
+        custom_material.roughness,
+        is_custom_material
+    );
 
     let diffuse = max(dot(normal, light_direction), 0.0);
 
-    let shininess = mix(MIN_SHININESS, MAX_SHININESS, 1.0 - material.roughness);
-    let specular = pow(max(dot(normal, h), 0.0), shininess) * material.metalic;
+    let shininess = mix(MIN_SHININESS, MAX_SHININESS, 1.0 - roughness);
+    let specular = pow(max(dot(normal, h), 0.0), shininess) * metalic;
 
-    let base_color = material.color.rgb;
-    let specular_color = mix(vec3f(1.0), base_color, material.metalic);
+    let specular_color = mix(vec3f(1.0), base_color, metalic);
     let final_specular = specular_color * specular * uni.specular_intensity;
     let final_color = base_color * (diffuse + uni.ambient) + final_specular;
 
     var out: FragmentOut;
-    out.color = vec4f(final_color, material.color.a);
+    out.color = vec4f(final_color, 1);
     out.normal = vec4f(normal, 0);
     out.part_id = f32(part_id);
 

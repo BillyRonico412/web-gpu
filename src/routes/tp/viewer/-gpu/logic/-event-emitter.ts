@@ -8,6 +8,9 @@ export type Events = {
 		| "create-object-resources"
 		| "create-normal-resources"
 		| "done"
+	updateVisibilityState: {
+		partIds: number[]
+	}
 }
 
 export const emitter = mitt<Events>()

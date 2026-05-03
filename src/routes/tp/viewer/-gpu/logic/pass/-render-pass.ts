@@ -131,6 +131,22 @@ export const createRenderPassRessource = (device: GPUDevice) => {
 					type: "read-only-storage",
 				},
 			},
+			// Visibility state buffer
+			{
+				binding: 7,
+				visibility: GPUShaderStage.FRAGMENT | GPUShaderStage.VERTEX,
+				buffer: {
+					type: "read-only-storage",
+				},
+			},
+			// Custom color buffer
+			{
+				binding: 8,
+				visibility: GPUShaderStage.FRAGMENT,
+				buffer: {
+					type: "read-only-storage",
+				},
+			},
 		],
 	})
 
@@ -146,6 +162,8 @@ export const createRenderPassRessource = (device: GPUDevice) => {
 			normalIndexBuffer,
 			materialBuffer,
 			matrixBuffer,
+			customMaterialBuffer,
+			visibilityStateBuffer,
 			partIdBuffer,
 		} = params.objectResources
 
@@ -209,6 +227,18 @@ export const createRenderPassRessource = (device: GPUDevice) => {
 					binding: 6,
 					resource: {
 						buffer: materialBuffer,
+					},
+				},
+				{
+					binding: 7,
+					resource: {
+						buffer: visibilityStateBuffer,
+					},
+				},
+				{
+					binding: 8,
+					resource: {
+						buffer: customMaterialBuffer,
 					},
 				},
 			],

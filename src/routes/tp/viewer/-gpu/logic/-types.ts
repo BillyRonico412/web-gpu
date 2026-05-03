@@ -30,6 +30,8 @@ export type PartResources = {
 	partIdData: Uint32Array
 	materialData: Float32Array
 	matrixData: Float32Array
+	visibilityStateData: Uint32Array
+	customMaterialData: Float32Array
 	aabbMap: AABB[]
 	assemblyAabb: AABB
 }
@@ -46,6 +48,8 @@ export type PartBufferResources = {
 	normalIndexBuffer: GPUBuffer
 	materialBuffer: GPUBuffer
 	matrixBuffer: GPUBuffer
+	visibilityStateBuffer: GPUBuffer
+	customMaterialBuffer: GPUBuffer
 	partIdBuffer: GPUBuffer
 }
 
@@ -74,4 +78,12 @@ export type PickParams = {
 	y: number
 	width: number
 	height: number
+}
+
+export enum VisibilityState {
+	Visible = 1 << 0,
+	Highlighted = 1 << 1,
+	Hidden = 1 << 2,
+	Ghost = 1 << 3,
+	CustomMaterial = 1 << 4,
 }

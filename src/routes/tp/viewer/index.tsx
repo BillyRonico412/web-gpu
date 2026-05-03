@@ -25,6 +25,7 @@ function RouteComponent() {
 	useAtom(gpuEffects.loadingStateEffect)
 	useAtom(gpuEffects.drawEffect)
 	useAtom(lightAtoms.lightModeEffect)
+	useAtom(pickingAtoms.pickingEffect)
 	useAtom(canvasEventEffect)
 	return (
 		<SidebarProvider>

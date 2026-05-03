@@ -1,13 +1,20 @@
 import { produce } from "immer"
 import { atom } from "jotai"
-import { atomWithProxy } from "jotai-valtio"
-import { proxySet } from "valtio/utils"
+import { atomEffect } from "jotai-effect"
 import { CANVAS_ID, gpuAtoms } from "@/routes/tp/viewer/-gpu/-gpu-atoms"
-import type { PickParams } from "@/routes/tp/viewer/-gpu/logic/-types"
+import {
+	type PickParams,
+	VisibilityState,
+} from "@/routes/tp/viewer/-gpu/logic/-types"
 
 const pickParamsAtom = atom<PickParams | undefined>()
-const partIdsState = proxySet()
-const partIdsAtom = atomWithProxy(partIdsState)
+const pickIdsAtom = atom<{
+	current: Set<number>
+	previous: Set<number>
+}>({
+	current: new Set<number>(),
+	previous: new Set<number>(),
+})
 
 const mouseDownHandlerAtom = atom(null, (_, set, event: MouseEvent) => {
 	if (event.button !== 0) {
@@ -59,13 +66,37 @@ const mouseUpHandlerAtom = atom(null, async (get, set, event: MouseEvent) => {
 		return
 	}
 	const partIdsPicked = await viewer.pickRect(pickParams)
+	const newPickIds = new Set(partIdsPicked)
 	if (!event.ctrlKey) {
-		partIdsState.clear()
+		newPickIds.clear()
 	}
 	for (const id of partIdsPicked) {
-		partIdsState.add(id)
+		newPickIds.add(id)
 	}
+	set(pickIdsAtom, (prev) => ({
+		current: newPickIds,
+		previous: prev.current,
+	}))
 	set(pickParamsAtom, undefined)
+})
+
+const pickingEffect = atomEffect((get, set) => {
+	const viewer = get(gpuAtoms.viewerAtom)
+	if (!viewer) {
+		return
+	}
+	const pickIds = get(pickIdsAtom)
+	viewer.partManager.updateVisibilityState(
+		Array.from(pickIds.previous),
+		VisibilityState.Highlighted,
+		0,
+	)
+	viewer.partManager.updateVisibilityState(
+		Array.from(pickIds.current),
+		VisibilityState.Highlighted,
+		VisibilityState.Highlighted,
+	)
+	set(gpuAtoms.drawTriggerAtom, (prev) => prev + 1)
 })
 
 export const pickingAtoms = {
@@ -73,6 +104,6 @@ export const pickingAtoms = {
 	mouseDownHandlerAtom,
 	mouseMoveHandlerAtom,
 	mouseUpHandlerAtom,
-	partIdsAtom,
-	partIdsState,
+	pickIdsAtom,
+	pickingEffect,
 }

@@ -33,7 +33,7 @@ const getAABB = (part: Part): AABB => {
 	return aabb.create(min, max)
 }
 
-const createObjectResources = async (params: {
+const createPartResources = async (params: {
 	parts: Part[]
 }): Promise<PartResources> => {
 	const { parts } = params
@@ -136,6 +136,16 @@ const createObjectResources = async (params: {
 		matrixOffset += 16
 	}
 
+	const customMaterialData = new Float32Array(parts.length * 8)
+	for (let i = 0; i < parts.length; i++) {
+		const part = parts[i]
+		customMaterialData.set(part.material.color, i * 8)
+		customMaterialData[i * 8 + 4] = part.material.metallic
+		customMaterialData[i * 8 + 5] = part.material.roughness
+	}
+
+	const visibilityStateData = new Uint32Array(parts.length)
+
 	const aabbMap = parts.map(getAABB)
 
 	const assemblyAabb = aabb.create()
@@ -148,6 +158,8 @@ const createObjectResources = async (params: {
 		vertexIndexesData,
 		normalData,
 		normalIndexesData,
+		visibilityStateData,
+		customMaterialData,
 		materialData,
 		matrixData,
 		partIdData,
@@ -156,7 +168,7 @@ const createObjectResources = async (params: {
 	}
 }
 
-export const createObjectBufferResources = (
+export const createPartBufferResources = (
 	device: GPUDevice,
 	objectResources: PartResources,
 ): PartBufferResources => {
@@ -167,6 +179,8 @@ export const createObjectBufferResources = (
 		normalIndexesData,
 		materialData,
 		matrixData,
+		visibilityStateData,
+		customMaterialData,
 		partIdData,
 	} = objectResources
 
@@ -227,19 +241,37 @@ export const createObjectBufferResources = (
 	})
 	device.queue.writeBuffer(partIdBuffer, 0, partIdData)
 
+	const visibilityStateBuffer = device.createBuffer({
+		label: "Visibility state buffer",
+		size: visibilityStateData.length * 4,
+		usage:
+			GPUBufferUsage.STORAGE | GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
+	})
+	device.queue.writeBuffer(visibilityStateBuffer, 0, visibilityStateData)
+
+	const customMaterialBuffer = device.createBuffer({
+		label: "Custom color buffer",
+		size: customMaterialData.length * 4,
+		usage:
+			GPUBufferUsage.STORAGE | GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
+	})
+	device.queue.writeBuffer(customMaterialBuffer, 0, customMaterialData)
+
 	return {
 		vertexBuffer,
 		vertexIndexBuffer,
 		normalBuffer,
 		normalIndexBuffer,
+		partIdBuffer,
 		materialBuffer,
 		matrixBuffer,
-		partIdBuffer,
+		visibilityStateBuffer,
+		customMaterialBuffer,
 	}
 }
 
 const api = {
-	createObjectResources,
+	createPartResources,
 }
 expose(api)
 

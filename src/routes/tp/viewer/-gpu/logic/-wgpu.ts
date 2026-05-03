@@ -8,8 +8,9 @@ import {
 	type NormalWorkerApi,
 	type ShadingModeType,
 } from "@/routes/tp/viewer/-gpu/logic/-normal-resources"
+import { createPartManager } from "@/routes/tp/viewer/-gpu/logic/-part-manager"
 import {
-	createObjectBufferResources,
+	createPartBufferResources,
 	type PartResourceWorkerApi,
 } from "@/routes/tp/viewer/-gpu/logic/-part-resources"
 import { createRenderResources } from "@/routes/tp/viewer/-gpu/logic/-render-resources"
@@ -18,6 +19,7 @@ import type {
 	Part,
 	PickParams,
 	TechnicalConfig,
+	VisibilityState,
 } from "@/routes/tp/viewer/-gpu/logic/-types"
 import { createPickingPassRessources } from "@/routes/tp/viewer/-gpu/logic/pass/-picking-pass"
 import { createPostProcessPassRessources } from "@/routes/tp/viewer/-gpu/logic/pass/-post-process-pass"
@@ -53,18 +55,15 @@ export const initViewer = async (parts: Part[]) => {
 		})
 
 		emitter.emit("updateLoadingState", "create-object-resources")
-		const objectResources = await objectProxy.createObjectResources({
+		const partResources = await objectProxy.createPartResources({
 			parts,
 		})
-		const objectBufferResources = createObjectBufferResources(
-			device,
-			objectResources,
-		)
+		const partBufferResources = createPartBufferResources(device, partResources)
 
 		emitter.emit("updateLoadingState", "create-normal-resources")
 		const flatNormalResources = await normalProxy.computeNormal({
-			vertex: objectResources.vertexData,
-			vertexIndex: objectResources.vertexIndexesData,
+			vertex: partResources.vertexData,
+			vertexIndex: partResources.vertexIndexesData,
 		})
 		const flatNormalBufferResources = createFlatNormalBufferResource(
 			device,
@@ -97,6 +96,13 @@ export const initViewer = async (parts: Part[]) => {
 
 		const { doPickingPass, pickingBitSetBuffer } = createPickingPassRessources({
 			device,
+			parts,
+		})
+
+		const partManager = createPartManager({
+			device,
+			partBufferResources,
+			partResources,
 			parts,
 		})
 
@@ -135,7 +141,7 @@ export const initViewer = async (parts: Part[]) => {
 
 			doRenderPass({
 				commandEncoder,
-				objectBufferResources,
+				objectBufferResources: partBufferResources,
 				flatNormalBufferResources,
 				renderDepthTexView,
 				background,
@@ -219,12 +225,29 @@ export const initViewer = async (parts: Part[]) => {
 			}
 		}
 
+		const updateVisibilityState = (
+			partIds: number[],
+			visibilityState: VisibilityState,
+		) => {
+			for (const partId of partIds) {
+				device.queue.writeBuffer(
+					partBufferResources.visibilityStateBuffer,
+					(partId - 1) * 4,
+					new Uint32Array([visibilityState]),
+				)
+			}
+		}
+
 		const cleanup = () => {
-			objectBufferResources.vertexBuffer.destroy()
-			objectBufferResources.vertexIndexBuffer.destroy()
+			partBufferResources.vertexBuffer.destroy()
+			partBufferResources.vertexIndexBuffer.destroy()
 			flatNormalBufferResources.flatNormalBuffer.destroy()
 			flatNormalBufferResources.flatNormalIndexBuffer.destroy()
-			objectBufferResources.materialBuffer.destroy()
+			partBufferResources.customMaterialBuffer.destroy()
+			partBufferResources.matrixBuffer.destroy()
+			partBufferResources.materialBuffer.destroy()
+			partBufferResources.visibilityStateBuffer.destroy()
+			partBufferResources.partIdBuffer.destroy()
 			renderDepthTexView.texture.destroy()
 			colorMsTexView.base.texture.destroy()
 			colorMsTexView.ms.texture.destroy()
@@ -237,10 +260,12 @@ export const initViewer = async (parts: Part[]) => {
 		return {
 			draw,
 			updateTextureByCanvasResize,
-			assemblyAabb: objectResources.assemblyAabb,
+			assemblyAabb: partResources.assemblyAabb,
 			parts,
 			cleanup,
 			pickRect,
+			updateVisibilityState,
+			partManager,
 		}
 	} finally {
 		emitter.emit("updateLoadingState", "done")

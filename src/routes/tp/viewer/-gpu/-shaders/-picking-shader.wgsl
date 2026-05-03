@@ -7,7 +7,7 @@ struct PickParams {
 
 @group(0) @binding(0) var<uniform> pick_params: PickParams;
 @group(1) @binding(0) var geometric_id_texture: texture_multisampled_2d<f32>;
-@group(2) @binding(0) var<storage, read_write> geomtric_bit_set: array<u32>;
+@group(2) @binding(0) var<storage, read_write> part_bit_set: array<u32>;
 
 @compute @workgroup_size(16, 16)
 fn cs_main(@builtin(global_invocation_id) global_id: vec3u) {
@@ -21,5 +21,5 @@ fn cs_main(@builtin(global_invocation_id) global_id: vec3u) {
     if geometric_id == 0u {
         return;
     }
-    geomtric_bit_set[geometric_id] = 1u;
+    part_bit_set[geometric_id] = 1u;
 }

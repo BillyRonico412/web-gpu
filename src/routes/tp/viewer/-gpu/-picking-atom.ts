@@ -7,13 +7,45 @@ import {
 	VisibilityState,
 } from "@/routes/tp/viewer/-gpu/logic/-types"
 
-const pickParamsAtom = atom<PickParams | undefined>()
-const pickIdsAtom = atom<{
-	current: Set<number>
-	previous: Set<number>
-}>({
-	current: new Set<number>(),
-	previous: new Set<number>(),
+export const RUBBER_BAND_ID = "rubber-band"
+
+const rectAtom = atom<
+	{ x1: number; y1: number; x2: number; y2: number } | undefined
+>(undefined)
+const pickParamsAtom = atom<PickParams | undefined>((get) => {
+	const rect = get(rectAtom)
+	if (!rect) {
+		return undefined
+	}
+	const x = Math.min(rect.x1, rect.x2)
+	const y = Math.min(rect.y1, rect.y2)
+	const width = Math.abs(rect.x2 - rect.x1)
+	const height = Math.abs(rect.y2 - rect.y1)
+	return { x, y, width, height }
+})
+const pickIdsAtom = atom<Set<number>>(new Set<number>())
+
+const updatePickIdsAtom = atom(null, (get, set, partIds: Set<number>) => {
+	const viewer = get(gpuAtoms.viewerAtom)
+	if (!viewer) {
+		return
+	}
+	const pickIds = get(pickIdsAtom)
+	const newPickIds = new Set(partIds)
+	const offIds = pickIds.difference(newPickIds)
+	const onIds = newPickIds.difference(pickIds)
+	viewer.partManager.updateVisibilityState(
+		Array.from(offIds),
+		VisibilityState.Highlighted,
+		0,
+	)
+	viewer.partManager.updateVisibilityState(
+		Array.from(onIds),
+		VisibilityState.Highlighted,
+		VisibilityState.Highlighted,
+	)
+	set(pickIdsAtom, newPickIds)
+	set(gpuAtoms.drawTriggerAtom, (prev) => prev + 1)
 })
 
 const mouseDownHandlerAtom = atom(null, (_, set, event: MouseEvent) => {
@@ -24,7 +56,7 @@ const mouseDownHandlerAtom = atom(null, (_, set, event: MouseEvent) => {
 	const rect = canvas.getBoundingClientRect()
 	const x = event.clientX - rect.left
 	const y = event.clientY - rect.top
-	set(pickParamsAtom, { x, y, width: 1, height: 1 })
+	set(rectAtom, { x1: x, y1: y, x2: x + 1, y2: y + 1 })
 })
 
 const mouseMoveHandlerAtom = atom(null, (_, set, event: MouseEvent) => {
@@ -36,19 +68,14 @@ const mouseMoveHandlerAtom = atom(null, (_, set, event: MouseEvent) => {
 	const x = event.clientX - rect.left
 	const y = event.clientY - rect.top
 	set(
-		pickParamsAtom,
+		rectAtom,
 		produce((draft) => {
 			if (!draft) {
-				return
+				draft = { x1: x, y1: y, x2: x, y2: y }
+			} else {
+				draft.x2 = x
+				draft.y2 = y
 			}
-			const minX = Math.min(draft.x, x)
-			const minY = Math.min(draft.y, y)
-			const maxX = Math.max(draft.x, x)
-			const maxY = Math.max(draft.y, y)
-			draft.x = minX
-			draft.y = minY
-			draft.width = maxX - minX
-			draft.height = maxY - minY
 		}),
 	)
 })
@@ -66,37 +93,62 @@ const mouseUpHandlerAtom = atom(null, async (get, set, event: MouseEvent) => {
 		return
 	}
 	const partIdsPicked = await viewer.pickRect(pickParams)
-	const newPickIds = new Set(partIdsPicked)
+	const pickIds = get(pickIdsAtom)
+	const newPickIds = new Set(pickIds)
 	if (!event.ctrlKey) {
 		newPickIds.clear()
 	}
 	for (const id of partIdsPicked) {
 		newPickIds.add(id)
 	}
-	set(pickIdsAtom, (prev) => ({
-		current: newPickIds,
-		previous: prev.current,
-	}))
-	set(pickParamsAtom, undefined)
+	set(updatePickIdsAtom, newPickIds)
+	set(rectAtom, undefined)
 })
 
-const pickingEffect = atomEffect((get, set) => {
+const rubberBandEffect = atomEffect((get) => {
+	const pickParams = get(pickParamsAtom)
+	const rubberBandDiv = document.querySelector(
+		`#${RUBBER_BAND_ID}`,
+	) as HTMLDivElement
+	if (!pickParams) {
+		rubberBandDiv.style.display = "none"
+		rubberBandDiv.style.width = "0px"
+		rubberBandDiv.style.height = "0px"
+		rubberBandDiv.style.left = "0px"
+		rubberBandDiv.style.top = "0px"
+		return
+	}
+	rubberBandDiv.style.display = "block"
+	rubberBandDiv.style.width = `${pickParams.width}px`
+	rubberBandDiv.style.height = `${pickParams.height}px`
+	rubberBandDiv.style.left = `${pickParams.x}px`
+	rubberBandDiv.style.top = `${pickParams.y}px`
+})
+
+const deleteEffect = atomEffect((get, set) => {
+	const pickIds = get(pickIdsAtom)
+	if (pickIds.size === 0) {
+		return
+	}
 	const viewer = get(gpuAtoms.viewerAtom)
 	if (!viewer) {
 		return
 	}
-	const pickIds = get(pickIdsAtom)
-	viewer.partManager.updateVisibilityState(
-		Array.from(pickIds.previous),
-		VisibilityState.Highlighted,
-		0,
-	)
-	viewer.partManager.updateVisibilityState(
-		Array.from(pickIds.current),
-		VisibilityState.Highlighted,
-		VisibilityState.Highlighted,
-	)
-	set(gpuAtoms.drawTriggerAtom, (prev) => prev + 1)
+	const handler = (e: KeyboardEvent) => {
+		if (e.key === "Delete") {
+			viewer.partManager.updateVisibilityState(
+				Array.from(pickIds),
+				VisibilityState.Hidden,
+				VisibilityState.Hidden,
+			)
+			set(updatePickIdsAtom, new Set<number>())
+			set(gpuAtoms.drawTriggerAtom, (prev) => prev + 1)
+		}
+	}
+	window.addEventListener("keydown", handler)
+	return () => {
+		window.removeEventListener("keydown", handler)
+	}
 })
 
 export const pickingAtoms = {
@@ -105,5 +157,6 @@ export const pickingAtoms = {
 	mouseMoveHandlerAtom,
 	mouseUpHandlerAtom,
 	pickIdsAtom,
-	pickingEffect,
+	rubberBandEffect,
+	deleteEffect,
 }

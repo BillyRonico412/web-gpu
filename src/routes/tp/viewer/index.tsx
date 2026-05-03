@@ -8,7 +8,10 @@ import { ChooseFileDialog } from "@/routes/tp/viewer/-gpu/-choose-file-dialog"
 import { CANVAS_ID } from "@/routes/tp/viewer/-gpu/-gpu-atoms"
 import { gpuEffects } from "@/routes/tp/viewer/-gpu/-gpu-effect"
 import { LoadFileEmpty } from "@/routes/tp/viewer/-gpu/-load-file-empty"
-import { pickingAtoms } from "@/routes/tp/viewer/-gpu/-picking-atom"
+import {
+	pickingAtoms,
+	RUBBER_BAND_ID,
+} from "@/routes/tp/viewer/-gpu/-picking-atom"
 import { lightAtoms } from "@/routes/tp/viewer/-light/-light-atoms"
 
 export const Route = createFileRoute("/tp/viewer/")({
@@ -25,7 +28,8 @@ function RouteComponent() {
 	useAtom(gpuEffects.loadingStateEffect)
 	useAtom(gpuEffects.drawEffect)
 	useAtom(lightAtoms.lightModeEffect)
-	useAtom(pickingAtoms.pickingEffect)
+	useAtom(pickingAtoms.rubberBandEffect)
+	useAtom(pickingAtoms.deleteEffect)
 	useAtom(canvasEventEffect)
 	return (
 		<SidebarProvider>
@@ -39,6 +43,10 @@ function RouteComponent() {
 					onMouseDownCapture={(e) => pickMouseDownHandler(e.nativeEvent)}
 					onMouseMoveCapture={(e) => pickMouseMoveHandler(e.nativeEvent)}
 					onMouseUpCapture={(e) => pickMouseUpHandler(e.nativeEvent)}
+				/>
+				<div
+					className="absolute w-0 h-0 top-0 left-0 bg-yellow-400/10 border-2 border-yellow-400 hidden pointer-events-none"
+					id={RUBBER_BAND_ID}
 				/>
 				<LoadFileEmpty />
 			</main>

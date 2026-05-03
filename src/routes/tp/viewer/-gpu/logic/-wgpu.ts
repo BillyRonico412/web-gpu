@@ -218,7 +218,6 @@ export const initViewer = async (parts: Part[]) => {
 					}
 					partIds.push(i)
 				}
-				console.log("Picked part IDs:", partIds)
 				return partIds
 			} finally {
 				pickingBitSetBuffer.unmap()

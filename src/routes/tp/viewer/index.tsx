@@ -33,11 +33,11 @@ function RouteComponent() {
 				<SidebarTrigger className="absolute" />
 				<canvas
 					id={CANVAS_ID}
-					className="w-full h-full"
+					className="w-full h-full relative"
 					onContextMenu={(e) => e.preventDefault()}
-					onMouseDown={(e) => pickMouseDownHandler(e.nativeEvent)}
+					onMouseDownCapture={(e) => pickMouseDownHandler(e.nativeEvent)}
 					onMouseMoveCapture={(e) => pickMouseMoveHandler(e.nativeEvent)}
-					onMouseUp={(e) => pickMouseUpHandler(e.nativeEvent)}
+					onMouseUpCapture={(e) => pickMouseUpHandler(e.nativeEvent)}
 				/>
 				<LoadFileEmpty />
 			</main>

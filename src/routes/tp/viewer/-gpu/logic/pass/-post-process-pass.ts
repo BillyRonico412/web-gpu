@@ -8,6 +8,7 @@ import {
 } from "@/routes/tp/viewer/-gpu/logic/-types"
 
 export const createPostProcessPassRessources = (device: GPUDevice) => {
+	// display mode
 	const postProcessUniformUintSize = 4
 	const postProcessUniformUintData = new Uint32Array(
 		postProcessUniformUintSize / 4,
@@ -18,7 +19,7 @@ export const createPostProcessPassRessources = (device: GPUDevice) => {
 		usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
 	})
 
-	// geometry edge active + normal edge active + depth edge active + near and far plane for depth linearization
+	// technical config + near and far plane for depth linearization
 	const postProcessUniformFloatSize = technicalKeys.length * 4 + 4 + 4
 	const postProcessUniformFloatData = new Float32Array(
 		postProcessUniformFloatSize / 4,

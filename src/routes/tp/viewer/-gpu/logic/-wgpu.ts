@@ -114,6 +114,7 @@ export const initViewer = async (objects3D: Object3D[]) => {
 			near: number
 			far: number
 			technicalConfig: TechnicalConfig
+			geometricIds: Set<number>
 		}) => {
 			const {
 				viewMatrix,

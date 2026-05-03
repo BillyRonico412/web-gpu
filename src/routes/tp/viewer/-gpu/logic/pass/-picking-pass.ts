@@ -153,7 +153,6 @@ export const createPickingPassRessources = (params: {
 		geometryIdTexView: TexView
 		pickParams: PickParams
 	}) => {
-		console.log(params.pickParams)
 		const { commandEncoder, geometryIdTexView, pickParams } = params
 		commandEncoder.clearBuffer(stagingBuffer)
 		const pickingBindGroup = createUniformPickingBindGroup(pickParams)

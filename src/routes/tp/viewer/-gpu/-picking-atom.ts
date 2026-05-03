@@ -1,9 +1,13 @@
 import { produce } from "immer"
 import { atom } from "jotai"
+import { atomWithProxy } from "jotai-valtio"
+import { proxySet } from "valtio/utils"
 import { CANVAS_ID, gpuAtoms } from "@/routes/tp/viewer/-gpu/-gpu-atoms"
 import type { PickParams } from "@/routes/tp/viewer/-gpu/logic/-types"
 
 const pickParamsAtom = atom<PickParams | undefined>()
+const geometricIdsState = proxySet()
+const geometricIdsAtom = atomWithProxy(geometricIdsState)
 
 const mouseDownHandlerAtom = atom(null, (_, set, event: MouseEvent) => {
 	if (event.button !== 0) {
@@ -42,7 +46,7 @@ const mouseMoveHandlerAtom = atom(null, (_, set, event: MouseEvent) => {
 	)
 })
 
-const mouseUpHandlerAtom = atom(null, (get, set, event: MouseEvent) => {
+const mouseUpHandlerAtom = atom(null, async (get, set, event: MouseEvent) => {
 	if (event.button !== 0) {
 		return
 	}
@@ -54,7 +58,13 @@ const mouseUpHandlerAtom = atom(null, (get, set, event: MouseEvent) => {
 	if (!pickParams) {
 		return
 	}
-	viewer.pickRect(pickParams)
+	const geometricIdsPicked = await viewer.pickRect(pickParams)
+	if (!event.ctrlKey) {
+		geometricIdsState.clear()
+	}
+	for (const id of geometricIdsPicked) {
+		geometricIdsState.add(id)
+	}
 	set(pickParamsAtom, undefined)
 })
 
@@ -63,4 +73,6 @@ export const pickingAtoms = {
 	mouseDownHandlerAtom,
 	mouseMoveHandlerAtom,
 	mouseUpHandlerAtom,
+	geometricIdsAtom,
+	geometricIdsState,
 }

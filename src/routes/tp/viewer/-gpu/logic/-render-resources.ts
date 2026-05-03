@@ -62,11 +62,11 @@ export const createRenderResources = (device: GPUDevice) => {
 		return createMsTexView(device, params.canvas, "rgba16float")
 	}
 
-	const createGeometryIdTexture = (params: {
+	const createPartIdTexture = (params: {
 		canvas: HTMLCanvasElement
 	}): TexView => {
-		const geometryIdTexture = device.createTexture({
-			label: "Geometry ID texture",
+		const partIdTexture = device.createTexture({
+			label: "Part ID texture",
 			size: [params.canvas.width, params.canvas.height],
 			format: "r32float",
 			sampleCount: 4,
@@ -74,15 +74,15 @@ export const createRenderResources = (device: GPUDevice) => {
 				GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING,
 		})
 		return {
-			texture: geometryIdTexture,
-			view: geometryIdTexture.createView(),
+			texture: partIdTexture,
+			view: partIdTexture.createView(),
 		}
 	}
 
 	return {
 		createRenderDepthTexture,
 		createColorTexture,
-		createGeometryIdTexture,
+		createPartIdTexture,
 		createNormalTexture,
 	}
 }

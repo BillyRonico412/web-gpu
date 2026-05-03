@@ -3,6 +3,7 @@ import { atomWithReset, RESET } from "jotai/utils"
 import { match } from "ts-pattern"
 import { mat4, utils, type Vec3, vec3 } from "wgpu-matrix"
 import { gpuAtoms } from "@/routes/tp/viewer/-gpu/-gpu-atoms"
+import { aabb } from "@/routes/tp/viewer/-gpu/logic/utils/AABB"
 
 export const NEAR = 0.1
 
@@ -60,11 +61,12 @@ const farAtom = atom((get) => {
 	if (!viewer) {
 		return 1000
 	}
-	const aabb = viewer.aabb
-	if (!aabb) {
+	const assemblyAabb = viewer.assemblyAabb
+	if (!assemblyAabb) {
 		return 1000
 	}
-	return aabb.radius * 10
+	const assemblyAabbRadius = aabb.getRadius(assemblyAabb)
+	return assemblyAabbRadius * 10
 })
 
 const projectionMatrixAtom = atom((get) => {
@@ -117,6 +119,16 @@ type CameraActionType =
 export const cameraActionAtom = atom(
 	null,
 	(get, set, cameraAction: CameraActionType) => {
+		const viewer = get(gpuAtoms.viewerAtom)
+		if (!viewer) {
+			return
+		}
+		const assemblyAabb = viewer.assemblyAabb
+		if (!assemblyAabb) {
+			return
+		}
+		const assemblyAabbRadius = aabb.getRadius(assemblyAabb)
+		const assemblyAabbCenter = aabb.getCenter(assemblyAabb)
 		match(cameraAction)
 			.with({ type: "rotate" }, (cameraAction) => {
 				const { deltaX, deltaY } = cameraAction
@@ -126,14 +138,6 @@ export const cameraActionAtom = atom(
 				set(elevationAtom, Math.max(-89.9, Math.min(89.9, nextElevation)))
 			})
 			.with({ type: "zoom" }, (cameraAction) => {
-				const viewer = get(gpuAtoms.viewerAtom)
-				if (!viewer) {
-					return
-				}
-				const aabb = viewer.aabb
-				if (!aabb) {
-					return
-				}
 				const { delta, ctrlKey, shiftKey } = cameraAction
 				const far = get(farAtom)
 				let zoomSpeed = 0.001
@@ -142,7 +146,8 @@ export const cameraActionAtom = atom(
 				} else if (shiftKey) {
 					zoomSpeed *= 10
 				}
-				const nextRadius = get(radiusAtom) + delta * aabb.radius * zoomSpeed
+				const nextRadius =
+					get(radiusAtom) + delta * assemblyAabbRadius * zoomSpeed
 				if (nextRadius < 0.1 || nextRadius > far) {
 					return
 				}
@@ -153,8 +158,8 @@ export const cameraActionAtom = atom(
 				if (!viewer) {
 					return
 				}
-				const aabb = viewer.aabb
-				if (!aabb) {
+				const assemblyAabb = viewer.assemblyAabb
+				if (!assemblyAabb) {
 					return
 				}
 				const { deltaX, deltaY } = cameraAction
@@ -172,8 +177,11 @@ export const cameraActionAtom = atom(
 				} else if (cameraAction.shiftKey) {
 					panSpeed *= 10
 				}
-				const panRight = vec3.scale(right, -deltaX * aabb.radius * panSpeed)
-				const panUp = vec3.scale(up, deltaY * aabb.radius * panSpeed)
+				const panRight = vec3.scale(
+					right,
+					-deltaX * assemblyAabbRadius * panSpeed,
+				)
+				const panUp = vec3.scale(up, deltaY * assemblyAabbRadius * panSpeed)
 				const pan = vec3.add(panRight, panUp)
 				const nextTarget = vec3.add(target, pan)
 				set(targetAtom, nextTarget)
@@ -183,13 +191,13 @@ export const cameraActionAtom = atom(
 				if (!viewer) {
 					return
 				}
-				const aabb = viewer.aabb
-				if (!aabb) {
+				const assemblyAabb = viewer.assemblyAabb
+				if (!assemblyAabb) {
 					return
 				}
 				const fov = get(fovAtom)
-				const radius = (aabb.radius * 2) / Math.sin(utils.degToRad(fov))
-				set(targetAtom, aabb.center)
+				const radius = (assemblyAabbRadius * 2) / Math.sin(utils.degToRad(fov))
+				set(targetAtom, assemblyAabbCenter)
 				set(radiusAtom, radius)
 			})
 			.exhaustive()

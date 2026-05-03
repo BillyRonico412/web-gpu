@@ -4,8 +4,8 @@ import type { ShadingModeType } from "@/routes/tp/viewer/-gpu/logic/-normal-reso
 import type {
 	FlatNormalBufferResources,
 	MsTexView,
-	Object3D,
-	ObjectBufferResources,
+	Part,
+	PartBufferResources,
 	TexView,
 } from "@/routes/tp/viewer/-gpu/logic/-types"
 
@@ -106,42 +106,26 @@ export const createRenderPassRessource = (device: GPUDevice) => {
 					type: "read-only-storage",
 				},
 			},
-			// Material buffer
+			// Part ID buffer
 			{
 				binding: 4,
-				visibility: GPUShaderStage.FRAGMENT,
-				buffer: {
-					type: "read-only-storage",
-				},
-			},
-			// Material index buffer
-			{
-				binding: 5,
-				visibility: GPUShaderStage.FRAGMENT,
-				buffer: {
-					type: "read-only-storage",
-				},
-			},
-			// Matrix buffer
-			{
-				binding: 6,
-				visibility: GPUShaderStage.VERTEX,
+				visibility: GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT,
 				buffer: {
 					type: "read-only-storage",
 				},
 			},
 
-			// Matrix index buffer
+			// Matrix buffer
 			{
-				binding: 7,
+				binding: 5,
 				visibility: GPUShaderStage.VERTEX,
 				buffer: {
 					type: "read-only-storage",
 				},
 			},
-			// Geometric ID buffer
+			// Material buffer
 			{
-				binding: 8,
+				binding: 6,
 				visibility: GPUShaderStage.FRAGMENT,
 				buffer: {
 					type: "read-only-storage",
@@ -151,7 +135,7 @@ export const createRenderPassRessource = (device: GPUDevice) => {
 	})
 
 	const createRenderStorageBindGroup = (params: {
-		objectResources: ObjectBufferResources
+		objectResources: PartBufferResources
 		flatNormalResources: FlatNormalBufferResources
 		shadingMode: ShadingModeType
 	}) => {
@@ -161,10 +145,8 @@ export const createRenderPassRessource = (device: GPUDevice) => {
 			normalBuffer,
 			normalIndexBuffer,
 			materialBuffer,
-			materialIndexBuffer,
 			matrixBuffer,
-			matrixIndexBuffer,
-			geometricIdBuffer,
+			partIdBuffer,
 		} = params.objectResources
 
 		const { flatNormalBuffer, flatNormalIndexBuffer } =
@@ -214,31 +196,19 @@ export const createRenderPassRessource = (device: GPUDevice) => {
 				{
 					binding: 4,
 					resource: {
-						buffer: materialBuffer,
+						buffer: partIdBuffer,
 					},
 				},
 				{
 					binding: 5,
 					resource: {
-						buffer: materialIndexBuffer,
+						buffer: matrixBuffer,
 					},
 				},
 				{
 					binding: 6,
 					resource: {
-						buffer: matrixBuffer,
-					},
-				},
-				{
-					binding: 7,
-					resource: {
-						buffer: matrixIndexBuffer,
-					},
-				},
-				{
-					binding: 8,
-					resource: {
-						buffer: geometricIdBuffer,
+						buffer: materialBuffer,
 					},
 				},
 			],
@@ -276,7 +246,7 @@ export const createRenderPassRessource = (device: GPUDevice) => {
 					{
 						format: "rgba16float",
 					},
-					// Geometry ID
+					// Part ID
 					{
 						format: "r32float",
 					},
@@ -300,15 +270,15 @@ export const createRenderPassRessource = (device: GPUDevice) => {
 
 	const doRenderPass = (params: {
 		commandEncoder: GPUCommandEncoder
-		objectBufferResources: ObjectBufferResources
+		objectBufferResources: PartBufferResources
 		flatNormalBufferResources: FlatNormalBufferResources
 		colorMsTexView: MsTexView
-		geometryIdTexView: TexView
+		partIdTexView: TexView
 		renderDepthTexView: TexView
 		normalTexView: MsTexView
 		background: Vec4
 		context: GPUCanvasContext
-		objects3D: Object3D[]
+		parts: Part[]
 		shadingMode: ShadingModeType
 		uniform: RenderUniform
 		culling: boolean
@@ -334,7 +304,7 @@ export const createRenderPassRessource = (device: GPUDevice) => {
 					storeOp: "store",
 				},
 				{
-					view: params.geometryIdTexView.view,
+					view: params.partIdTexView.view,
 					loadOp: "clear",
 					storeOp: "store",
 				},
@@ -362,8 +332,8 @@ export const createRenderPassRessource = (device: GPUDevice) => {
 		renderPass.setBindGroup(1, storageBindGroup)
 		renderPass.setVertexBuffer(0, params.objectBufferResources.vertexBuffer)
 		let nbDrawnVertices = 0
-		for (const obj of params.objects3D) {
-			nbDrawnVertices += obj.vertexIndexes.length
+		for (const partItem of params.parts) {
+			nbDrawnVertices += partItem.vertexIndexes.length
 		}
 		renderPass.draw(nbDrawnVertices)
 		renderPass.end()

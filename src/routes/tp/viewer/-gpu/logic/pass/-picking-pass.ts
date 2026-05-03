@@ -1,15 +1,15 @@
 import pickingShaderCode from "@/routes/tp/viewer/-gpu/-shaders/-picking-shader.wgsl?raw"
 import type {
-	Object3D,
+	Part,
 	PickParams,
 	TexView,
 } from "@/routes/tp/viewer/-gpu/logic/-types"
 
 export const createPickingPassRessources = (params: {
 	device: GPUDevice
-	objects3D: Object3D[]
+	parts: Part[]
 }) => {
-	const { device, objects3D } = params
+	const { device, parts } = params
 	// x, y, width, height
 	const pickingUniformSize = 4 + 4 + 4 + 4
 	const pickingUniformData = new Uint32Array(4)
@@ -56,7 +56,7 @@ export const createPickingPassRessources = (params: {
 	const textureBindGroupLayout = device.createBindGroupLayout({
 		label: "Picking texture bind group layout",
 		entries: [
-			// Geometry ID texture
+			// Part ID texture
 			{
 				binding: 0,
 				visibility: GPUShaderStage.COMPUTE,
@@ -68,14 +68,14 @@ export const createPickingPassRessources = (params: {
 		],
 	})
 
-	const createTextureBindGroup = (geometryIdTexView: TexView) => {
+	const createTextureBindGroup = (partIdTexView: TexView) => {
 		const textureBindGroup = device.createBindGroup({
 			label: "Picking texture bind group",
 			layout: textureBindGroupLayout,
 			entries: [
 				{
 					binding: 0,
-					resource: geometryIdTexView.view,
+					resource: partIdTexView.view,
 				},
 			],
 		})
@@ -84,7 +84,7 @@ export const createPickingPassRessources = (params: {
 
 	const stagingBuffer = device.createBuffer({
 		label: "Picking result buffer",
-		size: 4 * objects3D.length,
+		size: 4 * parts.length,
 		usage:
 			GPUBufferUsage.STORAGE |
 			GPUBufferUsage.COPY_SRC |
@@ -92,7 +92,7 @@ export const createPickingPassRessources = (params: {
 	})
 
 	const pickingBitSetBuffer = device.createBuffer({
-		size: 4 * objects3D.length,
+		size: 4 * parts.length,
 		usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ,
 	})
 
@@ -150,13 +150,13 @@ export const createPickingPassRessources = (params: {
 
 	const doPickingPass = (params: {
 		commandEncoder: GPUCommandEncoder
-		geometryIdTexView: TexView
+		partIdTexView: TexView
 		pickParams: PickParams
 	}) => {
-		const { commandEncoder, geometryIdTexView, pickParams } = params
+		const { commandEncoder, partIdTexView, pickParams } = params
 		commandEncoder.clearBuffer(stagingBuffer)
 		const pickingBindGroup = createUniformPickingBindGroup(pickParams)
-		const textureBindGroup = createTextureBindGroup(geometryIdTexView)
+		const textureBindGroup = createTextureBindGroup(partIdTexView)
 		const storageBindGroup = createStorageBindGroup()
 		const passEncoder = commandEncoder.beginComputePass({
 			label: "Picking compute pass",
@@ -175,7 +175,7 @@ export const createPickingPassRessources = (params: {
 			0,
 			pickingBitSetBuffer,
 			0,
-			4 * objects3D.length,
+			4 * parts.length,
 		)
 	}
 

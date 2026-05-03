@@ -1,6 +1,6 @@
 import { expose } from "comlink"
 import { mat4, vec4 } from "wgpu-matrix"
-import type { Object3D } from "@/routes/tp/viewer/-gpu/logic/-types"
+import type { Part } from "@/routes/tp/viewer/-gpu/logic/-types"
 
 const getNbResources = (
 	lines: string[],
@@ -36,13 +36,13 @@ const DEFAULT_MATERIAL = {
 	roughness: 1,
 }
 
-const parseObj = async (objText: string): Promise<Object3D[]> => {
-	const objects: Object3D[] = []
+const parseObj = async (objText: string): Promise<Part[]> => {
+	const objects: Part[] = []
 	const lines = objText.split("\n")
 
 	const { nbVertexes, nbNormals, nbIndex } = getNbResources(lines)
 
-	const currentObject: Object3D = {
+	const currentObject: Part = {
 		vertexes: new Float32Array(nbVertexes * 4),
 		normals: new Float32Array(nbNormals * 4),
 		vertexIndexes: new Uint32Array(nbIndex),
@@ -50,7 +50,7 @@ const parseObj = async (objText: string): Promise<Object3D[]> => {
 		material: DEFAULT_MATERIAL,
 		matrix: mat4.identity(),
 		name: "Object",
-		geometricId: 1,
+		partId: 1,
 	}
 	let vertexOffset = 0
 	let normalOffset = 0

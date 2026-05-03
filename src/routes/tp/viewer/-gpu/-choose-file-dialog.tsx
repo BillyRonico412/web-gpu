@@ -99,12 +99,12 @@ export const ChooseFileDialog = () => {
 							}
 							if (selectedFile.url.endsWith(".obj")) {
 								const text = await data.text()
-								const objects3D = await parseObjProxy.parseObj(text)
-								setObjects3D(objects3D)
+								const parts = await parseObjProxy.parseObj(text)
+								setObjects3D(parts)
 							} else if (selectedFile.url.endsWith(".glb")) {
 								const arrayBuffer = await data.arrayBuffer()
-								const objects3D = await parseGlbProxy.parseGlb(arrayBuffer)
-								setObjects3D(objects3D)
+								const parts = await parseGlbProxy.parseGlb(arrayBuffer)
+								setObjects3D(parts)
 							}
 							setOpen(false)
 						}}

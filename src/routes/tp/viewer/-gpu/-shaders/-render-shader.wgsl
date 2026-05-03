@@ -19,11 +19,9 @@ struct Material {
 @group(1) @binding(1) var<storage, read> normal_array: array<vec3f>;
 @group(1) @binding(2) var<storage, read> vertex_indexes_array: array<u32>;
 @group(1) @binding(3) var<storage, read> normal_indexes_array: array<u32>;
-@group(1) @binding(4) var<storage, read> material_array: array<Material>;
-@group(1) @binding(5) var<storage, read> material_indexes_array: array<u32>;
-@group(1) @binding(6) var<storage, read> matrix_array: array<mat4x4f>;
-@group(1) @binding(7) var<storage, read> matrix_indexes_array: array<u32>;
-@group(1) @binding(8) var<storage, read> geometric_id_array: array<u32>;
+@group(1) @binding(4) var<storage, read> part_id_array: array<u32>;
+@group(1) @binding(5) var<storage, read> matrix_array: array<mat4x4f>;
+@group(1) @binding(6) var<storage, read> material_array: array<Material>;
 
 struct VertexIn {
     @builtin(vertex_index) draw_index: u32,
@@ -40,11 +38,11 @@ struct VertexOut {
 fn vs_main(v_in: VertexIn) -> VertexOut {
     let vertex_index = vertex_indexes_array[v_in.draw_index];
     let normal_index = normal_indexes_array[v_in.draw_index];
-    let matrix_index = matrix_indexes_array[v_in.draw_index];
+    let part_id = part_id_array[v_in.draw_index];
 
-    let matrix = matrix_array[matrix_index];
     let vertex = vertex_array[vertex_index];
     let normal = normal_array[normal_index];
+    let matrix = matrix_array[part_id - 1];
 
     let rotationMatrix = mat3x3<f32>(
         matrix[0].xyz,
@@ -66,23 +64,25 @@ const MAX_SHININESS: f32 = 512.0;
 struct FragmentOut {
     @location(0) color: vec4f,
     @location(1) normal: vec4f,
-    @location(2) geometric_id: f32,
+    @location(2) part_id: f32,
 }
 
 @fragment
 fn fs_main(f_in: VertexOut) -> FragmentOut {
+    let part_id = part_id_array[f_in.draw_index];
+
     var normal = normalize(f_in.normal);
-    let pos_to_camara = normalize(uni.camera_position - f_in.world_position);
-    if dot(normal, pos_to_camara) < 0.0 {
+    let pos_to_camera_vec = normalize(uni.camera_position - f_in.world_position);
+    if dot(normal, pos_to_camera_vec) < 0.0 {
         normal = -normal;
     }
+
     let light_direction = normalize(-uni.light_direction);
 
     let v = normalize(uni.camera_position - f_in.world_position);
     let h = normalize(light_direction + v);
 
-    let material_index = material_indexes_array[f_in.draw_index];
-    let material = material_array[material_index];
+    let material = material_array[part_id - 1];
 
     let diffuse = max(dot(normal, light_direction), 0.0);
 
@@ -97,7 +97,7 @@ fn fs_main(f_in: VertexOut) -> FragmentOut {
     var out: FragmentOut;
     out.color = vec4f(final_color, material.color.a);
     out.normal = vec4f(normal, 0);
-    out.geometric_id = f32(geometric_id_array[f_in.draw_index]);
+    out.part_id = f32(part_id);
 
     return out;
 }

@@ -1,7 +1,7 @@
 import { WebIO } from "@gltf-transform/core"
 import { expose } from "comlink"
 import { mat4, vec3, vec4 } from "wgpu-matrix"
-import type { Object3D } from "@/routes/tp/viewer/-gpu/logic/-types"
+import type { Part } from "@/routes/tp/viewer/-gpu/logic/-types"
 
 const DEFAULT_MATERIAL = {
 	color: vec3.create(0.8, 0.8, 0.8),
@@ -54,7 +54,7 @@ const padTo4 = (array: Float32Array) => {
 	return newArray
 }
 
-const parseGlb = async (glbBuffer: ArrayBuffer): Promise<Object3D[]> => {
+const parseGlb = async (glbBuffer: ArrayBuffer): Promise<Part[]> => {
 	const io = new WebIO({
 		credentials: "include",
 	})
@@ -62,10 +62,10 @@ const parseGlb = async (glbBuffer: ArrayBuffer): Promise<Object3D[]> => {
 	const document = await io.readBinary(new Uint8Array(glbBuffer))
 	const root = document.getRoot()
 
-	const objects: Object3D[] = []
+	const objects: Part[] = []
 	const nodes = root.listNodes()
 
-	let geometricId = 1
+	let partId = 1
 
 	for (const node of nodes) {
 		const worldMatrix = mat4.clone(node.getWorldMatrix())
@@ -147,10 +147,10 @@ const parseGlb = async (glbBuffer: ArrayBuffer): Promise<Object3D[]> => {
 				normalIndexes,
 				matrix: mat4.clone(worldMatrix),
 				material: objectMaterial ?? DEFAULT_MATERIAL,
-				geometricId,
+				partId,
 			})
 		}
-		geometricId++
+		partId++
 	}
 
 	return objects

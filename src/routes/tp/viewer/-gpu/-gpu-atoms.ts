@@ -9,7 +9,7 @@ import {
 	waitFunctionStringAtom,
 } from "@/routes/tp/viewer/-components/-wait-message"
 import type { GlbParserWorkerApiType } from "@/routes/tp/viewer/-glb/-parser"
-import type { Object3D } from "@/routes/tp/viewer/-gpu/logic/-types"
+import type { Part } from "@/routes/tp/viewer/-gpu/logic/-types"
 import type { Viewer } from "@/routes/tp/viewer/-gpu/logic/-wgpu"
 import type { ObjParserWorkerAPiType } from "@/routes/tp/viewer/-obj/-parser"
 
@@ -27,7 +27,7 @@ const parseGlbProxy = wrap<GlbParserWorkerApiType>(parseGlbWorker)
 export const CANVAS_ID = "viewer-canvas"
 
 const drawTriggerAtom = atom(0)
-const objects3DAtom = atom<Object3D[] | undefined>(undefined)
+const objects3DAtom = atom<Part[] | undefined>(undefined)
 const viewerAtom = atom<Viewer | undefined>()
 
 const canvasSizeAtom = withAtomEffect(
@@ -87,13 +87,13 @@ const loadFileAtom = atom(null, (_, set) => {
 				},
 				message: "Loading .obj file...",
 			})
-			const objects3D = await set(waitFunctionObject3DAtom, {
+			const parts = await set(waitFunctionObject3DAtom, {
 				async fn() {
 					return await parseObjProxy.parseObj(objContent)
 				},
 				message: "Parsing .obj file...",
 			})
-			set(objects3DAtom, objects3D)
+			set(objects3DAtom, parts)
 			return
 		}
 
@@ -104,13 +104,13 @@ const loadFileAtom = atom(null, (_, set) => {
 				},
 				message: "Loading .glb file...",
 			})
-			const objects3D = await set(waitFunctionObject3DAtom, {
+			const parts = await set(waitFunctionObject3DAtom, {
 				async fn() {
 					return await parseGlbProxy.parseGlb(glbContent)
 				},
 				message: "Parsing .glb file...",
 			})
-			set(objects3DAtom, objects3D)
+			set(objects3DAtom, parts)
 			return
 		}
 	}

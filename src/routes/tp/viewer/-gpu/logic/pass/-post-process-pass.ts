@@ -122,7 +122,7 @@ export const createPostProcessPassRessources = (device: GPUDevice) => {
 					sampleType: "float",
 				},
 			},
-			// Geometry ID texture
+			// Part ID texture
 			{
 				binding: 2,
 				visibility: GPUShaderStage.FRAGMENT,
@@ -159,11 +159,11 @@ export const createPostProcessPassRessources = (device: GPUDevice) => {
 
 	const createPostProcessTextureBindGroup = (params: {
 		colorTexView: TexView
-		geometryIdTexView: TexView
+		partIdTextView: TexView
 		normalTexView: TexView
 		depthTexView: TexView
 	}) => {
-		const { colorTexView, geometryIdTexView, normalTexView } = params
+		const { colorTexView, partIdTextView, normalTexView } = params
 
 		const postProcessBindGroup = device.createBindGroup({
 			label: "Post process bind group",
@@ -179,7 +179,7 @@ export const createPostProcessPassRessources = (device: GPUDevice) => {
 				},
 				{
 					binding: 2,
-					resource: geometryIdTexView.texture,
+					resource: partIdTextView.texture,
 				},
 				{
 					binding: 3,
@@ -232,7 +232,7 @@ export const createPostProcessPassRessources = (device: GPUDevice) => {
 		commandEncoder: GPUCommandEncoder
 		context: GPUCanvasContext
 		colorTexView: TexView
-		geometryIdTexView: TexView
+		partIdTexView: TexView
 		normalTexView: TexView
 		depthTexView: TexView
 		displayMode: DisplayModeType
@@ -259,7 +259,7 @@ export const createPostProcessPassRessources = (device: GPUDevice) => {
 
 		const postProcessTextureBindGroup = createPostProcessTextureBindGroup({
 			colorTexView: params.colorTexView,
-			geometryIdTexView: params.geometryIdTexView,
+			partIdTextView: params.partIdTexView,
 			normalTexView: params.normalTexView,
 			depthTexView: params.depthTexView,
 		})

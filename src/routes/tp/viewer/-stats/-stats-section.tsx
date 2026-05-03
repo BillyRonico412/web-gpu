@@ -1,6 +1,7 @@
 import { useAtomValue } from "jotai"
 import { gpuAtoms } from "@/routes/tp/viewer/-gpu/-gpu-atoms"
-import type { AABB, Object3D } from "@/routes/tp/viewer/-gpu/logic/-types"
+import type { Part } from "@/routes/tp/viewer/-gpu/logic/-types"
+import type { AABB } from "@/routes/tp/viewer/-gpu/logic/utils/AABB"
 
 const Row = (props: { label: string; value: string }) => {
 	return (
@@ -11,19 +12,19 @@ const Row = (props: { label: string; value: string }) => {
 	)
 }
 
-const statsByObjects3D = (objects3D: Object3D[], aabb: AABB) => {
-	const vertexCount = objects3D.reduce(
-		(acc, obj) => acc + obj.vertexes.length / 4,
+const statsByObjects3D = (parts: Part[], assemblyAabb: AABB) => {
+	const vertexCount = parts.reduce(
+		(acc, partItem) => acc + partItem.vertexes.length / 4,
 		0,
 	)
-	const triangleCount = objects3D.reduce(
-		(acc, obj) => acc + obj.vertexIndexes.length / 3,
+	const triangleCount = parts.reduce(
+		(acc, partItem) => acc + partItem.vertexIndexes.length / 3,
 		0,
 	)
-	const sizeX = aabb.max[0] - aabb.min[0]
-	const sizeY = aabb.max[1] - aabb.min[1]
-	const sizeZ = aabb.max[2] - aabb.min[2]
-	const primitiveCount = objects3D.length
+	const sizeX = assemblyAabb.max[0] - assemblyAabb.min[0]
+	const sizeY = assemblyAabb.max[1] - assemblyAabb.min[1]
+	const sizeZ = assemblyAabb.max[2] - assemblyAabb.min[2]
+	const primitiveCount = parts.length
 	return {
 		vertexCount,
 		triangleCount,
@@ -40,9 +41,9 @@ export const StatsSection = () => {
 	const viewer = useAtomValue(gpuAtoms.viewerAtom)
 	let stats: Stats | undefined
 	if (viewer) {
-		const aabb = viewer.aabb
-		const objects3D = viewer.objects3D
-		stats = statsByObjects3D(objects3D, aabb)
+		const assemblyAabb = viewer.assemblyAabb
+		const parts = viewer.parts
+		stats = statsByObjects3D(parts, assemblyAabb)
 	}
 	return (
 		<table>

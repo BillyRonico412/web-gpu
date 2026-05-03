@@ -1,4 +1,5 @@
-import type { Mat4, Vec3, Vec4 } from "wgpu-matrix"
+import type { Mat4, Vec4 } from "wgpu-matrix"
+import type { AABB } from "@/routes/tp/viewer/-gpu/logic/utils/AABB"
 
 export type DisplayModeType =
 	| "basic"
@@ -6,7 +7,7 @@ export type DisplayModeType =
 	| "technical"
 	| "normal"
 
-export type Object3D = {
+export type Part = {
 	name: string
 	vertexes: Float32Array
 	vertexIndexes: Uint32Array
@@ -18,27 +19,19 @@ export type Object3D = {
 		metallic: number
 		roughness: number
 	}
-	geometricId: number
+	partId: number
 }
 
-export type AABB = {
-	min: Vec3
-	max: Vec3
-	center: Vec3
-	radius: number
-}
-
-export type ObjectResources = {
+export type PartResources = {
 	vertexData: Float32Array
 	vertexIndexesData: Uint32Array
 	normalData: Float32Array
 	normalIndexesData: Uint32Array
+	partIdData: Uint32Array
 	materialData: Float32Array
-	materialIndexesData: Uint32Array
 	matrixData: Float32Array
-	matrixIndexesData: Uint32Array
-	geometricIdData: Uint32Array
-	aabb: AABB
+	aabbMap: AABB[]
+	assemblyAabb: AABB
 }
 
 export type FlatNormalResources = {
@@ -46,16 +39,14 @@ export type FlatNormalResources = {
 	flatNormalIndex: Uint32Array
 }
 
-export type ObjectBufferResources = {
+export type PartBufferResources = {
 	vertexBuffer: GPUBuffer
 	vertexIndexBuffer: GPUBuffer
 	normalBuffer: GPUBuffer
 	normalIndexBuffer: GPUBuffer
 	materialBuffer: GPUBuffer
-	materialIndexBuffer: GPUBuffer
 	matrixBuffer: GPUBuffer
-	matrixIndexBuffer: GPUBuffer
-	geometricIdBuffer: GPUBuffer
+	partIdBuffer: GPUBuffer
 }
 
 export type FlatNormalBufferResources = {
@@ -73,7 +64,7 @@ export type MsTexView = {
 	ms: TexView
 }
 
-export const technicalKeys = ["geometry", "normal", "depth"] as const
+export const technicalKeys = ["part", "normal", "depth"] as const
 export type TechnicalConfigKey = (typeof technicalKeys)[number]
 
 export type TechnicalConfig = Record<TechnicalConfigKey, boolean>

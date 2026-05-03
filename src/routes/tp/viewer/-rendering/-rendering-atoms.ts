@@ -12,7 +12,7 @@ const cullingAtom = atomWithReset(true)
 const displayModeAtom = atomWithReset<DisplayModeType>("basic")
 
 const technicalConfigAtom = atomWithReset<TechnicalConfig>({
-	geometry: true,
+	part: true,
 	normal: true,
 	depth: true,
 })

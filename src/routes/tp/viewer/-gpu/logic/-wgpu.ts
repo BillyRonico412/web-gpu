@@ -10,12 +10,12 @@ import {
 } from "@/routes/tp/viewer/-gpu/logic/-normal-resources"
 import {
 	createObjectBufferResources,
-	type ObjectResourceWorkerApi,
-} from "@/routes/tp/viewer/-gpu/logic/-object-resources"
+	type PartResourceWorkerApi,
+} from "@/routes/tp/viewer/-gpu/logic/-part-resources"
 import { createRenderResources } from "@/routes/tp/viewer/-gpu/logic/-render-resources"
 import type {
 	DisplayModeType,
-	Object3D,
+	Part,
 	PickParams,
 	TechnicalConfig,
 } from "@/routes/tp/viewer/-gpu/logic/-types"
@@ -30,14 +30,14 @@ const normalWorker = new Worker(
 const normalProxy = wrap<NormalWorkerApi>(normalWorker)
 
 const objectWorker = new Worker(
-	new URL("../logic/-object-resources.ts", import.meta.url),
+	new URL("../logic/-part-resources.ts", import.meta.url),
 	{ type: "module" },
 )
-const objectProxy = wrap<ObjectResourceWorkerApi>(objectWorker)
+const objectProxy = wrap<PartResourceWorkerApi>(objectWorker)
 
 export type Viewer = Awaited<ReturnType<typeof initViewer>>
 
-export const initViewer = async (objects3D: Object3D[]) => {
+export const initViewer = async (parts: Part[]) => {
 	try {
 		emitter.emit("updateLoadingState", "init-webgpu")
 		const { device } = await initWebGPU()
@@ -54,7 +54,7 @@ export const initViewer = async (objects3D: Object3D[]) => {
 
 		emitter.emit("updateLoadingState", "create-object-resources")
 		const objectResources = await objectProxy.createObjectResources({
-			objects3D,
+			parts,
 		})
 		const objectBufferResources = createObjectBufferResources(
 			device,
@@ -75,7 +75,7 @@ export const initViewer = async (objects3D: Object3D[]) => {
 		const {
 			createRenderDepthTexture,
 			createColorTexture,
-			createGeometryIdTexture,
+			createPartIdTexture,
 			createNormalTexture,
 		} = createRenderResources(device)
 
@@ -86,7 +86,7 @@ export const initViewer = async (objects3D: Object3D[]) => {
 		let normalMsTexView = createNormalTexture({
 			canvas,
 		})
-		let geometryIdTexView = createGeometryIdTexture({
+		let partIdTexView = createPartIdTexture({
 			canvas,
 		})
 
@@ -97,7 +97,7 @@ export const initViewer = async (objects3D: Object3D[]) => {
 
 		const { doPickingPass, pickingBitSetBuffer } = createPickingPassRessources({
 			device,
-			objects3D,
+			parts,
 		})
 
 		const draw = (params: {
@@ -114,7 +114,6 @@ export const initViewer = async (objects3D: Object3D[]) => {
 			near: number
 			far: number
 			technicalConfig: TechnicalConfig
-			geometricIds: Set<number>
 		}) => {
 			const {
 				viewMatrix,
@@ -141,10 +140,10 @@ export const initViewer = async (objects3D: Object3D[]) => {
 				renderDepthTexView,
 				background,
 				context,
-				objects3D,
+				parts,
 				shadingMode,
 				colorMsTexView,
-				geometryIdTexView,
+				partIdTexView,
 				normalTexView: normalMsTexView,
 				culling,
 				uniform: {
@@ -159,7 +158,7 @@ export const initViewer = async (objects3D: Object3D[]) => {
 			doPostProcessPass({
 				commandEncoder,
 				colorTexView: colorMsTexView.base,
-				geometryIdTexView,
+				partIdTexView,
 				context,
 				normalTexView: normalMsTexView.base,
 				depthTexView: renderDepthTexView,
@@ -188,8 +187,8 @@ export const initViewer = async (objects3D: Object3D[]) => {
 				canvas,
 			})
 
-			geometryIdTexView.texture.destroy()
-			geometryIdTexView = createGeometryIdTexture({
+			partIdTexView.texture.destroy()
+			partIdTexView = createPartIdTexture({
 				canvas,
 			})
 		}
@@ -199,22 +198,22 @@ export const initViewer = async (objects3D: Object3D[]) => {
 				const commandEncoder = device.createCommandEncoder()
 				doPickingPass({
 					commandEncoder,
-					geometryIdTexView,
+					partIdTexView,
 					pickParams,
 				})
 				device.queue.submit([commandEncoder.finish()])
 				await pickingBitSetBuffer.mapAsync(GPUMapMode.READ)
 				const arrayBuffer = pickingBitSetBuffer.getMappedRange()
 				const pickingBitSet = new Uint32Array(arrayBuffer)
-				const geometricIds: number[] = []
+				const partIds: number[] = []
 				for (let i = 0; i < pickingBitSet.length; i++) {
 					if (pickingBitSet[i] === 0) {
 						continue
 					}
-					geometricIds.push(i)
+					partIds.push(i)
 				}
-				console.log("Picked geometric IDs:", geometricIds)
-				return geometricIds
+				console.log("Picked part IDs:", partIds)
+				return partIds
 			} finally {
 				pickingBitSetBuffer.unmap()
 			}
@@ -226,11 +225,10 @@ export const initViewer = async (objects3D: Object3D[]) => {
 			flatNormalBufferResources.flatNormalBuffer.destroy()
 			flatNormalBufferResources.flatNormalIndexBuffer.destroy()
 			objectBufferResources.materialBuffer.destroy()
-			objectBufferResources.materialIndexBuffer.destroy()
 			renderDepthTexView.texture.destroy()
 			colorMsTexView.base.texture.destroy()
 			colorMsTexView.ms.texture.destroy()
-			geometryIdTexView.texture.destroy()
+			partIdTexView.texture.destroy()
 			normalMsTexView.base.texture.destroy()
 			normalMsTexView.ms.texture.destroy()
 			renderPassCleanUp()
@@ -239,8 +237,8 @@ export const initViewer = async (objects3D: Object3D[]) => {
 		return {
 			draw,
 			updateTextureByCanvasResize,
-			aabb: objectResources.aabb,
-			objects3D,
+			assemblyAabb: objectResources.assemblyAabb,
+			parts,
 			cleanup,
 			pickRect,
 		}

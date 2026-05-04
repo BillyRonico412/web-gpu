@@ -22,6 +22,7 @@ const DISPLAY_MODE_NORMAL: u32 = 3u;
 @group(1) @binding(2) var geometric_id_texture: texture_multisampled_2d<f32>;
 @group(1) @binding(3) var normal_texture: texture_2d<f32>;
 @group(1) @binding(4) var depth_texture: texture_multisampled_2d<f32>;
+@group(2) @binding(0) var<storage, read> visibility_state_array: array<u32>; 
 
 struct VertexOut {
     @builtin(position) position: vec4f,
@@ -155,7 +156,8 @@ fn fs_main(v_in: VertexOut) -> @location(0) vec4f {
             return vec4f(mix(base_color.xyz, edge_color, factor), base_color.a);
         }
         case DISPLAY_MODE_TECHNICAL: {
-            let base_color = vec4f(1, 1, 1, 1);
+            let is_highlighted = visibility_state_array[u32(geometric_id) - 1] == (1u << 1u);
+            let base_color = select(vec4f(1, 1, 1, 1), vec4f(0.8, 0.8, 0.8, 1), is_highlighted);
             let geometry_neighbors = get_geometry_neighbors(vec2i(v_in.position.xy));
             let nb_different_geometry = get_nb_different_geometry(geometry_neighbors, geometric_id);
 

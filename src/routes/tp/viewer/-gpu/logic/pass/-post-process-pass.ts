@@ -194,11 +194,44 @@ export const createPostProcessPassRessources = (device: GPUDevice) => {
 		return postProcessBindGroup
 	}
 
+	const postProcessStorateBindGroupLayout = device.createBindGroupLayout({
+		label: "Storage bind group layout",
+		entries: [
+			// Visibility state
+			{
+				binding: 0,
+				visibility: GPUShaderStage.FRAGMENT,
+				buffer: {
+					type: "read-only-storage",
+				},
+			},
+		],
+	})
+
+	const postProcessCreateStorageBindGroup = (params: {
+		visibilityStateBuffer: GPUBuffer
+	}) => {
+		const bindGroup = device.createBindGroup({
+			label: "Storage bind group",
+			layout: postProcessStorateBindGroupLayout,
+			entries: [
+				{
+					binding: 0,
+					resource: {
+						buffer: params.visibilityStateBuffer,
+					},
+				},
+			],
+		})
+		return bindGroup
+	}
+
 	const postProcessPipelineLayout = device.createPipelineLayout({
 		label: "Post process pipeline layout",
 		bindGroupLayouts: [
 			postProcessUniformBindGroupLayout,
 			postProcessTextureBindGroupLayout,
+			postProcessStorateBindGroupLayout,
 		],
 	})
 
@@ -239,11 +272,25 @@ export const createPostProcessPassRessources = (device: GPUDevice) => {
 		near: number
 		far: number
 		technicalConfig: TechnicalConfig
+		visibilityStateBuffer: GPUBuffer
 	}) => {
+		const {
+			visibilityStateBuffer,
+			commandEncoder,
+			context,
+			colorTexView,
+			partIdTexView,
+			normalTexView,
+			depthTexView,
+			displayMode,
+			near,
+			far,
+			technicalConfig,
+		} = params
 		const renderPassDescriptor: GPURenderPassDescriptor = {
 			colorAttachments: [
 				{
-					view: params.context.getCurrentTexture().createView(),
+					view: context.getCurrentTexture().createView(),
 					loadOp: "clear",
 					storeOp: "store",
 				},
@@ -251,24 +298,28 @@ export const createPostProcessPassRessources = (device: GPUDevice) => {
 		}
 
 		const postProcessUniformBindGroup = createPostProcessUniformBindGroup({
-			displayMode: params.displayMode,
-			near: params.near,
-			far: params.far,
-			technicalConfig: params.technicalConfig,
+			displayMode,
+			near,
+			far,
+			technicalConfig,
 		})
 
 		const postProcessTextureBindGroup = createPostProcessTextureBindGroup({
-			colorTexView: params.colorTexView,
-			partIdTextView: params.partIdTexView,
-			normalTexView: params.normalTexView,
-			depthTexView: params.depthTexView,
+			colorTexView,
+			partIdTextView: partIdTexView,
+			normalTexView,
+			depthTexView,
 		})
 
-		const renderPass =
-			params.commandEncoder.beginRenderPass(renderPassDescriptor)
+		const postProcessStorageBindGroup = postProcessCreateStorageBindGroup({
+			visibilityStateBuffer,
+		})
+
+		const renderPass = commandEncoder.beginRenderPass(renderPassDescriptor)
 		renderPass.setPipeline(postProcessPipeline)
 		renderPass.setBindGroup(0, postProcessUniformBindGroup)
 		renderPass.setBindGroup(1, postProcessTextureBindGroup)
+		renderPass.setBindGroup(2, postProcessStorageBindGroup)
 		renderPass.draw(6)
 		renderPass.end()
 	}

@@ -172,6 +172,7 @@ export const initViewer = async (parts: Part[]) => {
 				near,
 				far,
 				technicalConfig,
+				visibilityStateBuffer: partBufferResources.visibilityStateBuffer,
 			})
 
 			device.queue.submit([commandEncoder.finish()])

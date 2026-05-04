@@ -87,3 +87,13 @@ export enum VisibilityState {
 	Ghost = 1 << 3,
 	CustomMaterial = 1 << 4,
 }
+
+export type ProductStructure = {
+	id: string
+	children: ProductStructure[]
+}
+
+export type ParserResult = {
+	objects: Part[]
+	productStructure: ProductStructure
+}

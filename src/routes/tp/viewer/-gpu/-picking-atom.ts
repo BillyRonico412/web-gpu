@@ -23,7 +23,9 @@ const pickParamsAtom = atom<PickParams | undefined>((get) => {
 	const height = Math.abs(rect.y2 - rect.y1)
 	return { x, y, width, height }
 })
+
 const pickIdsAtom = atom<Set<number>>(new Set<number>())
+const deletedIdsAtom = atom<Set<number>>(new Set<number>())
 
 const updatePickIdsAtom = atom(null, (get, set, partIds: Set<number>) => {
 	const viewer = get(gpuAtoms.viewerAtom)
@@ -45,6 +47,37 @@ const updatePickIdsAtom = atom(null, (get, set, partIds: Set<number>) => {
 		VisibilityState.Highlighted,
 	)
 	set(pickIdsAtom, newPickIds)
+	set(gpuAtoms.drawTriggerAtom, (prev) => prev + 1)
+})
+
+const deleteIdsAtom = atom(null, (get, set) => {
+	const viewer = get(gpuAtoms.viewerAtom)
+	if (!viewer) {
+		return
+	}
+	const pickIds = get(pickIdsAtom)
+	viewer.partManager.updateVisibilityState(
+		Array.from(pickIds),
+		VisibilityState.Hidden,
+		VisibilityState.Hidden,
+	)
+	set(deletedIdsAtom, (prev) => prev.union(pickIds))
+	set(pickIdsAtom, new Set<number>())
+	set(gpuAtoms.drawTriggerAtom, (prev) => prev + 1)
+})
+
+const restoreDeletedIdsAtom = atom(null, (get, set) => {
+	const viewer = get(gpuAtoms.viewerAtom)
+	if (!viewer) {
+		return
+	}
+	const deletedIds = get(deletedIdsAtom)
+	viewer.partManager.updateVisibilityState(
+		Array.from(deletedIds),
+		VisibilityState.Hidden,
+		0,
+	)
+	set(deletedIdsAtom, new Set<number>())
 	set(gpuAtoms.drawTriggerAtom, (prev) => prev + 1)
 })
 
@@ -136,13 +169,10 @@ const deleteEffect = atomEffect((get, set) => {
 	}
 	const handler = (e: KeyboardEvent) => {
 		if (e.key === "Delete") {
-			viewer.partManager.updateVisibilityState(
-				Array.from(pickIds),
-				VisibilityState.Hidden,
-				VisibilityState.Hidden,
-			)
-			set(updatePickIdsAtom, new Set<number>())
-			set(gpuAtoms.drawTriggerAtom, (prev) => prev + 1)
+			set(deleteIdsAtom)
+		}
+		if (e.key === "Escape") {
+			set(restoreDeletedIdsAtom)
 		}
 	}
 	window.addEventListener("keydown", handler)

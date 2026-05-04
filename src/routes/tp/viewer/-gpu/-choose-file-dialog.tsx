@@ -113,6 +113,7 @@ export const ChooseFileDialog = () => {
 						Choose File
 					</Button>
 					<Button
+						variant="outline"
 						onClick={() => {
 							loadFile()
 							setOpen(false)

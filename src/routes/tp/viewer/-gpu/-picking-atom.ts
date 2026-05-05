@@ -1,6 +1,7 @@
 import { produce } from "immer"
 import { atom } from "jotai"
 import { atomEffect } from "jotai-effect"
+import { cameraAtoms } from "@/routes/tp/viewer/-camera/-camera-atoms"
 import { CANVAS_ID, gpuAtoms } from "@/routes/tp/viewer/-gpu/-gpu-atoms"
 import {
 	type PickParams,
@@ -8,6 +9,8 @@ import {
 } from "@/routes/tp/viewer/-gpu/logic/-types"
 
 export const RUBBER_BAND_ID = "rubber-band"
+
+let mouseUpTimer: number | undefined
 
 const rectAtom = atom<
 	{ x1: number; y1: number; x2: number; y2: number } | undefined
@@ -113,10 +116,23 @@ const mouseMoveHandlerAtom = atom(null, (_, set, event: MouseEvent) => {
 	)
 })
 
-const mouseUpHandlerAtom = atom(null, async (get, set, event: MouseEvent) => {
+const mouseUpHandlerAtom = atom(null, async (_, set, event: MouseEvent) => {
 	if (event.button !== 0) {
 		return
 	}
+	if (mouseUpTimer) {
+		window.clearTimeout(mouseUpTimer)
+		mouseUpTimer = undefined
+		set(dbClickHandlerAtom, event)
+		return
+	}
+	mouseUpTimer = window.setTimeout(() => {
+		set(clickHandlerAtom, event)
+		mouseUpTimer = undefined
+	}, 200)
+})
+
+const clickHandlerAtom = atom(null, async (get, set, event: MouseEvent) => {
 	const viewer = get(gpuAtoms.viewerAtom)
 	if (!viewer) {
 		return
@@ -138,12 +154,29 @@ const mouseUpHandlerAtom = atom(null, async (get, set, event: MouseEvent) => {
 	set(rectAtom, undefined)
 })
 
+const dbClickHandlerAtom = atom(null, async (get, set, event: MouseEvent) => {
+	const canvas = document.querySelector(`#${CANVAS_ID}`) as HTMLCanvasElement
+	const rect = canvas.getBoundingClientRect()
+	const x = event.clientX - rect.left
+	const y = event.clientY - rect.top
+	const viewer = get(gpuAtoms.viewerAtom)
+	if (!viewer) {
+		return
+	}
+	const partIds = await viewer.pickRect({ x, y, width: 1, height: 1 })
+	if (partIds.length === 0) {
+		return
+	}
+	const partInfo = viewer.partManager.getPartInfo(partIds[0])
+	set(cameraAtoms.fitToAabbAtom, partInfo.aabb)
+})
+
 const rubberBandEffect = atomEffect((get) => {
 	const pickParams = get(pickParamsAtom)
 	const rubberBandDiv = document.querySelector(
 		`#${RUBBER_BAND_ID}`,
 	) as HTMLDivElement
-	if (!pickParams) {
+	if (!pickParams || pickParams.width < 5 || pickParams.height < 5) {
 		rubberBandDiv.style.display = "none"
 		rubberBandDiv.style.width = "0px"
 		rubberBandDiv.style.height = "0px"

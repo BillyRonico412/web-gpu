@@ -1,4 +1,5 @@
 import { type Vec3, vec3 } from "wgpu-matrix"
+import type { Part } from "@/routes/tp/viewer/-gpu/logic/-types"
 
 export type AABB = {
 	min: Vec3
@@ -46,9 +47,40 @@ const union = (aabb1: AABB, aabb2: AABB, dest?: AABB): AABB => {
 	return create(min, max)
 }
 
+const createFromPart = (params: {
+	vertexes: Float32Array
+	matrix: Float32Array
+}): AABB => {
+	const { vertexes, matrix } = params
+	const min = vec3.create(
+		Number.POSITIVE_INFINITY,
+		Number.POSITIVE_INFINITY,
+		Number.POSITIVE_INFINITY,
+	)
+	const max = vec3.create(
+		Number.NEGATIVE_INFINITY,
+		Number.NEGATIVE_INFINITY,
+		Number.NEGATIVE_INFINITY,
+	)
+
+	for (let i = 0; i < vertexes.length; i += 4) {
+		const vertex = vec3.fromValues(
+			vertexes[i],
+			vertexes[i + 1],
+			vertexes[i + 2],
+		)
+		const vertexTransformed = vec3.transformMat4(vertex, matrix)
+		vec3.min(min, vertexTransformed, min)
+		vec3.max(max, vertexTransformed, max)
+	}
+
+	return aabb.create(min, max)
+}
+
 export const aabb = {
 	create,
 	getCenter,
 	getRadius,
 	union,
+	createFromPart,
 }

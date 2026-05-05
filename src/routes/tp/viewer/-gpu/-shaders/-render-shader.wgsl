@@ -120,7 +120,7 @@ fn fs_main(f_in: VertexOut) -> FragmentOut {
     out.part_id = f32(part_id);
 
     let pos_to_camera_vec = normalize(uni.camera_position.xyz - f_in.world_position);
-    if dot(normal, pos_to_camera_vec) < 0.0 {
+    if dot(normal, pos_to_camera_vec) < -0.5 {
         normal = -normal;
     }
 

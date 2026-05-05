@@ -40,9 +40,17 @@ export const createPartManager = (params: {
 		return parts.length
 	}
 
+	const getPartInfo = (partId: number) => {
+		const part = parts[partId - 1]
+		return {
+			...part,
+		}
+	}
+
 	return {
 		updateVisibilityState,
 		getVisibilityState,
 		getPartCount,
+		getPartInfo,
 	}
 }

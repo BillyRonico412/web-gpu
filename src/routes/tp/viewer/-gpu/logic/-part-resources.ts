@@ -1,37 +1,10 @@
 import { expose } from "comlink"
-import { vec3 } from "wgpu-matrix"
 import type {
 	Part,
 	PartBufferResources,
 	PartResources,
 } from "@/routes/tp/viewer/-gpu/logic/-types"
-import { type AABB, aabb } from "@/routes/tp/viewer/-gpu/logic/utils/AABB"
-
-const getAABB = (part: Part): AABB => {
-	const min = vec3.create(
-		Number.POSITIVE_INFINITY,
-		Number.POSITIVE_INFINITY,
-		Number.POSITIVE_INFINITY,
-	)
-	const max = vec3.create(
-		Number.NEGATIVE_INFINITY,
-		Number.NEGATIVE_INFINITY,
-		Number.NEGATIVE_INFINITY,
-	)
-
-	for (let i = 0; i < part.vertexes.length; i += 4) {
-		const vertex = vec3.fromValues(
-			part.vertexes[i],
-			part.vertexes[i + 1],
-			part.vertexes[i + 2],
-		)
-		const vertexTransformed = vec3.transformMat4(vertex, part.matrix)
-		vec3.min(min, vertexTransformed, min)
-		vec3.max(max, vertexTransformed, max)
-	}
-
-	return aabb.create(min, max)
-}
+import { aabb } from "@/routes/tp/viewer/-gpu/logic/utils/AABB"
 
 const createPartResources = async (params: {
 	parts: Part[]
@@ -146,11 +119,9 @@ const createPartResources = async (params: {
 
 	const visibilityStateData = new Uint32Array(parts.length)
 
-	const aabbMap = parts.map(getAABB)
-
 	const assemblyAabb = aabb.create()
-	for (const partAabb of aabbMap) {
-		aabb.union(assemblyAabb, partAabb, assemblyAabb)
+	for (const part of parts) {
+		aabb.union(assemblyAabb, part.aabb, assemblyAabb)
 	}
 
 	return {
@@ -163,7 +134,6 @@ const createPartResources = async (params: {
 		materialData,
 		matrixData,
 		partIdData,
-		aabbMap,
 		assemblyAabb,
 	}
 }

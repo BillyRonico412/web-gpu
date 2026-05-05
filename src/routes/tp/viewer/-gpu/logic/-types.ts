@@ -22,6 +22,7 @@ export type Part = {
 		roughness: number
 	}
 	partId: number
+	aabb: AABB
 }
 
 export type PartResources = {
@@ -34,7 +35,6 @@ export type PartResources = {
 	matrixData: Float32Array
 	visibilityStateData: Uint32Array
 	customMaterialData: Float32Array
-	aabbMap: AABB[]
 	assemblyAabb: AABB
 }
 

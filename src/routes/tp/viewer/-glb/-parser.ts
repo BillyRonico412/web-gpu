@@ -2,6 +2,7 @@ import { WebIO } from "@gltf-transform/core"
 import { expose } from "comlink"
 import { mat4, vec3, vec4 } from "wgpu-matrix"
 import type { Part } from "@/routes/tp/viewer/-gpu/logic/-types"
+import { aabb } from "@/routes/tp/viewer/-gpu/logic/utils/AABB"
 
 const DEFAULT_MATERIAL = {
 	color: vec3.create(0.8, 0.8, 0.8),
@@ -106,6 +107,11 @@ const parseGlb = async (glbBuffer: ArrayBuffer): Promise<Part[]> => {
 				roughness: material?.getRoughnessFactor() ?? 1,
 			}
 
+			const partAabb = aabb.createFromPart({
+				vertexes,
+				matrix: worldMatrix,
+			})
+
 			objects.push({
 				name: `${mesh.getName() || "Mesh"}_${primitiveIndex}`,
 				vertexes,
@@ -115,6 +121,7 @@ const parseGlb = async (glbBuffer: ArrayBuffer): Promise<Part[]> => {
 				matrix: mat4.clone(worldMatrix),
 				material: objectMaterial ?? DEFAULT_MATERIAL,
 				partId,
+				aabb: partAabb,
 			})
 		}
 		partId++

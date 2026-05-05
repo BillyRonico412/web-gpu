@@ -1,6 +1,7 @@
 import { expose } from "comlink"
 import { mat4, vec4 } from "wgpu-matrix"
 import type { Part } from "@/routes/tp/viewer/-gpu/logic/-types"
+import { aabb } from "@/routes/tp/viewer/-gpu/logic/utils/AABB"
 
 const getNbResources = (
 	lines: string[],
@@ -37,21 +38,15 @@ const DEFAULT_MATERIAL = {
 }
 
 const parseObj = async (objText: string): Promise<Part[]> => {
-	const objects: Part[] = []
 	const lines = objText.split("\n")
 
 	const { nbVertexes, nbNormals, nbIndex } = getNbResources(lines)
 
-	const currentObject: Part = {
-		vertexes: new Float32Array(nbVertexes * 4),
-		normals: new Float32Array(nbNormals * 4),
-		vertexIndexes: new Uint32Array(nbIndex),
-		normalIndexes: new Uint32Array(nbIndex),
-		material: DEFAULT_MATERIAL,
-		matrix: mat4.identity(),
-		name: "Object",
-		partId: 1,
-	}
+	const vertexes = new Float32Array(nbVertexes * 4)
+	const normals = new Float32Array(nbNormals * 4)
+	const vertexIndexes = new Uint32Array(nbIndex)
+	const normalIndexes = new Uint32Array(nbIndex)
+
 	let vertexOffset = 0
 	let normalOffset = 0
 	let vertexIndexOffset = 0
@@ -61,12 +56,12 @@ const parseObj = async (objText: string): Promise<Part[]> => {
 		const parts = line.split(/\s+/)
 		if (parts[0] === "v") {
 			for (let i = 1; i < 4; i++) {
-				currentObject.vertexes.set([Number(parts[i])], vertexOffset + i - 1)
+				vertexes.set([Number(parts[i])], vertexOffset + i - 1)
 			}
 			vertexOffset += 4
 		} else if (parts[0] === "vn") {
 			for (let i = 1; i < 4; i++) {
-				currentObject.normals.set([Number(parts[i])], normalOffset + i - 1)
+				normals.set([Number(parts[i])], normalOffset + i - 1)
 			}
 			normalOffset += 4
 		} else if (parts[0] === "f") {
@@ -79,7 +74,7 @@ const parseObj = async (objText: string): Promise<Part[]> => {
 			const v0 = currentIndexes[0].vertexIndex
 			const n0 = currentIndexes[0].normalIndex
 			for (let i = 1; i < currentIndexes.length - 1; i++) {
-				currentObject.vertexIndexes.set(
+				vertexIndexes.set(
 					[
 						v0,
 						currentIndexes[i].vertexIndex,
@@ -88,7 +83,7 @@ const parseObj = async (objText: string): Promise<Part[]> => {
 					vertexIndexOffset,
 				)
 				vertexIndexOffset += 3
-				currentObject.normalIndexes.set(
+				normalIndexes.set(
 					[
 						n0,
 						currentIndexes[i].normalIndex,
@@ -100,11 +95,25 @@ const parseObj = async (objText: string): Promise<Part[]> => {
 			}
 		}
 	}
-	if (currentObject) {
-		objects.push(currentObject)
+
+	const partAabb = aabb.createFromPart({
+		vertexes,
+		matrix: mat4.identity(),
+	})
+
+	const currentObject: Part = {
+		vertexes: new Float32Array(nbVertexes * 4),
+		normals: new Float32Array(nbNormals * 4),
+		vertexIndexes: new Uint32Array(nbIndex),
+		normalIndexes: new Uint32Array(nbIndex),
+		material: DEFAULT_MATERIAL,
+		matrix: mat4.identity(),
+		name: "Object",
+		partId: 1,
+		aabb: partAabb,
 	}
 
-	return objects
+	return [currentObject]
 }
 
 const objParserWorkerApi = {

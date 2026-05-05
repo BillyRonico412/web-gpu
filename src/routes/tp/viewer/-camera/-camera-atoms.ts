@@ -3,7 +3,7 @@ import { atomWithReset, RESET } from "jotai/utils"
 import { match } from "ts-pattern"
 import { mat4, utils, type Vec3, vec3 } from "wgpu-matrix"
 import { gpuAtoms } from "@/routes/tp/viewer/-gpu/-gpu-atoms"
-import { aabb } from "@/routes/tp/viewer/-gpu/logic/utils/AABB"
+import { type AABB, aabb } from "@/routes/tp/viewer/-gpu/logic/utils/AABB"
 
 export const NEAR = 0.1
 
@@ -93,6 +93,15 @@ const projectionMatrixAtom = atom((get) => {
 	}
 })
 
+const fitToAabbAtom = atom(null, (get, set, aabbToFit: AABB) => {
+	const aabbCenter = aabb.getCenter(aabbToFit)
+	const aabbRadius = aabb.getRadius(aabbToFit)
+	const fov = get(fovAtom)
+	const radius = (aabbRadius * 2) / Math.sin(utils.degToRad(fov))
+	set(targetAtom, aabbCenter)
+	set(radiusAtom, radius)
+})
+
 type CameraActionType =
 	| {
 			type: "rotate"
@@ -116,7 +125,7 @@ type CameraActionType =
 			type: "fitToView"
 	  }
 
-export const cameraActionAtom = atom(
+const cameraActionAtom = atom(
 	null,
 	(get, set, cameraAction: CameraActionType) => {
 		const viewer = get(gpuAtoms.viewerAtom)
@@ -128,7 +137,6 @@ export const cameraActionAtom = atom(
 			return
 		}
 		const assemblyAabbRadius = aabb.getRadius(assemblyAabb)
-		const assemblyAabbCenter = aabb.getCenter(assemblyAabb)
 		match(cameraAction)
 			.with({ type: "rotate" }, (cameraAction) => {
 				const { deltaX, deltaY } = cameraAction
@@ -195,10 +203,7 @@ export const cameraActionAtom = atom(
 				if (!assemblyAabb) {
 					return
 				}
-				const fov = get(fovAtom)
-				const radius = (assemblyAabbRadius * 2) / Math.sin(utils.degToRad(fov))
-				set(targetAtom, assemblyAabbCenter)
-				set(radiusAtom, radius)
+				set(fitToAabbAtom, assemblyAabb)
 			})
 			.exhaustive()
 	},
@@ -240,4 +245,5 @@ export const cameraAtoms = {
 	turnUpAtom,
 	eyeAtom,
 	cameraResetAtom,
+	fitToAabbAtom,
 }

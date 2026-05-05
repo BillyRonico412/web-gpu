@@ -2,6 +2,7 @@ import { type Mat4, mat4, type Vec3, type Vec4 } from "wgpu-matrix"
 import renderShaderCode from "@/routes/tp/viewer/-gpu/-shaders/-render-shader.wgsl?raw"
 import type { ShadingModeType } from "@/routes/tp/viewer/-gpu/logic/-normal-resources"
 import type {
+	DisplayModeEnum,
 	FlatNormalBufferResources,
 	MsTexView,
 	Part,
@@ -15,13 +16,32 @@ type RenderUniform = {
 	lightDirection: Vec3
 	ambient: number
 	specularIntensity: number
+	displayMode: DisplayModeEnum
 }
 
 export const createRenderPassRessource = (device: GPUDevice) => {
-	// 112 bytes: mvp matrix + light direction + camera position + light params
-	const renderUniformSize = 16 * 4 + 4 * 4 + 4 * 4 + 4 * 4
+	// mvp matrix + light direction + camera position + ambient + specular intensity + display mode
+	const mvpMatrixSize = 16 * 4
+	const lightDirectionSize = 4 * 4
+	const cameraPositionSize = 4 * 4
+	const ambientSize = 4
+	const specularIntensitySize = 4
+	const displayModeSize = 4
+	const paddingSize = 4
 
-	const renderUniformData = new Float32Array(renderUniformSize / 4)
+	const renderUniformSize =
+		mvpMatrixSize +
+		lightDirectionSize +
+		cameraPositionSize +
+		ambientSize +
+		specularIntensitySize +
+		displayModeSize +
+		paddingSize
+
+	const renderUniformData = new ArrayBuffer(renderUniformSize)
+	const float32View = new Float32Array(renderUniformData)
+	const uint32View = new Uint32Array(renderUniformData)
+
 	const renderUniformBuffer = device.createBuffer({
 		label: "Uniform buffer",
 		size: renderUniformSize,
@@ -43,17 +63,24 @@ export const createRenderPassRessource = (device: GPUDevice) => {
 	})
 
 	const createUniformBindGroup = (renderUniform: RenderUniform) => {
-		const { mvp, lightDirection, cameraPosition, ambient, specularIntensity } =
-			renderUniform
+		const {
+			mvp,
+			lightDirection,
+			cameraPosition,
+			ambient,
+			specularIntensity,
+			displayMode,
+		} = renderUniform
 		const modelMatrix = mat4.identity()
 		const mvpMatrix = mat4.multiply(
 			mat4.multiply(mvp.projectionMatrix, mvp.viewMatrix),
 			modelMatrix,
 		)
-		renderUniformData.set(mvpMatrix, 0)
-		renderUniformData.set(lightDirection, 16)
-		renderUniformData.set(cameraPosition, 20)
-		renderUniformData.set([ambient, specularIntensity], 23)
+		float32View.set(mvpMatrix, 0)
+		float32View.set(lightDirection, 16)
+		float32View.set(cameraPosition, 20)
+		float32View.set([ambient, specularIntensity], 24)
+		uint32View[26] = displayMode
 		device.queue.writeBuffer(renderUniformBuffer, 0, renderUniformData)
 
 		const uniformBindGroup = device.createBindGroup({

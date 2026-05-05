@@ -8,16 +8,17 @@ import { ColorPicker } from "@/routes/tp/viewer/-components/-color-picker"
 import { ResetButton } from "@/routes/tp/viewer/-components/-reset-button"
 import type { ShadingModeType } from "@/routes/tp/viewer/-gpu/logic/-normal-resources"
 import {
-	type DisplayModeType,
+	DisplayModeEnum,
 	technicalKeys,
 } from "@/routes/tp/viewer/-gpu/logic/-types"
 import { renderingAtoms } from "@/routes/tp/viewer/-rendering/-rendering-atoms"
 
-const displayModeOptions: { label: string; value: string }[] = [
-	{ label: "Basic", value: "basic" },
-	{ label: "Basic with edges", value: "basic-with-edges" },
-	{ label: "Technical", value: "technical" },
-	{ label: "Normal", value: "normal" },
+const displayModeOptions: { label: string; value: number }[] = [
+	{ label: "Basic", value: DisplayModeEnum.BASIC },
+	{ label: "Basic with edges", value: DisplayModeEnum.BASIC_WITH_EDGES },
+	{ label: "Technical", value: DisplayModeEnum.TECHNICAL },
+	{ label: "Normal", value: DisplayModeEnum.NORMAL },
+	{ label: "Cel shading", value: DisplayModeEnum.CEL_SHADING },
 ]
 
 export const RenderingSection = () => {
@@ -57,7 +58,7 @@ export const RenderingSection = () => {
 				<NativeSelect
 					value={displayMode}
 					onChange={(e) => {
-						setDisplayMode(e.target.value as DisplayModeType)
+						setDisplayMode(Number(e.target.value) as DisplayModeEnum)
 					}}
 				>
 					{displayModeOptions.map((option) => (
@@ -68,7 +69,7 @@ export const RenderingSection = () => {
 				</NativeSelect>
 			</Field>
 			<div className="flex flex-col gap-2">
-				{displayMode === "technical" &&
+				{displayMode === DisplayModeEnum.TECHNICAL &&
 					technicalKeys.map((key) => (
 						<Field orientation="horizontal" key={key}>
 							<FieldLabel>

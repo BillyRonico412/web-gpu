@@ -14,6 +14,7 @@ const DISPLAY_MODE_BASIC: u32 = 0u;
 const DISPLAY_MODE_BASIC_EDGES: u32 = 1u;
 const DISPLAY_MODE_TECHNICAL: u32 = 2u;
 const DISPLAY_MODE_NORMAL: u32 = 3u;
+const DISPLAY_MODE_CEL_SHADING: u32 = 4u;
 
 @group(0) @binding(0) var<uniform> uni1: Uniform1;
 @group(0) @binding(1) var<uniform> uni2: Uniform2;
@@ -129,6 +130,35 @@ fn get_nb_different_depth(depth_neighbors: array<f32, 8>, depth: f32) -> u32 {
     return count;
 }
 
+fn get_edge_darkening_factor(
+    v_in: VertexOut,
+    geometric_id: f32,
+    normal: vec3f,
+    depth: f32,
+    base_color: vec4f
+) -> f32 {
+    let geometry_neighbors = get_geometry_neighbors(vec2i(v_in.position.xy));
+    let nb_different_geometry = get_nb_different_geometry(geometry_neighbors, geometric_id);
+
+    let normal_neighbors = get_normal_neighbors(vec2i(v_in.position.xy));
+    let nb_different_normal = get_nb_different_normal(normal_neighbors, normal);
+
+    let depth_neighbors = get_depth_neighbors(vec2i(v_in.position.xy));
+    let nb_different_depth = get_nb_different_depth(depth_neighbors, depth);
+
+    if nb_different_geometry == 0 && nb_different_normal == 0 && get_nb_different_depth(depth_neighbors, depth) == 0 {
+        return -1.0;
+    }
+    let edge_color = vec3f(0, 0, 0);
+    var edge_darkening_factor = 0.0;
+
+    edge_darkening_factor = max(edge_darkening_factor, f32(nb_different_geometry) / 8.0);
+    edge_darkening_factor = max(edge_darkening_factor, f32(nb_different_normal) / 8.0);
+    edge_darkening_factor = max(edge_darkening_factor, f32(nb_different_depth) / 8.0);
+
+    return smoothstep(0.0, 1.0, edge_darkening_factor);
+} 
+
 @fragment
 fn fs_main(v_in: VertexOut) -> @location(0) vec4f {
     let dims = textureDimensions(color_texture);
@@ -140,7 +170,6 @@ fn fs_main(v_in: VertexOut) -> @location(0) vec4f {
     let depth = linearize_reverse_z(textureLoad(depth_texture, vec2i(v_in.position.xy), 0).x);
 
     switch uni1.display_mode {
-
         case DISPLAY_MODE_BASIC: {
             return base_color;
         }
@@ -158,27 +187,19 @@ fn fs_main(v_in: VertexOut) -> @location(0) vec4f {
         case DISPLAY_MODE_TECHNICAL: {
             let is_highlighted = visibility_state_array[u32(geometric_id) - 1] == (1u << 1u);
             let base_color = select(vec4f(1, 1, 1, 1), vec4f(0.8, 0.8, 0.8, 1), is_highlighted);
-            let geometry_neighbors = get_geometry_neighbors(vec2i(v_in.position.xy));
-            let nb_different_geometry = get_nb_different_geometry(geometry_neighbors, geometric_id);
-
-            let normal_neighbors = get_normal_neighbors(vec2i(v_in.position.xy));
-            let nb_different_normal = get_nb_different_normal(normal_neighbors, normal);
-
-            let depth_neighbors = get_depth_neighbors(vec2i(v_in.position.xy));
-            let nb_different_depth = get_nb_different_depth(depth_neighbors, depth);
-
-            if nb_different_geometry == 0 && nb_different_normal == 0 && get_nb_different_depth(depth_neighbors, depth) == 0 {
+            let edge_factor = get_edge_darkening_factor(v_in, geometric_id, normal, depth, base_color);
+            if edge_factor < 0.0 {
                 return base_color;
             }
             let edge_color = vec3f(0, 0, 0);
-            var edge_darkening_factor = 0.0;
-
-            edge_darkening_factor = max(edge_darkening_factor, f32(nb_different_geometry) / 8.0);
-            edge_darkening_factor = max(edge_darkening_factor, f32(nb_different_normal) / 8.0);
-            edge_darkening_factor = max(edge_darkening_factor, f32(nb_different_depth) / 8.0);
-
-            let factor = smoothstep(0.0, 1.0, edge_darkening_factor);
-            return vec4f(mix(base_color.xyz, edge_color, factor), base_color.a);
+            return vec4f(mix(base_color.xyz, edge_color, edge_factor), base_color.a);
+        }
+        case DISPLAY_MODE_CEL_SHADING: {
+            let edge_factor = get_edge_darkening_factor(v_in, geometric_id, normal, depth, base_color);
+            if edge_factor < 0.0 {
+                return base_color;
+            }
+            return vec4f(mix(base_color.xyz, vec3f(0, 0, 0), edge_factor), base_color.a);
         }
         case DISPLAY_MODE_NORMAL: {
             return vec4f(normal * 0.5 + 0.5, 1.0);

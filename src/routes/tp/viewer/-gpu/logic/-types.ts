@@ -1,11 +1,13 @@
 import type { Mat4, Vec4 } from "wgpu-matrix"
 import type { AABB } from "@/routes/tp/viewer/-gpu/logic/utils/AABB"
 
-export type DisplayModeType =
-	| "basic"
-	| "basic-with-edges"
-	| "technical"
-	| "normal"
+export enum DisplayModeEnum {
+	BASIC = 0,
+	BASIC_WITH_EDGES = 1,
+	TECHNICAL = 2,
+	NORMAL = 3,
+	CEL_SHADING = 4,
+}
 
 export type Part = {
 	name: string

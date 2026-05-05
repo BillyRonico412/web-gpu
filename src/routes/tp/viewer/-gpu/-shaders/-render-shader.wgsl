@@ -2,11 +2,18 @@
 
 struct Uniform {
     mvp_matrix: mat4x4f,
-    light_direction: vec3f,
-    camera_position: vec3f,
+    light_direction: vec4f,
+    camera_position: vec4f,
     ambient: f32,
     specular_intensity: f32,
+    display_mode: u32,
 }
+
+const DISPLAY_MODE_BASIC: u32 = 0u;
+const DISPLAY_MODE_BASIC_EDGES: u32 = 1u;
+const DISPLAY_MODE_TECHNICAL: u32 = 2u;
+const DISPLAY_MODE_NORMAL: u32 = 3u;
+const DISPLAY_MODE_CEL_SHADING: u32 = 4u;
 
 struct Material {
     color: vec4f,
@@ -107,15 +114,20 @@ fn fs_main(f_in: VertexOut) -> FragmentOut {
     let is_highlighted = (visibility_state_array[part_id - 1] & VS_HIGHLIGHTED) != 0u;
 
     var normal = normalize(f_in.normal);
-    let pos_to_camera_vec = normalize(uni.camera_position - f_in.world_position);
+
+    var out: FragmentOut;
+    out.normal = vec4f(normal, 0);
+    out.part_id = f32(part_id);
+
+    let pos_to_camera_vec = normalize(uni.camera_position.xyz - f_in.world_position);
     if dot(normal, pos_to_camera_vec) < 0.0 {
         normal = -normal;
     }
 
     let light_direction = normalize(-uni.light_direction);
 
-    let v = normalize(uni.camera_position - f_in.world_position);
-    let h = normalize(light_direction + v);
+    let v = normalize(uni.camera_position.xyz - f_in.world_position);
+    let h = normalize(light_direction.xyz + v);
 
     let material = material_array[part_id - 1];
     let custom_material = custom_material_array[part_id - 1];
@@ -127,6 +139,23 @@ fn fs_main(f_in: VertexOut) -> FragmentOut {
         base_color = custom_material.color.xyz;
     } else {
         base_color = material.color.xyz;
+    }
+
+    let diffuse = max(dot(normal, light_direction.xyz), 0.0);
+
+    if uni.display_mode == DISPLAY_MODE_CEL_SHADING {
+        var shade: f32;
+        if diffuse > 0.95 {
+            shade = 1.0;
+        } else if diffuse > 0.5 {
+            shade = 0.7;      // Teinte moyenne
+        } else if diffuse > 0.2 {
+            shade = 0.3;      // Ombre
+        } else {
+            shade = 0.1;      // Ombre portée profonde
+        }
+        out.color = vec4f(base_color * shade, 1.0);
+        return out;
     }
 
     let metalic = select(
@@ -141,19 +170,13 @@ fn fs_main(f_in: VertexOut) -> FragmentOut {
         is_custom_material
     );
 
-    let diffuse = max(dot(normal, light_direction), 0.0);
-
     let shininess = mix(MIN_SHININESS, MAX_SHININESS, 1.0 - roughness);
     let specular = pow(max(dot(normal, h), 0.0), shininess) * metalic;
 
     let specular_color = mix(vec3f(1.0), base_color, metalic);
     let final_specular = specular_color * specular * uni.specular_intensity;
     let final_color = base_color * (diffuse + uni.ambient) + final_specular;
-
-    var out: FragmentOut;
     out.color = vec4f(final_color, 1);
-    out.normal = vec4f(normal, 0);
-    out.part_id = f32(part_id);
 
     return out;
 }

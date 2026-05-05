@@ -1,7 +1,6 @@
-import { match } from "ts-pattern"
 import postProcessShaderCode from "@/routes/tp/viewer/-gpu/-shaders/-post-process-shader.wgsl?raw"
 import {
-	type DisplayModeType,
+	type DisplayModeEnum,
 	type TechnicalConfig,
 	type TexView,
 	technicalKeys,
@@ -52,17 +51,12 @@ export const createPostProcessPassRessources = (device: GPUDevice) => {
 	})
 
 	const createPostProcessUniformBindGroup = (params: {
-		displayMode: DisplayModeType
+		displayMode: DisplayModeEnum
 		near: number
 		far: number
 		technicalConfig: TechnicalConfig
 	}) => {
-		postProcessUniformUintData[0] = match(params.displayMode)
-			.with("basic", () => 0)
-			.with("basic-with-edges", () => 1)
-			.with("technical", () => 2)
-			.with("normal", () => 3)
-			.exhaustive()
+		postProcessUniformUintData[0] = params.displayMode
 		device.queue.writeBuffer(
 			postProcessUniformUintBuffer,
 			0,
@@ -268,7 +262,7 @@ export const createPostProcessPassRessources = (device: GPUDevice) => {
 		partIdTexView: TexView
 		normalTexView: TexView
 		depthTexView: TexView
-		displayMode: DisplayModeType
+		displayMode: DisplayModeEnum
 		near: number
 		far: number
 		technicalConfig: TechnicalConfig

@@ -2,14 +2,14 @@ import { atom } from "jotai"
 import { atomWithReset, RESET } from "jotai/utils"
 import { type Vec4, vec4 } from "wgpu-matrix"
 import type { ShadingModeType } from "@/routes/tp/viewer/-gpu/logic/-normal-resources"
-import type {
-	DisplayModeType,
-	TechnicalConfig,
+import {
+	DisplayModeEnum,
+	type TechnicalConfig,
 } from "@/routes/tp/viewer/-gpu/logic/-types"
 
 const shadingModeAtom = atomWithReset<ShadingModeType>("auto")
 const cullingAtom = atomWithReset(true)
-const displayModeAtom = atomWithReset<DisplayModeType>("basic")
+const displayModeAtom = atomWithReset<DisplayModeEnum>(DisplayModeEnum.BASIC)
 
 const technicalConfigAtom = atomWithReset<TechnicalConfig>({
 	part: true,

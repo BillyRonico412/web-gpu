@@ -15,7 +15,7 @@ import {
 } from "@/routes/tp/viewer/-gpu/logic/-part-resources"
 import { createRenderResources } from "@/routes/tp/viewer/-gpu/logic/-render-resources"
 import type {
-	DisplayModeType,
+	DisplayModeEnum,
 	Part,
 	PickParams,
 	TechnicalConfig,
@@ -116,7 +116,7 @@ export const initViewer = async (parts: Part[]) => {
 			ambient: number
 			specularIntensity: number
 			culling: boolean
-			displayMode: DisplayModeType
+			displayMode: DisplayModeEnum
 			near: number
 			far: number
 			technicalConfig: TechnicalConfig
@@ -158,6 +158,7 @@ export const initViewer = async (parts: Part[]) => {
 					cameraPosition,
 					ambient,
 					specularIntensity,
+					displayMode,
 				},
 			})
 

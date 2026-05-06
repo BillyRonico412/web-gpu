@@ -102,10 +102,10 @@ const parseObj = async (objText: string): Promise<Part[]> => {
 	})
 
 	const currentObject: Part = {
-		vertexes: new Float32Array(nbVertexes * 4),
-		normals: new Float32Array(nbNormals * 4),
-		vertexIndexes: new Uint32Array(nbIndex),
-		normalIndexes: new Uint32Array(nbIndex),
+		vertexes,
+		normals,
+		vertexIndexes,
+		normalIndexes,
 		material: DEFAULT_MATERIAL,
 		matrix: mat4.identity(),
 		name: "Object",

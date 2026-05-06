@@ -148,11 +148,11 @@ fn fs_main(f_in: VertexOut) -> FragmentOut {
         if diffuse > 0.95 {
             shade = 1.0;
         } else if diffuse > 0.5 {
-            shade = 0.7;      // Teinte moyenne
+            shade = 0.7;
         } else if diffuse > 0.2 {
-            shade = 0.3;      // Ombre
+            shade = 0.3;
         } else {
-            shade = 0.1;      // Ombre portée profonde
+            shade = 0.1;
         }
         out.color = vec4f(base_color * shade, 1.0);
         return out;

@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as WithSidebarRouteRouteImport } from './routes/_with-sidebar/route'
 import { Route as WithSidebarIndexRouteImport } from './routes/_with-sidebar/index'
 import { Route as TpViewerIndexRouteImport } from './routes/tp/viewer/index'
+import { Route as TpImageEditorIndexRouteImport } from './routes/tp/image-editor/index'
 import { Route as TpGravitySwarmIndexRouteImport } from './routes/tp/gravity-swarm/index'
 import { Route as TpGameOfLifeIndexRouteImport } from './routes/tp/game-of-life/index'
 import { Route as WithSidebarMultiStageVariableIndexRouteImport } from './routes/_with-sidebar/multi-stage-variable/index'
@@ -33,6 +34,11 @@ const WithSidebarIndexRoute = WithSidebarIndexRouteImport.update({
 const TpViewerIndexRoute = TpViewerIndexRouteImport.update({
   id: '/tp/viewer/',
   path: '/tp/viewer/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TpImageEditorIndexRoute = TpImageEditorIndexRouteImport.update({
+  id: '/tp/image-editor/',
+  path: '/tp/image-editor/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const TpGravitySwarmIndexRoute = TpGravitySwarmIndexRouteImport.update({
@@ -86,6 +92,7 @@ export interface FileRoutesByFullPath {
   '/multi-stage-variable/': typeof WithSidebarMultiStageVariableIndexRoute
   '/tp/game-of-life/': typeof TpGameOfLifeIndexRoute
   '/tp/gravity-swarm/': typeof TpGravitySwarmIndexRoute
+  '/tp/image-editor/': typeof TpImageEditorIndexRoute
   '/tp/viewer/': typeof TpViewerIndexRoute
   '/3d/cube/': typeof WithSidebar3dCubeIndexRoute
   '/buffer/storage/': typeof WithSidebarBufferStorageIndexRoute
@@ -98,6 +105,7 @@ export interface FileRoutesByTo {
   '/multi-stage-variable': typeof WithSidebarMultiStageVariableIndexRoute
   '/tp/game-of-life': typeof TpGameOfLifeIndexRoute
   '/tp/gravity-swarm': typeof TpGravitySwarmIndexRoute
+  '/tp/image-editor': typeof TpImageEditorIndexRoute
   '/tp/viewer': typeof TpViewerIndexRoute
   '/3d/cube': typeof WithSidebar3dCubeIndexRoute
   '/buffer/storage': typeof WithSidebarBufferStorageIndexRoute
@@ -112,6 +120,7 @@ export interface FileRoutesById {
   '/_with-sidebar/multi-stage-variable/': typeof WithSidebarMultiStageVariableIndexRoute
   '/tp/game-of-life/': typeof TpGameOfLifeIndexRoute
   '/tp/gravity-swarm/': typeof TpGravitySwarmIndexRoute
+  '/tp/image-editor/': typeof TpImageEditorIndexRoute
   '/tp/viewer/': typeof TpViewerIndexRoute
   '/_with-sidebar/3d/cube/': typeof WithSidebar3dCubeIndexRoute
   '/_with-sidebar/buffer/storage/': typeof WithSidebarBufferStorageIndexRoute
@@ -126,6 +135,7 @@ export interface FileRouteTypes {
     | '/multi-stage-variable/'
     | '/tp/game-of-life/'
     | '/tp/gravity-swarm/'
+    | '/tp/image-editor/'
     | '/tp/viewer/'
     | '/3d/cube/'
     | '/buffer/storage/'
@@ -138,6 +148,7 @@ export interface FileRouteTypes {
     | '/multi-stage-variable'
     | '/tp/game-of-life'
     | '/tp/gravity-swarm'
+    | '/tp/image-editor'
     | '/tp/viewer'
     | '/3d/cube'
     | '/buffer/storage'
@@ -151,6 +162,7 @@ export interface FileRouteTypes {
     | '/_with-sidebar/multi-stage-variable/'
     | '/tp/game-of-life/'
     | '/tp/gravity-swarm/'
+    | '/tp/image-editor/'
     | '/tp/viewer/'
     | '/_with-sidebar/3d/cube/'
     | '/_with-sidebar/buffer/storage/'
@@ -163,6 +175,7 @@ export interface RootRouteChildren {
   WithSidebarRouteRoute: typeof WithSidebarRouteRouteWithChildren
   TpGameOfLifeIndexRoute: typeof TpGameOfLifeIndexRoute
   TpGravitySwarmIndexRoute: typeof TpGravitySwarmIndexRoute
+  TpImageEditorIndexRoute: typeof TpImageEditorIndexRoute
   TpViewerIndexRoute: typeof TpViewerIndexRoute
 }
 
@@ -187,6 +200,13 @@ declare module '@tanstack/react-router' {
       path: '/tp/viewer'
       fullPath: '/tp/viewer/'
       preLoaderRoute: typeof TpViewerIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/tp/image-editor/': {
+      id: '/tp/image-editor/'
+      path: '/tp/image-editor'
+      fullPath: '/tp/image-editor/'
+      preLoaderRoute: typeof TpImageEditorIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/tp/gravity-swarm/': {
@@ -276,6 +296,7 @@ const rootRouteChildren: RootRouteChildren = {
   WithSidebarRouteRoute: WithSidebarRouteRouteWithChildren,
   TpGameOfLifeIndexRoute: TpGameOfLifeIndexRoute,
   TpGravitySwarmIndexRoute: TpGravitySwarmIndexRoute,
+  TpImageEditorIndexRoute: TpImageEditorIndexRoute,
   TpViewerIndexRoute: TpViewerIndexRoute,
 }
 export const routeTree = rootRouteImport

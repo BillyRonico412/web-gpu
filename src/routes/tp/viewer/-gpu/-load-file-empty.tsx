@@ -5,7 +5,7 @@ import { chooseFileDialogOpenAtom } from "@/routes/tp/viewer/-gpu/-choose-file-d
 import { gpuAtoms } from "@/routes/tp/viewer/-gpu/-gpu-atoms"
 
 export const LoadFileEmpty = () => {
-	const parts = useAtomValue(gpuAtoms.objects3DAtom)
+	const parts = useAtomValue(gpuAtoms.assemblyAtom)
 	const setChooseFileDialogOpen = useSetAtom(chooseFileDialogOpenAtom)
 	if (parts) {
 		return null

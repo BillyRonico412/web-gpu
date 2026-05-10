@@ -9,12 +9,12 @@ import { lightAtoms } from "@/routes/tp/viewer/-light/-light-atoms"
 import { renderingAtoms } from "@/routes/tp/viewer/-rendering/-rendering-atoms"
 
 const initViewerEffect = atomEffect((get, set) => {
-	const parts = get(gpuAtoms.objects3DAtom)
-	if (parts === undefined) {
+	const assembly = get(gpuAtoms.assemblyAtom)
+	if (assembly === undefined) {
 		return
 	}
 	;(async () => {
-		const viewer = await initViewer(parts)
+		const viewer = await initViewer(assembly)
 		set(gpuAtoms.viewerAtom, (prev) => {
 			if (prev) {
 				prev.cleanup()

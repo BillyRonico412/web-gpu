@@ -1,5 +1,4 @@
 import { type Vec3, vec3 } from "wgpu-matrix"
-import type { Part } from "@/routes/tp/viewer/-gpu/logic/-types"
 
 export type AABB = {
 	min: Vec3

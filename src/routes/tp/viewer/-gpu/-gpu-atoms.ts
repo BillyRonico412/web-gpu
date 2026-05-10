@@ -3,13 +3,9 @@ import { atom } from "jotai"
 import { withAtomEffect } from "jotai-effect"
 import { toast } from "sonner"
 import { asyncReadTextFile } from "@/lib/file"
-import {
-	waitFunctionArrayBufferAtom,
-	waitFunctionObject3DAtom,
-	waitFunctionStringAtom,
-} from "@/routes/tp/viewer/-components/-wait-message"
+import { waitMessageAtom } from "@/routes/tp/viewer/-components/-wait-message"
 import type { GlbParserWorkerApiType } from "@/routes/tp/viewer/-glb/-parser"
-import type { Part } from "@/routes/tp/viewer/-gpu/logic/-types"
+import type { Assembly } from "@/routes/tp/viewer/-gpu/logic/-types"
 import type { Viewer } from "@/routes/tp/viewer/-gpu/logic/-wgpu"
 import type { ObjParserWorkerAPiType } from "@/routes/tp/viewer/-obj/-parser"
 
@@ -27,7 +23,7 @@ const parseGlbProxy = wrap<GlbParserWorkerApiType>(parseGlbWorker)
 export const CANVAS_ID = "viewer-canvas"
 
 const drawTriggerAtom = atom(0)
-const objects3DAtom = atom<Part[] | undefined>(undefined)
+const assemblyAtom = atom<Assembly | undefined>(undefined)
 const viewerAtom = atom<Viewer | undefined>()
 
 const canvasSizeAtom = withAtomEffect(
@@ -54,71 +50,59 @@ const loadFileAtom = atom(null, (_, set) => {
 	input.accept = ".obj, .glb"
 	input.multiple = true
 	input.onchange = async (e) => {
-		const files = (e.target as HTMLInputElement).files
-		if (!files || files.length === 0) {
-			toast.error("No file selected")
-			return
-		}
-		if (files.length > 1) {
-			toast.error("Please select 1 files (.obj and .glb)")
-			return
-		}
+		try {
+			const files = (e.target as HTMLInputElement).files
+			if (!files || files.length === 0) {
+				toast.error("No file selected")
+				return
+			}
+			if (files.length > 1) {
+				toast.error("Please select 1 files (.obj and .glb)")
+				return
+			}
 
-		let selectedObjFile: File | undefined
-		let selectedGlbFile: File | undefined
+			let selectedObjFile: File | undefined
+			let selectedGlbFile: File | undefined
 
-		const file = files[0]
-		if (file.name.endsWith(".obj")) {
-			selectedObjFile = file
-		}
-		if (file.name.endsWith(".glb")) {
-			selectedGlbFile = file
-		}
+			const file = files[0]
+			if (file.name.endsWith(".obj")) {
+				selectedObjFile = file
+			}
+			if (file.name.endsWith(".glb")) {
+				selectedGlbFile = file
+			}
 
-		if (!selectedObjFile && !selectedGlbFile) {
-			toast.error("Please select a .obj or .glb file")
-			return
-		}
+			if (!selectedObjFile && !selectedGlbFile) {
+				toast.error("Please select a .obj or .glb file")
+				return
+			}
 
-		if (selectedObjFile) {
-			const objContent = await set(waitFunctionStringAtom, {
-				async fn() {
-					return await asyncReadTextFile(selectedObjFile)
-				},
-				message: "Loading .obj file...",
-			})
-			const parts = await set(waitFunctionObject3DAtom, {
-				async fn() {
-					return await parseObjProxy.parseObj(objContent)
-				},
-				message: "Parsing .obj file...",
-			})
-			set(objects3DAtom, parts)
-			return
-		}
+			if (selectedObjFile) {
+				set(waitMessageAtom, "Loading .obj file...")
+				const objContent = await asyncReadTextFile(selectedObjFile)
+				set(waitMessageAtom, "Parsing .obj file...")
+				const assembly = await parseObjProxy.parseObj(objContent)
+				set(assemblyAtom, assembly)
+				return
+			}
 
-		if (selectedGlbFile) {
-			const glbContent = await set(waitFunctionArrayBufferAtom, {
-				async fn() {
-					return await selectedGlbFile.arrayBuffer()
-				},
-				message: "Loading .glb file...",
-			})
-			const parts = await set(waitFunctionObject3DAtom, {
-				async fn() {
-					return await parseGlbProxy.parseGlb(glbContent)
-				},
-				message: "Parsing .glb file...",
-			})
-			set(objects3DAtom, parts)
-			return
+			if (selectedGlbFile) {
+				set(waitMessageAtom, "Loading .glb file...")
+				const glbContent = await selectedGlbFile.arrayBuffer()
+				set(waitMessageAtom, "Parsing .glb file...")
+				const assembly = await parseGlbProxy.parseGlb(glbContent)
+				set(assemblyAtom, assembly)
+				return
+			}
+		} finally {
+			set(waitMessageAtom, undefined)
 		}
 	}
 	input.click()
 })
 
 export const gpuAtoms = {
-	objects3DAtom,
+	assemblyAtom,
 	viewerAtom,
 	canvasSizeAtom,
 	loadFileAtom,

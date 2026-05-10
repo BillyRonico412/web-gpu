@@ -1,5 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router"
+import { useAtom } from "jotai"
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
+import { atoms } from "@/routes/tp/image-editor/-atom"
 import { ImageEditorSidebar } from "@/routes/tp/image-editor/-components/-sidebar"
 import { CANVAS_ID } from "@/routes/tp/image-editor/-wgpu"
 
@@ -8,6 +10,10 @@ export const Route = createFileRoute("/tp/image-editor/")({
 })
 
 function RouteComponent() {
+	useAtom(atoms.initImageEditorEffect)
+	useAtom(atoms.loadImageEffect)
+	useAtom(atoms.resizeEffect)
+	useAtom(atoms.renderEffect)
 	return (
 		<SidebarProvider>
 			<ImageEditorSidebar />

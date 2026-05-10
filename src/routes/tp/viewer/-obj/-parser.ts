@@ -1,6 +1,10 @@
 import { expose } from "comlink"
 import { mat4, vec4 } from "wgpu-matrix"
-import type { Part } from "@/routes/tp/viewer/-gpu/logic/-types"
+import type {
+	Assembly,
+	HierarchyNode,
+	Part,
+} from "@/routes/tp/viewer/-gpu/logic/-types"
 import { aabb } from "@/routes/tp/viewer/-gpu/logic/utils/AABB"
 
 const getNbResources = (
@@ -37,7 +41,7 @@ const DEFAULT_MATERIAL = {
 	roughness: 1,
 }
 
-const parseObj = async (objText: string): Promise<Part[]> => {
+const parseObj = async (objText: string): Promise<Assembly> => {
 	const lines = objText.split("\n")
 
 	const { nbVertexes, nbNormals, nbIndex } = getNbResources(lines)
@@ -101,19 +105,31 @@ const parseObj = async (objText: string): Promise<Part[]> => {
 		matrix: mat4.identity(),
 	})
 
-	const currentObject: Part = {
+	const hierarchyNodes: HierarchyNode = {
+		id: 0,
+		name: "Root",
+		parentIndex: null,
+		childIndexes: [],
+		partIndexes: [0],
+		isOpen: true,
+	}
+
+	const part: Part = {
 		vertexes,
 		normals,
 		vertexIndexes,
 		normalIndexes,
 		material: DEFAULT_MATERIAL,
 		matrix: mat4.identity(),
-		name: "Object",
 		partId: 1,
 		aabb: partAabb,
+		nodeIndex: 0,
 	}
 
-	return [currentObject]
+	return {
+		hierarchyNodes: [hierarchyNodes],
+		parts: [part],
+	}
 }
 
 const objParserWorkerApi = {

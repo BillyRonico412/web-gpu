@@ -38,12 +38,6 @@ export const canvasEventEffect = atomEffect((_, set) => {
 		})
 	}
 
-	const handleDblClick = (e: MouseEvent) => {
-		e.preventDefault()
-		e.stopPropagation()
-		set(cameraAtoms.cameraActionAtom, { type: "fitToView" })
-	}
-
 	type TouchPoint = { x: number; y: number }
 
 	let lastTouches: TouchPoint[] = []
@@ -128,13 +122,11 @@ export const canvasEventEffect = atomEffect((_, set) => {
 
 	canvas.addEventListener("mousemove", handleMouseMove)
 	canvas.addEventListener("wheel", handleWheel, { passive: false })
-	canvas.addEventListener("dblclick", handleDblClick)
 	canvas.addEventListener("touchstart", handleTouchStart, { passive: false })
 	canvas.addEventListener("touchmove", handleTouchMove, { passive: false })
 	return () => {
 		canvas.removeEventListener("mousemove", handleMouseMove)
 		canvas.removeEventListener("wheel", handleWheel)
-		canvas.removeEventListener("dblclick", handleDblClick)
 		canvas.removeEventListener("touchstart", handleTouchStart)
 		canvas.removeEventListener("touchmove", handleTouchMove)
 	}

@@ -163,7 +163,7 @@ const SidebarElementByProjectLinkGroup = (props: {
 
 export const AppSidebar = () => {
 	return (
-		<Sidebar variant="floating">
+		<Sidebar>
 			<SidebarHeader>
 				<h1 className="font-bold flex items-center gap-2 justify-center">
 					<Gpu />

@@ -65,7 +65,6 @@ const deleteIdsAtom = atom(null, (get, set) => {
 		VisibilityState.Hidden,
 	)
 	set(deletedIdsAtom, (prev) => prev.union(pickIds))
-	set(pickIdsAtom, new Set<number>())
 	set(gpuAtoms.drawTriggerAtom, (prev) => prev + 1)
 })
 

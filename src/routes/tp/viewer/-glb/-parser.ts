@@ -1,7 +1,11 @@
-import { WebIO } from "@gltf-transform/core"
+import { type Node, WebIO } from "@gltf-transform/core"
 import { expose } from "comlink"
 import { mat4, vec3, vec4 } from "wgpu-matrix"
-import type { Part } from "@/routes/tp/viewer/-gpu/logic/-types"
+import type {
+	Assembly,
+	HierarchyNode,
+	Part,
+} from "@/routes/tp/viewer/-gpu/logic/-types"
 import { aabb } from "@/routes/tp/viewer/-gpu/logic/utils/AABB"
 
 const DEFAULT_MATERIAL = {
@@ -22,7 +26,7 @@ const padTo4 = (array: Float32Array) => {
 	return newArray
 }
 
-const parseGlb = async (glbBuffer: ArrayBuffer): Promise<Part[]> => {
+const parseGlb = async (glbBuffer: ArrayBuffer): Promise<Assembly> => {
 	const io = new WebIO({
 		credentials: "include",
 	})
@@ -30,17 +34,33 @@ const parseGlb = async (glbBuffer: ArrayBuffer): Promise<Part[]> => {
 	const document = await io.readBinary(new Uint8Array(glbBuffer))
 	const root = document.getRoot()
 
-	const objects: Part[] = []
-	const nodes = root.listNodes()
+	const defaultScene = root.getDefaultScene()
 
-	let partId = 1
+	if (!defaultScene) {
+		throw new Error("GLB file has no default scene")
+	}
 
-	for (const node of nodes) {
+	const parts: Part[] = []
+	const hierarchyNodes: HierarchyNode[] = [
+		{
+			id: 0,
+			name: "Root",
+			parentIndex: null,
+			childIndexes: [],
+			partIndexes: [],
+			isOpen: true,
+		},
+	]
+
+	const getPartByNode = (node: Node, nodeIndex: number): Part[] => {
 		const worldMatrix = mat4.clone(node.getWorldMatrix())
 		const mesh = node.getMesh()
+		const partsFromNode: Part[] = []
+
 		if (!mesh) {
-			continue
+			return []
 		}
+
 		const primitives = mesh.listPrimitives()
 		for (
 			let primitiveIndex = 0;
@@ -111,23 +131,55 @@ const parseGlb = async (glbBuffer: ArrayBuffer): Promise<Part[]> => {
 				vertexes,
 				matrix: worldMatrix,
 			})
-
-			objects.push({
-				name: `${mesh.getName() || "Mesh"}_${primitiveIndex}`,
+			partsFromNode.push({
+				partId: parts.length + partsFromNode.length + 1,
 				vertexes,
 				normals,
 				vertexIndexes,
 				normalIndexes,
-				matrix: mat4.clone(worldMatrix),
+				matrix: worldMatrix,
 				material: objectMaterial ?? DEFAULT_MATERIAL,
-				partId,
 				aabb: partAabb,
+				nodeIndex,
 			})
 		}
-		partId++
+		return partsFromNode
 	}
 
-	return objects
+	const traverseNode = (node: Node, parentIndex: number) => {
+		const currentNodeIndex = hierarchyNodes.length
+
+		const currentNode: HierarchyNode = {
+			id: currentNodeIndex,
+			name: node.getName() || `Node_${currentNodeIndex}`,
+			parentIndex,
+			childIndexes: [],
+			partIndexes: [],
+			isOpen: true,
+		}
+
+		const partsFromNode = getPartByNode(node, currentNodeIndex)
+
+		for (const partNode of partsFromNode) {
+			currentNode.partIndexes.push(partNode.partId)
+			parts.push(partNode)
+		}
+		for (const child of node.listChildren()) {
+			traverseNode(child, currentNodeIndex)
+		}
+
+		hierarchyNodes.push(currentNode)
+		hierarchyNodes[parentIndex].childIndexes.push(currentNodeIndex)
+	}
+
+	for (const child of defaultScene.listChildren()) {
+		traverseNode(child, 0)
+	}
+
+	return {
+		hierarchyNodes,
+		parts,
+	}
 }
 
 const glbParserWorkerApi = {

@@ -9,8 +9,16 @@ export enum DisplayModeEnum {
 	CEL_SHADING = 4,
 }
 
-export type Part = {
+export type HierarchyNode = {
+	id: number
 	name: string
+	parentIndex: number | null
+	childIndexes: number[]
+	partIndexes: number[]
+	isOpen: boolean
+}
+
+export type Part = {
 	vertexes: Float32Array
 	vertexIndexes: Uint32Array
 	normals: Float32Array
@@ -23,6 +31,12 @@ export type Part = {
 	}
 	partId: number
 	aabb: AABB
+	nodeIndex: number
+}
+
+export type Assembly = {
+	hierarchyNodes: HierarchyNode[]
+	parts: Part[]
 }
 
 export type PartResources = {
@@ -88,14 +102,4 @@ export enum VisibilityState {
 	Hidden = 1 << 2,
 	Ghost = 1 << 3,
 	CustomMaterial = 1 << 4,
-}
-
-export type ProductStructure = {
-	id: string
-	children: ProductStructure[]
-}
-
-export type ParserResult = {
-	objects: Part[]
-	productStructure: ProductStructure
 }

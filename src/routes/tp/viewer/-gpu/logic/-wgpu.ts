@@ -15,8 +15,8 @@ import {
 } from "@/routes/tp/viewer/-gpu/logic/-part-resources"
 import { createRenderResources } from "@/routes/tp/viewer/-gpu/logic/-render-resources"
 import type {
+	Assembly,
 	DisplayModeEnum,
-	Part,
 	PickParams,
 	TechnicalConfig,
 	VisibilityState,
@@ -39,7 +39,9 @@ const objectProxy = wrap<PartResourceWorkerApi>(objectWorker)
 
 export type Viewer = Awaited<ReturnType<typeof initViewer>>
 
-export const initViewer = async (parts: Part[]) => {
+export const initViewer = async (assembly: Assembly) => {
+	const { parts, hierarchyNodes } = assembly
+	console.log(hierarchyNodes)
 	try {
 		emitter.emit("updateLoadingState", "init-webgpu")
 		const { device } = await initWebGPU()

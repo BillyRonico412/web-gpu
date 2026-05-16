@@ -33,42 +33,42 @@ type Option = {
 const objOpts: Record<string, Option> = {
 	cube: {
 		name: "Cube",
-		url: "/obj/cube.obj",
+		url: "https://raw.githubusercontent.com/BillyRonico412/glb/main/obj/cube.obj",
 	},
 	suzanne: {
 		name: "Suzanne",
-		url: "/obj/suzanne.obj",
+		url: "https://raw.githubusercontent.com/BillyRonico412/glb/main/obj/suzanne.obj",
 	},
 	bp: {
 		name: "Body Part",
-		url: "/obj/bp.obj",
+		url: "https://raw.githubusercontent.com/BillyRonico412/glb/main/obj/bp.obj",
 	},
 }
 
 const glbOpts: Record<string, Option> = {
 	bike: {
 		name: "Bike",
-		url: "https://raw.githubusercontent.com/BillyRonico412/glb/main/bike.glb",
+		url: "https://raw.githubusercontent.com/BillyRonico412/glb/main/glb/bike.glb",
 	},
 	tank: {
 		name: "Tank",
-		url: "https://raw.githubusercontent.com/BillyRonico412/glb/main/tank.glb",
+		url: "https://raw.githubusercontent.com/BillyRonico412/glb/main/glb/tank.glb",
 	},
 	engine1: {
 		name: "Engine 1",
-		url: "https://raw.githubusercontent.com/BillyRonico412/glb/main/engine-1.glb",
+		url: "https://raw.githubusercontent.com/BillyRonico412/glb/main/glb/engine-1.glb",
 	},
 	engine2: {
 		name: "Engine 2",
-		url: "https://raw.githubusercontent.com/BillyRonico412/glb/main/engine-2.glb",
+		url: "https://raw.githubusercontent.com/BillyRonico412/glb/main/glb/engine-2.glb",
 	},
 	grue: {
 		name: "Grue",
-		url: "https://raw.githubusercontent.com/BillyRonico412/glb/main/grue.glb",
+		url: "https://raw.githubusercontent.com/BillyRonico412/glb/main/glb/grue.glb",
 	},
 	wheel: {
 		name: "Wheel",
-		url: "https://raw.githubusercontent.com/BillyRonico412/glb/main/wheel.glb",
+		url: "https://raw.githubusercontent.com/BillyRonico412/glb/main/glb/wheel.glb",
 	},
 }
 

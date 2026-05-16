@@ -49,6 +49,7 @@ const parseGlb = async (glbBuffer: ArrayBuffer): Promise<Assembly> => {
 			childIndexes: [],
 			partIndexes: [],
 			isOpen: true,
+			depth: 0,
 		},
 	]
 
@@ -156,6 +157,7 @@ const parseGlb = async (glbBuffer: ArrayBuffer): Promise<Assembly> => {
 			childIndexes: [],
 			partIndexes: [],
 			isOpen: true,
+			depth: hierarchyNodes[parentIndex].depth + 1,
 		}
 
 		const partsFromNode = getPartByNode(node, currentNodeIndex)
@@ -164,12 +166,13 @@ const parseGlb = async (glbBuffer: ArrayBuffer): Promise<Assembly> => {
 			currentNode.partIndexes.push(partNode.partId)
 			parts.push(partNode)
 		}
-		for (const child of node.listChildren()) {
-			traverseNode(child, currentNodeIndex)
-		}
 
 		hierarchyNodes.push(currentNode)
 		hierarchyNodes[parentIndex].childIndexes.push(currentNodeIndex)
+
+		for (const child of node.listChildren()) {
+			traverseNode(child, currentNodeIndex)
+		}
 	}
 
 	for (const child of defaultScene.listChildren()) {

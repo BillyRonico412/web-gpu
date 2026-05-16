@@ -41,7 +41,6 @@ export type Viewer = Awaited<ReturnType<typeof initViewer>>
 
 export const initViewer = async (assembly: Assembly) => {
 	const { parts, hierarchyNodes } = assembly
-	console.log(hierarchyNodes)
 	try {
 		emitter.emit("updateLoadingState", "init-webgpu")
 		const { device } = await initWebGPU()
@@ -265,6 +264,7 @@ export const initViewer = async (assembly: Assembly) => {
 			updateTextureByCanvasResize,
 			assemblyAabb: partResources.assemblyAabb,
 			parts,
+			hierarchyNodes,
 			cleanup,
 			pickRect,
 			updateVisibilityState,

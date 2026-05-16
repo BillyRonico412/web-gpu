@@ -13,6 +13,7 @@ export type HierarchyNode = {
 	id: number
 	name: string
 	parentIndex: number | null
+	depth: number
 	childIndexes: number[]
 	partIndexes: number[]
 	isOpen: boolean

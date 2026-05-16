@@ -15,37 +15,29 @@ export const Settings = () => {
 		<Tabs>
 			<TabsList className="mx-auto">
 				<Tooltip>
-					<TooltipTrigger>
-						<TabsTrigger value="rendering">
-							<Torus className="size-5 text-muted-foreground" />
-						</TabsTrigger>
+					<TooltipTrigger render={<TabsTrigger value="rendering" />}>
+						<Torus className="size-5 text-muted-foreground" />
 					</TooltipTrigger>
 					<TooltipContent>Rendering</TooltipContent>
 				</Tooltip>
-        <Tooltip>
-          <TooltipTrigger>
-            <TabsTrigger value="camera">
-              <Camera className="size-5 text-muted-foreground" />
-            </TabsTrigger>
-          </TooltipTrigger>
-          <TooltipContent>Camera</TooltipContent>
-        </Tooltip>
-        <Tooltip>
-          <TooltipTrigger>
-            <TabsTrigger value="light">
-              <Lightbulb className="size-5 text-muted-foreground" />
-            </TabsTrigger>
-          </TooltipTrigger>
-          <TooltipContent>Light</TooltipContent>
-        </Tooltip>
-        <Tooltip>
-          <TooltipTrigger>
-            <TabsTrigger value="stats">
-              <Info className="size-5 text-muted-foreground" />
-            </TabsTrigger>
-          </TooltipTrigger>
-          <TooltipContent>Stats</TooltipContent>
-        </Tooltip>
+				<Tooltip>
+					<TooltipTrigger render={<TabsTrigger value="camera" />}>
+						<Camera className="size-5 text-muted-foreground" />
+					</TooltipTrigger>
+					<TooltipContent>Camera</TooltipContent>
+				</Tooltip>
+				<Tooltip>
+					<TooltipTrigger render={<TabsTrigger value="light" />}>
+						<Lightbulb className="size-5 text-muted-foreground" />
+					</TooltipTrigger>
+					<TooltipContent>Light</TooltipContent>
+				</Tooltip>
+				<Tooltip>
+					<TooltipTrigger render={<TabsTrigger value="stats" />}>
+						<Info className="size-5 text-muted-foreground" />
+					</TooltipTrigger>
+					<TooltipContent>Stats</TooltipContent>
+				</Tooltip>
 			</TabsList>
 			<div className="px-4 py-4">
 				<TabsContent value="rendering">

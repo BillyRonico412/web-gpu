@@ -12,7 +12,7 @@ import {
 	SidebarHeader,
 } from "@/components/ui/sidebar"
 import { LoadFileButton } from "@/routes/tp/viewer/-components/-load-file-button"
-import { ProductStructure } from "@/routes/tp/viewer/-components/-product-structure"
+import { Ps } from "@/routes/tp/viewer/-components/-product-structure/-ps"
 import { Settings } from "@/routes/tp/viewer/-components/-settings"
 
 export const ViewerSidebar = () => {
@@ -30,7 +30,7 @@ export const ViewerSidebar = () => {
 					className="flex flex-col gap-4"
 				>
 					<ResizablePanel>
-						<ProductStructure />
+						<Ps />
 					</ResizablePanel>
 					<ResizableHandle withHandle={true} />
 					<ResizablePanel>

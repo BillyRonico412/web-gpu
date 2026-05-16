@@ -112,6 +112,7 @@ const parseObj = async (objText: string): Promise<Assembly> => {
 		childIndexes: [],
 		partIndexes: [0],
 		isOpen: true,
+		depth: 0,
 	}
 
 	const part: Part = {

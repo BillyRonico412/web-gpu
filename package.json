@@ -33,6 +33,7 @@
     "lucide-react": "^0.577.0",
     "mitt": "^3.0.1",
     "next-themes": "^0.4.6",
+    "radash": "^12.1.1",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
     "react-resizable-panels": "^4.11.0",

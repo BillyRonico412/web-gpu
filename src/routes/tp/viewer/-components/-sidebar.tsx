@@ -27,7 +27,7 @@ export const ViewerSidebar = () => {
 			<SidebarContent>
 				<ResizablePanelGroup
 					orientation="vertical"
-					className="flex flex-col gap-4"
+					className="flex flex-col gap-4 overflow-hidden"
 				>
 					<ResizablePanel>
 						<Ps />

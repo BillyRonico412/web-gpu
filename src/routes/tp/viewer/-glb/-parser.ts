@@ -152,7 +152,7 @@ const parseGlb = async (glbBuffer: ArrayBuffer): Promise<Assembly> => {
 
 		const currentNode: HierarchyNode = {
 			id: currentNodeIndex,
-			name: node.getName() || `Node_${currentNodeIndex}`,
+			name: node.getName().trim() || `Node_${currentNodeIndex}`,
 			parentIndex,
 			childIndexes: [],
 			partIndexes: [],

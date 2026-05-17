@@ -12,7 +12,6 @@ export const PsItem = (props: { hierarchyNode: HierarchyNode }) => {
 			<Button variant="ghost" size="icon-sm">
 				<ChevronRight className="size-3 shrink-0" />
 			</Button>
-			<Box className="size-3 shrink-0" />
 			<span className="flex-1 truncate">{props.hierarchyNode.name}</span>
 		</div>
 	)

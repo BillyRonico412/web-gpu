@@ -11,11 +11,11 @@ function RouteComponent() {
 		<div className="mx-auto p-4 flex justify-center-safe items-center-safe w-full h-full">
 			<div className="w-full flex flex-col gap-4">
 				<h1 className="text-xl font-bold text-center">
-					Apprentissage de wgpu avec Rust
+					Apprentissage du webgpu
 				</h1>
 				<p className="text-center">
 					Cette application est mon carnet de bord pour apprendre à utiliser
-					wgpu avec Typescript.
+					webgpu avec Typescript.
 					<br />
 					Pour chaque projet, vous aurez une petite description, le code source
 					et une démo en direct.

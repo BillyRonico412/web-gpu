@@ -1,4 +1,4 @@
-import { Box, ChevronRight } from "lucide-react"
+import { ChevronRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import type { HierarchyNode } from "@/routes/tp/viewer/-gpu/logic/-types"
 

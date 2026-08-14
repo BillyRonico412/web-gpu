@@ -15,14 +15,14 @@ function RouteComponent() {
 				</h1>
 				<p className="text-center">
 					Cette application est mon carnet de bord pour apprendre à utiliser
-					wgpu avec Rust.
+					wgpu avec Typescript.
 					<br />
 					Pour chaque projet, vous aurez une petite description, le code source
 					et une démo en direct.
 				</p>
 				<div className="flex items-center gap-2 justify-center">
 					<a
-						href="https://github.com/BillyRonico412/web-gpu/tree/master"
+						href="https://github.com/BillyRonico412/web-gpu/tree/main"
 						target="_blank"
 						rel="noopener noreferrer"
 					>
